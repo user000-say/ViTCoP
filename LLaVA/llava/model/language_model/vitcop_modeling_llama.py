@@ -1389,6 +1389,13 @@ class LlamaModel(LlamaPreTrainedModel):
         #   QED          : response-space redundancy weighted by D_Q (G3)
         #   QED_VISUAL   : visual-hidden cosine redundancy weighted by D_Q (G4)
         # ==================================================================
+        # E014-AEE-BEGIN: read isolated experiment settings before K guards
+        # E014: read early because E006/E007/E012 budget gates follow.
+        # OFF-by-default, frozen historical runs preserve their own restrictions.
+        self.e014_enable = os.environ.get("E014_ENABLE", "False") == "True"
+        self.e014_variant = os.environ.get("E014_VARIANT", "AEE").upper()
+        self.e014_b = int(os.environ.get("E014_B", "16"))
+        # E014-AEE-END: independent experiment settings
         self.e006_enable = os.environ.get("E006_ENABLE", "False") == "True"
         self.e006_selector = os.environ.get("E006_SELECTOR", "GLOBAL_KNORM").upper()
         self.e006_layer = int(os.environ.get("E006_LAYER", "12"))
@@ -1473,7 +1480,16 @@ class LlamaModel(LlamaPreTrainedModel):
                 e007_registered_budget_point = (
                     self.e007_enable and self.e006_target_k == 64
                 )
-                if not (e006_registered_fallback or e007_registered_budget_point):
+                # E014-AEE-BEGIN: E014-only final-K32 registration
+                # Only E014 may extend the registered budget to K32.
+                e014_registered_budget_point = (
+                    self.e014_enable and self.e006_target_k in {64, 32}
+                )
+                # E014-AEE-END: E014-only final-K32 registration
+                if not (
+                    e006_registered_fallback or e007_registered_budget_point
+                    or e014_registered_budget_point
+                ):
                     raise ValueError(
                         f"[E006/E007] E006_TARGET_K must be 96, or 64 as either "
                         f"the registered E006 fallback or the E007 matched-budget point. "
@@ -1504,10 +1520,13 @@ class LlamaModel(LlamaPreTrainedModel):
                 raise ValueError(
                     f"[E007] unsupported E007_STAGE1_MODE={self.e007_stage1_mode}"
                 )
-            if self.e006_target_k not in {96, 64}:
+            # E014-AEE-BEGIN: K32 allowed only with E014_ENABLE
+            if self.e006_target_k not in ({96, 64, 32} if self.e014_enable else {96, 64}):
                 raise ValueError(
-                    f"[E007] target K must be 96 or 64, got {self.e006_target_k}"
+                    f"[E007] target K invalid for this registered experiment: "
+                    f"{self.e006_target_k}"
                 )
+            # E014-AEE-END: preserve legacy E007 K96/K64 gate
 
         if self.e008_enable:
             if not self.e007_enable:
@@ -1610,6 +1629,36 @@ class LlamaModel(LlamaPreTrainedModel):
                 raise ValueError('[E013] freeze S=D; do not confound Stage1 and S/D')
             if self.e010_qed_layer not in {8, 12}:
                 raise ValueError('[E013] S=D must be layer8 (primary) or 12 (E008 bridge)')
+        # E014-AEE-BEGIN: fixed Stage1/Stage2 invariants
+        # E014 E013-independent contract: 172 *eligible* visual positions,
+        # same QED and S=D as the E013 primary/bridge experiments.
+        if self.e014_enable:
+            if self.e013_enable or self.e008_enable or self.e009_enable:
+                raise ValueError('[E014] cannot combine with E013/E008/E009')
+            if not self.e012_enable or not self.e010.enabled:
+                raise ValueError('[E014] requires E010 and E012')
+            if not self.e007_enable or self.e007_stage1_mode != 'ORIGINAL_172':
+                raise ValueError('[E014] E007 ORIGINAL_172 required')
+            if os.environ.get('E007_SKIP_UNUSED_VIC', 'False') != 'True':
+                raise ValueError('[E014] E007_SKIP_UNUSED_VIC=True required')
+            if self.e006_selector != 'QED':
+                raise ValueError('[E014] E006_SELECTOR must be QED')
+            if self.e006_target_k not in {96, 64, 32}:
+                raise ValueError('[E014] final K must be 96,64,32')
+            if self.e012_delete_layer != self.e010_qed_layer:
+                raise ValueError('[E014] S=D must be frozen')
+            if self.e010_qed_layer not in {8, 12}:
+                raise ValueError('[E014] S=D layer must be 8 or 12')
+            if self.e014_variant not in {
+                'BASE', 'FIXED_COVER', 'FIXED_COVER_PROXY',
+                'FIXED_RISK', 'ADAPTIVE_B_ONLY', 'AEE'
+            } or self.e014_b not in {0, 8, 16, 24, 32}:
+                raise ValueError('[E014] invalid variant or fixed exchange budget')
+            if os.environ.get('E014_AUDIT', 'False') == 'True' and (
+                os.environ.get('COMPUTE_EFFICIENCY', 'False') == 'True'
+            ):
+                raise ValueError('[E014] audit must be OFF in timing')
+        # E014-AEE-END: fixed Stage1/Stage2 invariants
         if self.e012_enable:
             errors = []
             if not self.use_vitcop or not self.e006_enable or not self.e010.enabled:
@@ -1620,8 +1669,12 @@ class LlamaModel(LlamaPreTrainedModel):
                 errors.append("requires E007_SKIP_UNUSED_VIC=True")
             if self.e008_enable or self.e009_enable:
                 errors.append("E008/E009 context variants are unsupported")
-            if self.e006_target_k != 96:
-                errors.append("first frozen experiment requires K96")
+            # E014-AEE-BEGIN: scoped E012 K64/K32 extension
+            if self.e006_target_k != 96 and not (
+                self.e014_enable and self.e006_target_k in {64, 32}
+            ):
+                errors.append("E012 frozen K96; only E014 additionally permits K64/K32")
+            # E014-AEE-END: scoped E012 K64/K32 extension
             if self.e006_selector not in {"QED", "Q_ATTN", "RANDOM_FINAL"}:
                 errors.append("requires QED/Q_ATTN/RANDOM_FINAL selector")
             if bool(self.e010.qed_side_only):
@@ -3098,6 +3151,18 @@ class LlamaModel(LlamaPreTrainedModel):
                     # synchronization.  Debug/profile mode may materialize them.
                     self.e006_last = {
                         "selector": self.e006_selector,
+                        # E014-AEE-BEGIN: static identity only, no fabricated dynamic budget
+                        # Dynamic exchange budget/IDs live at the CLIP
+                        # vision tower, not inside LlamaModel.  Do not
+                        # fabricate them from E014_B in adaptive runs.
+                        "e014_enable": bool(self.e014_enable),
+                        "e014_variant": (
+                            self.e014_variant if self.e014_enable else None
+                        ),
+                        "e014_stage1_visual_out": (
+                            172 if self.e014_enable else None
+                        ),
+                        # E014-AEE-END: static provenance
                         "e010_qed_layer": int(self.e010_qed_layer),
                         "e010_enabled": bool(self.e010.enabled),
                         "span_source": side["span_source"],

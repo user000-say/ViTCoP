@@ -335,6 +335,37 @@ class CLIPVisionTower(nn.Module):
             if os.environ.get('E006_SELECTOR', 'QED').upper() != 'QED':
                 raise RuntimeError('[E009] QED selector must remain frozen')
 
+        # E014-AEE-BEGIN: isolated configuration and invariants
+        # E014 2026-10-10: independent and OFF by default.
+        # Keep all E013/E007/E012 historical paths inert when E014 is off.
+        self.e014_enable = os.environ.get('E014_ENABLE', 'False') == 'True'
+        self.e014_cfg = None
+        self.e014_last = None
+        if self.e014_enable:
+            from .e014_config import E014Config
+            self.e014_cfg = E014Config.from_env()
+            if self.e013_enable or self.e008_enable or self.e009_enable:
+                raise RuntimeError('[E014] E013/E008/E009 must all be disabled')
+            if not self.e007_enable or not self.e007_skip_unused_vic:
+                raise RuntimeError('[E014] E007_ENABLE/E007_SKIP_UNUSED_VIC required')
+            if self.e007_stage1_mode != 'ORIGINAL_172':
+                raise RuntimeError('[E014] freeze E007_STAGE1_MODE=ORIGINAL_172')
+            if not self.e010.enabled or os.environ.get('E012_ENABLE') != 'True':
+                raise RuntimeError('[E014] requires E010_ENABLE and E012_ENABLE')
+            if os.environ.get('E006_SELECTOR', 'QED').upper() != 'QED':
+                raise RuntimeError('[E014] freeze E006_SELECTOR=QED')
+            if any((
+                self.use_dynamic_ratio, self.use_adaptive_select,
+                self.use_debias, self.use_zone_routing, self.use_coord_tokens,
+                self.use_spatial_aware,
+            )):
+                raise RuntimeError('[E014] disable legacy Stage1 selectors/routers')
+            if self.e010.analysis_full576:
+                raise RuntimeError('[E014] E010_ANALYSIS_FULL576 must be False')
+            if self.e014_cfg.audit and os.environ.get('COMPUTE_EFFICIENCY') == 'True':
+                raise RuntimeError('[E014] audit not allowed in timing runs')
+        # E014-AEE-END: isolated configuration and invariants
+
         # E013-P1 2026-10-09: protect old E007/E009 paths and true CLIP geometry.
         if self.e013_enable:
             if not self.e007_enable or not self.e007_skip_unused_vic:
@@ -1024,7 +1055,15 @@ class CLIPVisionTower(nn.Module):
         # E001-S1-A 2026-09-18: budget and selection are orthogonal factors.
         # E007 deliberately bypasses global ratio coupling and fixes the
         # pre-registered Stage1 budgets directly.
-        if self.e013_enable:
+        # E014-AEE-BEGIN: constant-length Stage1 budget
+        if self.e014_enable:
+            # AEE exchanges evidence within exactly 172 eligible token slots.
+            total_budget = 172
+            keep_tokens_each = torch.full((B,), total_budget, dtype=torch.long, device=device)
+            rho = torch.full((B,), float('nan'), device=device)
+            phi = torch.full((B,), float('nan'), device=device)
+        # E014-AEE-END: constant-length Stage1 budget
+        elif self.e013_enable:
             total_budget = 172 + (self.e013_b if self.e013_variant == 'EXTRA' else 0)
             keep_tokens_each = torch.full((B,), total_budget, dtype=torch.long, device=device)
             rho = torch.full((B,), float('nan'), device=device)
@@ -1069,7 +1108,14 @@ class CLIPVisionTower(nn.Module):
 
         e007_coverage_anchors = None
 
-        if self.e013_enable:
+        # E014-AEE-BEGIN: defer original Top172 to isolated selector
+        if self.e014_enable:
+            # e014_choose computes Top172 ONCE while doing the exchange.
+            # Do not duplicate a TopK kernel before the Stage1 output branch.
+            attn_0 = cls_attention_sum[0]
+            final_idx = None
+        # E014-AEE-END: defer original Top172
+        elif self.e013_enable:
             # E013-P1: Stage1 output is constructed below via a frozen helper.
             attn_0 = cls_attention_sum[0]
             final_idx = attn_0.topk(172, largest=True).indices.sort().values
@@ -1214,6 +1260,27 @@ class CLIPVisionTower(nn.Module):
         if self.e010.enabled and self.e010.analysis_full576:
             hidden_states_filtered = tokens_0.unsqueeze(0)
             K = int(tokens_0.shape[0])
+        elif self.e014_enable:
+            # E014-AEE-BEGIN: 172 eligible patches, exchange in CLIP coordinates
+            # E014: no transient tokens. Every selected patch is QED-eligible.
+            from .e014_stage1_support import e014_choose
+            selected, original, added, removed, stats = e014_choose(
+                tokens_0, cls_attention_sum[0], self.e014_cfg,
+                request_index=self.e007_request_index,
+            )
+            hidden_states_filtered = tokens_0.index_select(0, selected).unsqueeze(0)
+            final_idx = selected
+            K = int(hidden_states_filtered.shape[1])
+            if K != 172:
+                raise RuntimeError('[E014] Stage1 must output exactly 172 visual tokens')
+            self.e014_last = {
+                'selected_ids': selected.detach(),
+                'original_core_ids': original.detach(),
+                'added_ids': added.detach(),
+                'removed_ids': removed.detach(),
+                'stats': stats,
+            }
+            # E014-AEE-END: 172 eligible patches
         elif self.e013_enable:
             # E013-P1 2026-10-09: compute IDs using only existing CLIP output.
             # Same original residual candidate pool for ATTN/RANDOM/COVER.
@@ -1580,6 +1647,15 @@ class CLIPVisionTower(nn.Module):
             'e013_pick': self.e013_pick if self.e013_enable else None,
             'e013_b': self.e013_b if self.e013_enable else None,
             'e013_visual_count': K if self.e013_enable else None,
+            # E014-AEE-BEGIN: no decoder-context/transient metadata
+            # E014: budget is the *exchange* count, never extra visual tokens.
+            'e014_enable': bool(self.e014_enable),
+            'e014_variant': self.e014_cfg.variant if self.e014_enable else None,
+            'e014_exchange_budget': (
+                int(self.e014_last['stats']['budget']) if self.e014_enable else None
+            ),
+            'e014_visual_count': K if self.e014_enable else None,
+            # E014-AEE-END: Stage1 metadata
             'e009_enable': bool(self.e009_enable),
             'e009_mode': self.e009_mode if self.e009_enable else None,
             'e009_core_count': self.e009_core_k if self.e009_enable else None,
@@ -1588,6 +1664,38 @@ class CLIPVisionTower(nn.Module):
             ),
             'e009_total_count': self.e009_total_k if self.e009_enable else None,
         }
+
+        # E014-AEE-BEGIN: OFFLINE-only provenance audit
+        # E014 offline audit: patch IDs are CLIP 0..575 spatial indices.
+        # GPU->CPU copies below are allowed ONLY with E014_AUDIT=True.
+        if self.e014_enable and self.e014_cfg.audit:
+            audit_ids = self.e014_last
+            st = audit_ids['stats']
+            selected_ids = audit_ids['selected_ids']
+            if selected_ids.unique().numel() != 172:
+                raise RuntimeError('[E014] duplicate visual token in Stage1')
+            if not bool(torch.isfinite(tokens_0).all().item()):
+                raise RuntimeError('[E014] nonfinite CLIP features')
+            if not bool(torch.isfinite(attn_0).all().item()):
+                raise RuntimeError('[E014] nonfinite CLS attention')
+            print('[E014_STAGE1_JSON] ' + json.dumps({
+                'request_index': int(self.e007_request_index),
+                'variant': self.e014_cfg.variant,
+                'budget': int(st['budget']),
+                'stage1_in': int(T), 'stage1_out': int(K),
+                'eligible_count': int((clustered_labels[0] >= 0).sum().item()),
+                'original_core_ids': audit_ids['original_core_ids'].cpu().tolist(),
+                'selected_ids': selected_ids.cpu().tolist(),
+                'added_ids': audit_ids['added_ids'].cpu().tolist(),
+                'removed_ids': audit_ids['removed_ids'].cpu().tolist(),
+                'score_type': st.get('score_type'),
+                'lambda': float(self.e014_cfg.lam),
+                'penalty': float(self.e014_cfg.penalty),
+                'utility': float(st['utility'].item()),
+                'gain_sum': float(st['gain_sum'].item()),
+                'risk_sum': float(st['risk_sum'].item()),
+            }, separators=(',', ':')))
+        # E014-AEE-END: OFFLINE-only provenance audit
 
         # E013-P1: auditing is forbidden inside canonical latency measurements.
         if self.e013_enable and self.e013_audit:

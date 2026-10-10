@@ -1,0 +1,6 @@
+{
+  "GQA": "python REPLACE_WITH_YOUR_GQA_FULL_EVAL.py --output-dir {out_dir}",
+  "POPE": "python REPLACE_WITH_YOUR_POPE_FULL_EVAL.py --output-dir {out_dir}",
+  "MME": "python REPLACE_WITH_YOUR_MME_FULL_EVAL.py --output-dir {out_dir}",
+  "MMBench": "python REPLACE_WITH_YOUR_MMBENCH_FULL_EVAL.py --output-dir {out_dir}"
+}
