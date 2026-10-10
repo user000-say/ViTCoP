@@ -3,3 +3,9 @@ LLaVA/llava.egg-info
 lmms-eval/lmms_eval.egg-info
 
 logs/*
+# Keep experiment snapshots trackable; raw logs stay ignored via logs/*
+!experiments/
+__pycache__/
+*.pyc
+.codex/
+.vscode/

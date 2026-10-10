@@ -1,0 +1,7 @@
+{
+  "addendum_kv_policy": "EXTRA smoke under pre-KVFIX package would be AUDIT_INVALID; this server smoke used live llama SHA with visual_before=172+b",
+  "live_llama_sha": "6a4f4c31334fa73f9e99395c93a6bff64e60c8b7b93f951f8e54c8c804651896",
+  "smoke_extra_visual_before_observed": 188,
+  "smoke_verdict": "KVFIX_EQUIVALENT_VALID",
+  "running_jobs_policy": "KEEP; no hot replace"
+}

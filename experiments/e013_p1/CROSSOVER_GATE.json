@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "rule": "user_relative_15pct_fixed32",
+  "max_rel_percent": 15.0,
+  "e012_minus_legacy_pair1_rel_mean_ci": [
+    0.04339791279983074,
+    0.03925407388198627,
+    0.04754175171767521
+  ],
+  "e012_minus_legacy_pair2_rel_mean_ci": [
+    0.0013037792711361722,
+    -0.002258158952822764,
+    0.0048657174950951084
+  ],
+  "e012_minus_legacy_pair1_ms_mean": -52.46857137812499,
+  "e012_minus_legacy_pair2_ms_mean": -1.4686637718750113,
+  "legacy_ab_stability_rel_mean_ci": [
+    0.07007755682918654,
+    0.06718177219221608,
+    0.072973341466157
+  ],
+  "e012_ab_stability_rel_mean_ci": [
+    0.027167329049227803,
+    0.02262980528551024,
+    0.03170485281294537
+  ],
+  "legacy_a_mean_fixed32_ms": 1209.59861295625,
+  "e012_a_mean_fixed32_ms": 1262.067184334375,
+  "verdict": "|rel Fixed32 mean| <= 15.0% on both ABBA pairs; Stage1 latency attribution allowed"
+}

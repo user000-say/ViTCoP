@@ -1,0 +1,274 @@
+{
+  "policy": "full_four_dataset_only",
+  "full_n": {
+    "gqa": 12578,
+    "pope": 9000,
+    "mme": 2374,
+    "mmbench_en_dev": 4329
+  },
+  "missing": [],
+  "bad_n": [],
+  "complete": true,
+  "arms": {
+    "BASE_S8": {
+      "arm": "BASE_S8",
+      "gqa": {
+        "exact_match": 0.5878518047384322,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/BASE_S8/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.861,
+        "pope_f1_score": 0.8483452539701781,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/BASE_S8/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1452.8056222488995,
+        "mme_cognition_score": 324.6428571428571,
+        "mme_total": 1777.4484793917566,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/BASE_S8/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.4020618556701,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/BASE_S8/mmbench_en_dev/metrics.json"
+      }
+    },
+    "B0_S8": {
+      "arm": "B0_S8",
+      "gqa": {
+        "exact_match": 0.5878518047384322,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/B0_S8/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.861,
+        "pope_f1_score": 0.8483452539701781,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/B0_S8/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1452.8056222488995,
+        "mme_cognition_score": 324.6428571428571,
+        "mme_total": 1777.4484793917566,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/B0_S8/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.4020618556701,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/B0_S8/mmbench_en_dev/metrics.json"
+      }
+    },
+    "REPLACE_RANDOM16": {
+      "arm": "REPLACE_RANDOM16",
+      "gqa": {
+        "exact_match": 0.5876132930513596,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_RANDOM16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8615555555555555,
+        "pope_f1_score": 0.848639455782313,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_RANDOM16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1442.5793317326932,
+        "mme_cognition_score": 337.1428571428571,
+        "mme_total": 1779.7221888755503,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_RANDOM16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.31615120274914,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_RANDOM16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "REPLACE_ATTN16": {
+      "arm": "REPLACE_ATTN16",
+      "gqa": {
+        "exact_match": 0.5880903164255048,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_ATTN16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8648888888888889,
+        "pope_f1_score": 0.8528201404018397,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_ATTN16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1457.482092837135,
+        "mme_cognition_score": 321.7857142857143,
+        "mme_total": 1779.2678071228493,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_ATTN16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 62.97250859106529,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_ATTN16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "REPLACE_COVER16": {
+      "arm": "REPLACE_COVER16",
+      "gqa": {
+        "exact_match": 0.5900779138177771,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_COVER16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8644444444444445,
+        "pope_f1_score": 0.8523359961268457,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_COVER16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1467.8701480592238,
+        "mme_cognition_score": 331.07142857142856,
+        "mme_total": 1798.9415766306524,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_COVER16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.144329896907216,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/REPLACE_COVER16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "EXTRA_RANDOM16": {
+      "arm": "EXTRA_RANDOM16",
+      "gqa": {
+        "exact_match": 0.5895213865479408,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_RANDOM16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8621111111111112,
+        "pope_f1_score": 0.850138872116894,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_RANDOM16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1457.5978391356543,
+        "mme_cognition_score": 304.2857142857143,
+        "mme_total": 1761.8835534213686,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_RANDOM16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.745704467353946,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_RANDOM16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "EXTRA_ATTN16": {
+      "arm": "EXTRA_ATTN16",
+      "gqa": {
+        "exact_match": 0.5883288281125775,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_ATTN16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8632222222222222,
+        "pope_f1_score": 0.8513823493903175,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_ATTN16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1452.9616846738697,
+        "mme_cognition_score": 320.0,
+        "mme_total": 1772.9616846738697,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_ATTN16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.487972508591064,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_ATTN16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "EXTRA_COVER16": {
+      "arm": "EXTRA_COVER16",
+      "gqa": {
+        "exact_match": 0.5896803943393226,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_COVER16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8626666666666667,
+        "pope_f1_score": 0.8505441354292623,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_COVER16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1462.7558023209283,
+        "mme_cognition_score": 330.3571428571429,
+        "mme_total": 1793.1129451780712,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_COVER16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.487972508591064,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_COVER16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "EXTRA_NULL16": {
+      "arm": "EXTRA_NULL16",
+      "gqa": {
+        "exact_match": 0.5765622515503259,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_NULL16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8558888888888889,
+        "pope_f1_score": 0.841112336150925,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_NULL16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1409.592236894758,
+        "mme_cognition_score": 327.8571428571429,
+        "mme_total": 1737.4493797519008,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_NULL16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 60.39518900343642,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_NULL16/mmbench_en_dev/metrics.json"
+      }
+    },
+    "EXTRA_DUPLICATE16": {
+      "arm": "EXTRA_DUPLICATE16",
+      "gqa": {
+        "exact_match": 0.5888058514867228,
+        "effective": 12578,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_DUPLICATE16/gqa/metrics.json"
+      },
+      "pope": {
+        "pope_accuracy": 0.8597777777777778,
+        "pope_f1_score": 0.8460975609756097,
+        "effective": 9000,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_DUPLICATE16/pope/metrics.json"
+      },
+      "mme": {
+        "mme_perception_score": 1432.8473389355743,
+        "mme_cognition_score": 330.0,
+        "mme_total": 1762.8473389355743,
+        "effective": 2374,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_DUPLICATE16/mme/metrics.json"
+      },
+      "mmbench_en_dev": {
+        "gpt_eval_score": 63.144329896907216,
+        "effective": 4329,
+        "path": "/home/xiangyue/ViTCoP/logs/e013_p1/full/full/EXTRA_DUPLICATE16/mmbench_en_dev/metrics.json"
+      }
+    }
+  }
+}

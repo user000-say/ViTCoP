@@ -1,3 +1,4 @@
+
 # coding=utf-8
 # Copyright 2022 EleutherAI and the HuggingFace Inc. team. All rights reserved.
 #
@@ -20,6 +21,7 @@
 """ PyTorch LLaMA model."""
 import math
 import warnings
+import json
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -785,6 +787,231 @@ class LlamaSdpaAttention(LlamaAttention):
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
+        # E010 analysis-only local fusion influence. The SDPA call below is unchanged.
+        if (
+            getattr(self, "_e010_collect_local_influence", False)
+            and q_len > 1
+            and not output_attentions
+        ):
+            from llava.model.e010_runtime_support import local_zero_contribution_influence
+            span = getattr(self, "_e010_question_span", None)
+            v0 = int(getattr(self, "_e010_visual_start", -1))
+            vn = int(getattr(self, "_e010_visual_count", 0))
+            if span is not None and vn > 0 and v0 >= 0 and v0 + vn <= int(key_states.shape[-2]):
+                q_idx = torch.arange(int(span[0]), int(span[1]), device=query_states.device)
+                q_idx = q_idx[(q_idx >= 0) & (q_idx < q_len)]
+                if int(q_idx.numel()) > 0:
+                    q_side = query_states.index_select(2, q_idx).float()
+                    k_vis = key_states[:, :, v0:v0 + vn, :].float()
+                    logits = torch.matmul(q_side, k_vis.transpose(2, 3)) / math.sqrt(self.head_dim)
+                    probs = torch.softmax(logits, dim=-1)
+                    positions = torch.arange(vn, device=probs.device)
+                    self._e010_last_influence = local_zero_contribution_influence(
+                        probs, value_states[:, :, v0:v0 + vn, :], positions
+                    ).detach()
+
+        # ==================================================================
+        # E006-QED-R1 2026-10-07: side question-response statistics.
+        #
+        # This does NOT request/return the model attention matrix and does NOT
+        # change the SDPA main path.  It materializes only
+        #   [batch, heads, N_question, prefix_length]
+        # for layer 12 during prefill, using the post-RoPE Q/K tensors that the
+        # layer already computed.  The normal SDPA call below remains intact.
+        # ==================================================================
+        if getattr(self, "_e006_enabled", False) and q_len > 1:
+            selector = getattr(self, "_e006_selector", "").upper()
+            if selector not in {"Q_ATTN", "Q_RESP", "QED", "QED_VISUAL"}:
+                raise RuntimeError(f"[E006] invalid SDPA-side selector: {selector}")
+            if output_attentions:
+                raise RuntimeError("[E006] output_attentions=True is forbidden")
+
+            visual_start = int(getattr(self, "_e006_visual_start"))
+            visual_count = int(getattr(self, "_e006_visual_count"))
+            visual_end = visual_start + visual_count
+            question_indices = getattr(self, "_e006_question_indices").to(query_states.device)
+            target_k = int(getattr(self, "_e006_target_k"))
+            eps = float(getattr(self, "_e006_eps", 1e-8))
+            e008_candidate_mask = getattr(self, "_e008_candidate_mask", None)
+            e008_mode = getattr(self, "_e008_mode", None)
+
+            if e008_candidate_mask is not None:
+                if e008_candidate_mask.numel() != visual_count:
+                    raise RuntimeError(
+                        f"[E008] candidate mask length={e008_candidate_mask.numel()} "
+                        f"!= visual_count={visual_count}"
+                    )
+                if getattr(self, "_e008_strict_check", False):
+                    candidate_count = int(e008_candidate_mask.sum().item())
+                    if candidate_count != 172:
+                        raise RuntimeError(
+                            f"[E008] candidate count={candidate_count}, expected 172"
+                        )
+                if target_k > 172:
+                    raise RuntimeError(
+                        f"[E008] target_k={target_k} > Core172 candidate_count=172"
+                    )
+
+            if visual_count <= 0 or visual_end > kv_seq_len:
+                raise RuntimeError(
+                    f"[E006] bad visual span [{visual_start},{visual_end}) for kv_len={kv_seq_len}"
+                )
+            if question_indices.numel() == 0:
+                raise RuntimeError("[E006] empty question span")
+            if int(question_indices.max().item()) >= q_len:
+                raise RuntimeError(
+                    f"[E006] question index {int(question_indices.max().item())} >= q_len={q_len}"
+                )
+            if target_k > visual_count:
+                raise RuntimeError(f"[E006] target_k={target_k} > visual_count={visual_count}")
+
+            events = None
+            if getattr(self, "_e006_profile", False) and query_states.is_cuda:
+                events = tuple(torch.cuda.Event(enable_timing=True) for _ in range(4))
+                events[0].record()
+
+            # [B,H,Qq,D] x [B,H,D,L] -> [B,H,Qq,L].  Float32 only for
+            # this small selector side-path to make entropy/cosine numerically
+            # stable; main SDPA dtype/semantics are untouched.
+            q_side = query_states.index_select(2, question_indices).float()
+            k_side = key_states.float()
+            side_logits = torch.matmul(q_side, k_side.transpose(2, 3)) / math.sqrt(self.head_dim)
+
+            if attention_mask is not None:
+                side_mask = attention_mask.index_select(2, question_indices)[..., :kv_seq_len].float()
+                side_logits = side_logits + side_mask
+            else:
+                # Main SDPA uses is_causal=True when mask is None.  Reproduce
+                # that causal legality only for the selected question rows.
+                key_pos = torch.arange(kv_seq_len, device=side_logits.device).view(1, 1, 1, -1)
+                q_pos = question_indices.view(1, 1, -1, 1)
+                side_logits = side_logits.masked_fill(key_pos > q_pos, torch.finfo(side_logits.dtype).min)
+
+            selector_logits = side_logits
+            if e008_candidate_mask is not None and e008_mode == "CONTEXT_ONLY":
+                # This modifies ONLY the small E006/QED side copy. The real
+                # scaled_dot_product_attention below still sees all 192 visual
+                # tokens. Therefore transient tokens can still alter the actual
+                # transformer representations while being absent from QED's
+                # selection statistic.
+                selector_logits = side_logits.clone()
+                transient_local = torch.where(~e008_candidate_mask)[0]
+                transient_abs = transient_local + int(visual_start)
+                selector_logits.index_fill_(
+                    -1,
+                    transient_abs,
+                    torch.finfo(selector_logits.dtype).min,
+                )
+
+            side_prob = torch.softmax(selector_logits, dim=-1)
+            # Average heads first, then isolate the current visual tokens.
+            visual_prob = side_prob[..., visual_start:visual_end].mean(dim=1)[0]  # [Qq,Nv]
+            g = visual_prob.sum(dim=-1)
+            P = visual_prob / (g.unsqueeze(-1) + eps)
+            w = g / (g.sum() + eps)
+            r = (w.unsqueeze(-1) * P).sum(dim=0)
+            r = r / (r.sum() + eps)
+
+            if events is not None:
+                events[1].record()
+
+            D_Q = None
+            rho = None
+            score = r
+            if selector == "Q_RESP":
+                D_Q = torch.ones((), device=r.device, dtype=r.dtype)
+            elif selector in {"QED", "QED_VISUAL"}:
+                entropy_count = (
+                    172
+                    if (
+                        e008_candidate_mask is not None
+                        and e008_mode == "CONTEXT_ONLY"
+                    )
+                    else visual_count
+                )
+                D_Q = -(r * torch.log(r + eps)).sum() / math.log(
+                    float(entropy_count)
+                )
+                D_Q = D_Q.clamp(min=0.0, max=1.0)
+
+            if selector in {"Q_RESP", "QED"}:
+                # z_i[t] = sqrt(w_t) P_{t,i}, shape [Nv,Qq].
+                z = P.transpose(0, 1) * torch.sqrt(w + eps).unsqueeze(0)
+                z_norm = F.normalize(z, p=2, dim=-1, eps=eps)
+                sim = torch.matmul(z_norm, z_norm.transpose(0, 1)).clamp(min=0.0, max=1.0)
+                higher = r.view(1, -1) > r.view(-1, 1)
+                masked = sim.masked_fill(~higher, -1.0)
+                rho = masked.max(dim=1).values
+                rho = torch.where(rho < 0, torch.zeros_like(rho), rho)
+                if selector == "Q_RESP":
+                    score = r * (1.0 - rho)
+                else:
+                    score = r * (1.0 - D_Q * rho)
+
+            if events is not None:
+                events[2].record()
+
+            # E008 restricts final-evidence candidacy to Core172 while leaving
+            # the REAL layer-12 SDPA untouched. In SURVIVAL_ABLATION, all 192
+            # still shape QED response geometry; in CONTEXT_ONLY, transient
+            # keys are additionally absent from the side-copy statistic above.
+            selection_score = score
+            if e008_candidate_mask is not None:
+                selection_score = score.masked_fill(
+                    ~e008_candidate_mask,
+                    torch.finfo(score.dtype).min,
+                )
+            if getattr(self, "_e010_analysis_full576", False):
+                from llava.model.e010_runtime_support import analysis_entropy_from_distribution
+                full_h, full_d = analysis_entropy_from_distribution(r.detach())
+                self._e010_full_context = {
+                    "H_raw": full_h.detach(),
+                    "D_Q_analysis": full_d.detach(),
+                    "FullContextResponseScore": score.detach(),
+                    "candidate_count": int(r.numel()),
+                }
+
+            # QED_VISUAL postpones rho/score until the full layer-12 decoder
+            # output exists. Q_ATTN/Q_RESP/QED already have final scores.
+            if selector != "QED_VISUAL":
+                selected_local = torch.topk(
+                    selection_score,
+                    target_k,
+                    largest=True,
+                    sorted=False,
+                ).indices.sort().values
+            else:
+                selected_local = None
+
+            if events is not None:
+                events[3].record()
+
+            self._e006_last = {
+                "selector": selector,
+                "visual_start": visual_start,
+                "visual_count": visual_count,
+                "question_indices": question_indices.detach(),
+                "span_source": getattr(self, "_e006_span_source", "unknown"),
+                "r": r.detach(),
+                "D_Q": None if D_Q is None else D_Q.detach(),
+                "rho": None if rho is None else rho.detach(),
+                "score": score.detach(),
+                "selection_score": selection_score.detach(),
+                "e008_candidate_mask": (
+                    None
+                    if e008_candidate_mask is None
+                    else e008_candidate_mask.detach()
+                ),
+                "e008_mode": e008_mode,
+                "selected_local": None if selected_local is None else selected_local.detach(),
+                "events": events,
+            }
+            # E012-SD-P1 2026-10-09: on-device sufficient statistics for a
+            # diagnostic-only OFFLINE selector audit. Not used for inference.
+            if getattr(self, "_e012_diag", False):
+                self._e006_last["P"] = P.detach()
+                self._e006_last["w"] = w.detach()
+
         if attention_mask is not None:
             if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):
                 raise ValueError(
@@ -1047,6 +1274,371 @@ class LlamaModel(LlamaPreTrainedModel):
         self.vitcop_pruned_ratio = float(os.environ.get("VITCOP_PRUNED_RARIO", "0.25"))   # Overall pruning ratio
         self.vision_prune_ratio = float(os.environ.get('VISION_PRUNE_RARIO', "0.5"))   # Retention ratio for ViT layers
 
+        self.use_t3guide = os.environ.get("USE_T3GUIDE", "True") == "True"   # Enable text-token aware stage-III guidance
+        self.t3guide_lambda = float(os.environ.get("T3GUIDE_LAMBDA", "0.8"))   # Weight for text-conditioned score in Stage III
+        self.t3guide_temperature = float(os.environ.get("T3GUIDE_TEMPERATURE", "1.0"))   # Temperature for text-token weighting
+        self.t3guide_cluster_protect = os.environ.get("T3GUIDE_CLUSTER_PROTECT", "True") == "True"   # Keep stage-II diversity in Stage III
+
+        # ------------------------------------------------------------------
+        # Stage-II Summary Reliability Enhancement (SRE)
+        # ------------------------------------------------------------------
+        # Motivation:
+        #   Your Stage-1 already performs global importance/diversity selection.
+        #   Stage-II should not repeat global diversity. Instead, it should ask a
+        #   cluster-level question: "Is this merged evidence group reliable enough?"
+        #   If a visual group is compact, one merged summary is enough. If a group
+        #   has high residual evidence that the summary cannot represent, SRE keeps
+        #   a few complementary elite tokens from that group.
+        #
+        # Default behavior is conservative: SRE is a small residual correction on
+        # top of the original ViTCoP Stage-II quota, not a full replacement.
+        self.use_stage2_sre = os.environ.get("USE_STAGE2_SRE", "False") == "True"
+        self.sre_quota_blend = float(os.environ.get("SRE_QUOTA_BLEND", "0.30"))
+        self.sre_residual_lambda = float(os.environ.get("SRE_RESIDUAL_LAMBDA", "0.25"))
+        self.sre_redundancy_lambda = float(os.environ.get("SRE_REDUNDANCY_LAMBDA", "0.08"))
+        self.sre_group_reliability_power = float(os.environ.get("SRE_GROUP_RELIABILITY_POWER", "1.0"))
+        self.sre_keep_original_anchor = os.environ.get("SRE_KEEP_ORIGINAL_ANCHOR", "True") == "True"
+        self.debug_stage2_sre = os.environ.get("DEBUG_STAGE2_SRE", "False") == "True"
+
+        # ------------------------------------------------------------------
+        # Stage-II Lite Router (SRE + coverage + conservative query prior)
+        # ------------------------------------------------------------------
+        # This is designed for the paper story you want:
+        #   1) do not add a heavy deep semantic pruning module;
+        #   2) move reliable selection to Stage-II;
+        #   3) keep the original ViTCoP cluster structure so latency stays low;
+        #   4) add only training-free, vectorized signals: K-norm, residual,
+        #      spatial coverage/rarity, and a small query-hidden similarity prior.
+        self.use_stage2_lite_router = os.environ.get("USE_STAGE2_LITE_ROUTER", "False") == "True"
+        self.stage2_query_lambda = float(os.environ.get("STAGE2_QUERY_LAMBDA", "0.12"))
+        self.stage2_coverage_lambda = float(os.environ.get("STAGE2_COVERAGE_LAMBDA", "0.18"))
+        self.stage2_rarity_lambda = float(os.environ.get("STAGE2_RARITY_LAMBDA", "0.10"))
+        self.stage2_mmr_query_lambda = float(os.environ.get("STAGE2_MMR_QUERY_LAMBDA", "0.10"))
+        self.stage2_mmr_coverage_lambda = float(os.environ.get("STAGE2_MMR_COVERAGE_LAMBDA", "0.18"))
+        self.use_stage2_weighted_merge = os.environ.get("USE_STAGE2_WEIGHTED_MERGE", "False") == "True"
+        self.stage2_merge_temperature = float(os.environ.get("STAGE2_MERGE_TEMPERATURE", "1.0"))
+        self.stage2_merge_query_lambda = float(os.environ.get("STAGE2_MERGE_QUERY_LAMBDA", "0.10"))
+        self.stage2_merge_residual_lambda = float(os.environ.get("STAGE2_MERGE_RESIDUAL_LAMBDA", "0.15"))
+
+        # Stage-III policy.  For latency-first experiments, use:
+        #   STAGE3_POLICY=skip       : delete Stage-III entirely.
+        #   STAGE3_POLICY=uniform    : deterministic low-cost tail pruning.
+        #   STAGE3_POLICY=original   : original ViTCoP / T3Guide branch.
+        self.stage3_policy = os.environ.get("STAGE3_POLICY", "original").lower()
+        self.stage3_uniform_protect_clusters = os.environ.get("STAGE3_UNIFORM_PROTECT_CLUSTERS", "True") == "True"
+
+        # E001-S1-A 2026-09-18: strict experiment gate.  Stage1 is the only
+        # experimental factor in E001-S1, therefore Stage2/Stage3 custom paths
+        # must fail fast instead of silently contaminating S0-S3.
+        self.e001_method_id = os.environ.get("E001_METHOD_ID", "UNSET").upper()
+        self.e001_stage1_strict = os.environ.get("E001_STAGE1_STRICT", "False") == "True"
+        self.e001_config_audit = os.environ.get("E001_CONFIG_AUDIT", "False") == "True"
+        self.e001_token_audit = os.environ.get("E001_TOKEN_AUDIT", "False") == "True"
+
+        if self.e001_stage1_strict:
+            violations = []
+            if self.use_stage2_sre:
+                violations.append("USE_STAGE2_SRE=True")
+            if self.use_stage2_lite_router:
+                violations.append("USE_STAGE2_LITE_ROUTER=True")
+            if self.use_stage2_weighted_merge:
+                violations.append("USE_STAGE2_WEIGHTED_MERGE=True")
+            if self.use_t3guide:
+                violations.append("USE_T3GUIDE=True")
+            if self.stage3_policy != "original":
+                violations.append(f"STAGE3_POLICY={self.stage3_policy}")
+            if violations:
+                raise RuntimeError(
+                    "[E001-S1-A] Strict Stage2/Stage3 isolation failed: "
+                    + ", ".join(violations)
+                )
+
+        if self.e001_config_audit:
+            print(
+                f"[E001_CONFIG_LLM] method_id={self.e001_method_id} "
+                f"stage2_policy={'sre' if self.use_stage2_sre else 'original_vitcop'} "
+                f"stage3_policy={self.stage3_policy} sre_enabled={self.use_stage2_sre} "
+                f"t3guide_enabled={self.use_t3guide} lite_router={self.use_stage2_lite_router} "
+                f"weighted_merge={self.use_stage2_weighted_merge}"
+            )
+
+        if self.use_stage2_sre or self.use_stage2_lite_router:
+            print(
+                f"[ViTCoP Stage2-SRE/Lite Config] "
+                f"sre={self.use_stage2_sre}, lite={self.use_stage2_lite_router}, "
+                f"quota_blend={self.sre_quota_blend}, "
+                f"residual_lambda={self.sre_residual_lambda}, "
+                f"redundancy_lambda={self.sre_redundancy_lambda}, "
+                f"query_lambda={self.stage2_query_lambda}, "
+                f"coverage_lambda={self.stage2_coverage_lambda}, "
+                f"weighted_merge={self.use_stage2_weighted_merge}, "
+                f"stage3_policy={self.stage3_policy}"
+            )
+
+        # ==================================================================
+        # E006-QED-R1 2026-10-07
+        # Query-conditioned evidence-role selector at layer 12.
+        # IMPORTANT: this branch is calibration/training free.  It preserves
+        # the normal SDPA attention path and only performs a small side QK
+        # computation for user-question query rows during PREFILL.
+        #
+        # Supported arms:
+        #   GLOBAL_KNORM : existing cheap layer-11 K-norm anchor (G0)
+        #   Q_ATTN       : query relevance r_i (G1)
+        #   Q_RESP       : response-space redundancy with fixed weight 1 (G2)
+        #   QED          : response-space redundancy weighted by D_Q (G3)
+        #   QED_VISUAL   : visual-hidden cosine redundancy weighted by D_Q (G4)
+        # ==================================================================
+        self.e006_enable = os.environ.get("E006_ENABLE", "False") == "True"
+        self.e006_selector = os.environ.get("E006_SELECTOR", "GLOBAL_KNORM").upper()
+        self.e006_layer = int(os.environ.get("E006_LAYER", "12"))
+        self.e006_target_k = int(os.environ.get("E006_TARGET_K", "96"))
+        self.e006_allow_fallback_64 = os.environ.get("E006_ALLOW_FALLBACK_64", "False") == "True"
+        self.e006_profile = os.environ.get("E006_PROFILE", "False") == "True"
+        self.e006_debug = os.environ.get("E006_DEBUG", "False") == "True"
+        self.e006_require_explicit_question_span = os.environ.get(
+            "E006_REQUIRE_EXPLICIT_QUESTION_SPAN", "False"
+        ) == "True"
+        # Fallback span trims are only for smoke/debug when the caller cannot
+        # provide e006_question_span=(start,end).  Publication-facing runs
+        # should use the explicit span path and set REQUIRE_EXPLICIT=True.
+        self.e006_question_prefix_tokens = int(os.environ.get("E006_QUESTION_PREFIX_TOKENS", "0"))
+        self.e006_question_suffix_tokens = int(os.environ.get("E006_QUESTION_SUFFIX_TOKENS", "0"))
+        self.e006_eps = float(os.environ.get("E006_EPS", "1e-8"))
+
+        # ================================================================
+        # E007-ELP 2026-10-07: cross-file guards + budget/provenance audit.
+        #
+        # E007 does NOT change the frozen QED formula. It only:
+        #   1) formalizes QED64 as a matched-budget point,
+        #   2) asserts the Stage1 candidate-pool size from clip_encoder,
+        #   3) optionally emits selected-local indices for provenance.
+        # ================================================================
+        self.e007_enable = os.environ.get("E007_ENABLE", "False") == "True"
+        self.e007_stage1_mode = os.environ.get(
+            "E007_STAGE1_MODE", "ORIGINAL_172"
+        ).upper()
+        self.e007_token_audit = os.environ.get(
+            "E007_TOKEN_AUDIT", "False"
+        ) == "True"
+
+        # E008-Causal: full-accuracy causal intervention on HR_TOPK_192.
+        # The successful QED formula and real SDPA path remain unchanged.
+        self.e008_enable = os.environ.get("E008_ENABLE", "False") == "True"
+        self.e008_mode = os.environ.get(
+            "E008_MODE", "SURVIVAL_ABLATION"
+        ).upper()
+        self.e008_audit = os.environ.get("E008_AUDIT", "False") == "True"
+        self.e008_strict_check = os.environ.get(
+            "E008_STRICT_CHECK", "True"
+        ) == "True"
+
+        # E009 Context Conservation. Both E009 arms expose exactly 188
+        # visual tokens to real LLM layers: 172 QED-eligible Core tokens
+        # plus 16 context-only tokens (raw or HREC).
+        self.e009_enable = os.environ.get("E009_ENABLE", "False") == "True"
+        self.e009_mode = os.environ.get(
+            "E009_MODE", "HREC16_CONTEXT"
+        ).upper()
+        self.e009_audit = os.environ.get(
+            "E009_AUDIT", "False"
+        ) == "True"
+        self.e009_strict_check = os.environ.get(
+            "E009_STRICT_CHECK", "True"
+        ) == "True"
+
+        self._e007_stage1_expected = {
+            "ORIGINAL_172": 172,
+            "HR_TOPK_192": 192,
+            "HR_COVER_192": 192,
+        }
+
+        self.e006_prefill_count = 0
+        self.e006_decode_count = 0
+        self.e006_last = {}
+
+        if self.e006_enable:
+            valid = {"GLOBAL_KNORM", "Q_ATTN", "Q_RESP", "QED", "QED_VISUAL"}
+            # E012-SD-P1 2026-10-09: accuracy-only, reproducible final-K random control.
+            if os.environ.get("E012_ENABLE", "False") == "True":
+                valid.add("RANDOM_FINAL")
+            if self.e006_selector not in valid:
+                raise ValueError(f"[E006] Unsupported selector: {self.e006_selector}")
+            if self.e006_layer != 12:
+                raise ValueError(f"[E006] E006_LAYER must remain frozen at 12, got {self.e006_layer}")
+            if self.e006_target_k != 96:
+                e006_registered_fallback = (
+                    self.e006_target_k == 64 and self.e006_allow_fallback_64
+                )
+                e007_registered_budget_point = (
+                    self.e007_enable and self.e006_target_k == 64
+                )
+                if not (e006_registered_fallback or e007_registered_budget_point):
+                    raise ValueError(
+                        f"[E006/E007] E006_TARGET_K must be 96, or 64 as either "
+                        f"the registered E006 fallback or the E007 matched-budget point. "
+                        f"Got {self.e006_target_k}"
+                    )
+            if self.stage3_policy != "skip":
+                raise ValueError(f"[E006] STAGE3_POLICY must be skip, got {self.stage3_policy}")
+            if self.use_stage2_sre or self.use_stage2_lite_router or self.use_stage2_weighted_merge:
+                raise ValueError("[E006] SRE/Lite/weighted-merge must all be disabled")
+            if self.use_t3guide:
+                raise ValueError("[E006] USE_T3GUIDE must be False")
+
+        if self.e007_enable:
+            if not self.e006_enable:
+                raise ValueError("[E007] E007_ENABLE=True requires E006_ENABLE=True")
+            # E012-SD-P1 2026-10-09: permit matched Core172 baselines without
+            # changing the frozen E007 selector contract when E012 is OFF.
+            e012_control = (
+                os.environ.get("E012_ENABLE", "False") == "True"
+                and self.e006_selector in {"Q_ATTN", "RANDOM_FINAL"}
+            )
+            if self.e006_selector != "QED" and not e012_control:
+                raise ValueError(
+                    f"[E007] E007 is frozen to QED except E012 controls, "
+                    f"got {self.e006_selector}"
+                )
+            if self.e007_stage1_mode not in self._e007_stage1_expected:
+                raise ValueError(
+                    f"[E007] unsupported E007_STAGE1_MODE={self.e007_stage1_mode}"
+                )
+            if self.e006_target_k not in {96, 64}:
+                raise ValueError(
+                    f"[E007] target K must be 96 or 64, got {self.e006_target_k}"
+                )
+
+        if self.e008_enable:
+            if not self.e007_enable:
+                raise ValueError("[E008] E008_ENABLE=True requires E007_ENABLE=True")
+            if self.e007_stage1_mode != "HR_TOPK_192":
+                raise ValueError(
+                    "[E008] E007_STAGE1_MODE must be HR_TOPK_192"
+                )
+            if self.e006_selector != "QED":
+                raise ValueError("[E008] E006_SELECTOR must remain QED")
+            if os.environ.get("E007_SKIP_UNUSED_VIC", "False") != "True":
+                raise ValueError(
+                    "[E008] E007_SKIP_UNUSED_VIC=True is required for mask transport"
+                )
+            if self.e008_mode not in {"SURVIVAL_ABLATION", "CONTEXT_ONLY"}:
+                raise ValueError(f"[E008] unsupported E008_MODE={self.e008_mode}")
+            if self.e006_target_k not in {96, 64}:
+                raise ValueError("[E008] target K must be 96 or 64")
+
+        if self.e009_enable:
+            if self.e008_enable:
+                raise ValueError("[E009] E008_ENABLE must be False")
+            if not self.e007_enable:
+                raise ValueError("[E009] E007_ENABLE=True is required")
+            if self.e007_stage1_mode != "ORIGINAL_172":
+                raise ValueError(
+                    "[E009] E007_STAGE1_MODE must be ORIGINAL_172"
+                )
+            if os.environ.get("E007_SKIP_UNUSED_VIC", "False") != "True":
+                raise ValueError("[E009] E007_SKIP_UNUSED_VIC=True is required")
+            if self.e009_mode not in {
+                "RAW188_CONTEXT",
+                "HREC16_CONTEXT",
+                "RANDOM188_CONTEXT",
+                "NULL188_CONTEXT",
+            }:
+                raise ValueError(
+                    f"[E009] unsupported E009_MODE={self.e009_mode}"
+                )
+            if self.e006_selector != "QED":
+                raise ValueError("[E009] selector must remain QED")
+            if self.e006_target_k != 96:
+                raise ValueError(
+                    "[E009] first prototype is frozen to QED96; "
+                    "do not run QED64 before the full-accuracy gate"
+                )
+
+        # E010 measures the deployment layer and context lifetime. With
+        # E010_ENABLE unset, e010_qed_layer stays on the frozen E006/E009 layer.
+        from llava.model.e010_runtime_support import E010Config
+        # Literal names are part of the E010 source contract.
+        os.environ.get("E010_ENABLE")
+        os.environ.get("E010_QED_LAYER")
+        os.environ.get("E010_CONTEXT_EXIT_LAYER")
+        os.environ.get("E010_KEEP_CONTEXT_AFTER_QED")
+        os.environ.get("E010_QED_SIDE_ONLY")
+        self.e010 = E010Config.from_env()
+        self.e010_qed_layer = int(self.e006_layer)
+        if self.e010.enabled:
+            if not 0 <= int(self.e010.qed_layer) < int(self.config.num_hidden_layers):
+                raise ValueError(
+                    f"[E010] E010_QED_LAYER={self.e010.qed_layer} is outside the model"
+                )
+            self.e010_qed_layer = int(self.e010.qed_layer)
+        self._e010_visual_removed = 0
+
+        # E012-SD-P1 2026-10-09: optional selection/deletion separation.
+        # S and D are zero-based decoder layer_idx values; physical removal is
+        # POST-layer D. E012 disabled => exact historical E010 execution path.
+        self.e012_enable = os.environ.get("E012_ENABLE", "False") == "True"
+        self.e012_delete_layer = int(os.environ.get(
+            "E012_DELETE_LAYER", str(self.e010_qed_layer)
+        ))
+        self.e012_diag = os.environ.get("E012_DIAG", "False") == "True"
+        # E012-SD-P1 2026-10-09: optional decode1/decode2 and prefill
+        # layer-KV topology audit. DISABLE during every wall-clock run.
+        self.e012_kv_audit = os.environ.get("E012_KV_AUDIT", "False") == "True"
+        self.e012_decode_visit = 0
+        self.e012_prefill_len = None
+        self.e012_random_seed = int(os.environ.get("E012_RANDOM_SEED", "20261009"))
+        self.e012_last = {}
+        # E013-P1 2026-10-09: only extend Stage1 metadata acceptance.
+        self.e013_enable = os.environ.get('E013_ENABLE', 'False') == 'True'
+        self.e013_variant = os.environ.get('E013_VARIANT', 'EXTRA').upper()
+        self.e013_b = int(os.environ.get('E013_B', '16'))
+        self.e013_strict_check = os.environ.get('E013_STRICT', 'False') == 'True'
+        self.e013_has_context = (
+            self.e013_enable and self.e013_variant == 'EXTRA' and self.e013_b > 0
+        )
+        if self.e013_enable:
+            if not self.e012_enable:
+                raise ValueError('[E013] requires E012_ENABLE=True')
+            if self.e008_enable or self.e009_enable:
+                raise ValueError('[E013] E008/E009 must be off')
+            if self.e013_variant not in {'EXTRA', 'REPLACE'} or not 0 <= self.e013_b <= 32:
+                raise ValueError('[E013] invalid variant/budget')
+            if self.e006_selector != 'QED':
+                raise ValueError('[E013] freeze E006_SELECTOR=QED for causal Stage1 study')
+            if self.e012_delete_layer != self.e010_qed_layer:
+                raise ValueError('[E013] freeze S=D; do not confound Stage1 and S/D')
+            if self.e010_qed_layer not in {8, 12}:
+                raise ValueError('[E013] S=D must be layer8 (primary) or 12 (E008 bridge)')
+        if self.e012_enable:
+            errors = []
+            if not self.use_vitcop or not self.e006_enable or not self.e010.enabled:
+                errors.append("USE_VITCOP, E006_ENABLE, E010_ENABLE must be True")
+            if not self.e007_enable or self.e007_stage1_mode != "ORIGINAL_172":
+                errors.append("requires E007_ENABLE=True and ORIGINAL_172")
+            if os.environ.get("E007_SKIP_UNUSED_VIC", "False") != "True":
+                errors.append("requires E007_SKIP_UNUSED_VIC=True")
+            if self.e008_enable or self.e009_enable:
+                errors.append("E008/E009 context variants are unsupported")
+            if self.e006_target_k != 96:
+                errors.append("first frozen experiment requires K96")
+            if self.e006_selector not in {"QED", "Q_ATTN", "RANDOM_FINAL"}:
+                errors.append("requires QED/Q_ATTN/RANDOM_FINAL selector")
+            if bool(self.e010.qed_side_only):
+                errors.append("E010_QED_SIDE_ONLY must be False")
+            if bool(self.e010.keep_context_after_qed):
+                errors.append("E010_KEEP_CONTEXT_AFTER_QED must be False")
+            if int(self.e010.context_exit_layer) >= 0:
+                errors.append("E010_CONTEXT_EXIT_LAYER must be -1")
+            if not self.e010_qed_layer <= self.e012_delete_layer < self.config.num_hidden_layers:
+                errors.append("require 0 <= selection layer <= deletion layer < num_layers")
+            if (self.e012_diag or self.e012_kv_audit) and os.environ.get("COMPUTE_EFFICIENCY", "False") == "True":
+                errors.append("E012_DIAG/E012_KV_AUDIT may not run with COMPUTE_EFFICIENCY")
+            if self.e010.collect_local_influence or self.e010.analysis_full576:
+                errors.append("E010 analysis collector flags must be False")
+            if errors:
+                raise ValueError("[E012-SD-P1] " + "; ".join(errors))
+
         self.compute_efficiency = os.environ.get("COMPUTE_EFFICIENCY", "False") == "True"   # Whether to compute FLOPs, Prefill Latency, Inference Latency (per token)
         self.prefill_time = 0
         self.all_FLOPs = 0
@@ -1054,6 +1646,26 @@ class LlamaModel(LlamaPreTrainedModel):
         self.inference_time_per_token = 0
         self.max_gpu_mem = 0
         self.num_token = 0
+
+        # E001-S1-B 2026-09-18: timing-control metadata for reproducible
+        # screening/canonical-internal runs. Warmup requests execute normally but
+        # are excluded from the existing CUDA-event timing accumulators.
+        self.e001_warmup_requests = int(os.environ.get("E001_WARMUP_REQUESTS", "0"))
+        self.e001_timing_mode = os.environ.get("E001_TIMING_MODE", "UNSPECIFIED")
+        self.e001_request_index = -1
+        self.e001_current_request_measured = False
+        self.e001_decode_token_index = 0
+        self.e001_last_stage1_visual_tokens = None
+        self.e001_last_stage2_visual_tokens = None
+        self.e001_last_final_visual_tokens = None
+
+        self.stage2_token_sources = None   # Provenance of stage-II visual tokens for cluster protection in Stage III
+        self.stage2_visual_token_num = None
+        # E006/ViTCoP cache guards.  Original code populates these immediately
+        # before the corresponding prune layer; initialize explicitly so a bad
+        # execution order fails cleanly instead of raising AttributeError.
+        self.k_shallow = None
+        self.k_deep = None
         ####################################################################################
 
     def get_input_embeddings(self):
@@ -1061,6 +1673,128 @@ class LlamaModel(LlamaPreTrainedModel):
 
     def set_input_embeddings(self, value):
         self.embed_tokens = value
+
+    # ======================================================================
+    # E006-QED-R1 helpers.  These helpers deliberately live in LlamaModel so
+    # the selector can reuse the already-computed layer-12 SDPA Q/K tensors
+    # without enabling output_attentions or changing the main attention path.
+    # ======================================================================
+    def _e006_resolve_question_indices(
+        self,
+        current_seq_len,
+        visual_end,
+        token_length_list,
+        e006_question_span,
+        device,
+    ):
+        if e006_question_span is not None:
+            if isinstance(e006_question_span, torch.Tensor):
+                span = e006_question_span.detach().view(-1).tolist()
+            else:
+                span = list(e006_question_span)
+            if len(span) != 2:
+                raise ValueError(f"[E006] e006_question_span must contain [start,end), got {span}")
+            q_start, q_end = int(span[0]), int(span[1])
+            span_source = "explicit"
+        else:
+            if self.e006_require_explicit_question_span:
+                raise RuntimeError(
+                    "[E006] Explicit user-question span required. Pass "
+                    "e006_question_span=(start,end) from the worker."
+                )
+            valid_len = int(token_length_list[0]) if len(token_length_list) else int(current_seq_len)
+            q_start = int(visual_end) + int(self.e006_question_prefix_tokens)
+            q_end = valid_len - int(self.e006_question_suffix_tokens)
+            span_source = "post_visual_fallback"
+
+        q_start = max(int(q_start), int(visual_end))
+        q_end = min(int(q_end), int(current_seq_len))
+        if q_end <= q_start:
+            raise RuntimeError(
+                f"[E006] Invalid question span [{q_start},{q_end}) for "
+                f"visual_end={visual_end}, seq_len={current_seq_len}"
+            )
+        return torch.arange(q_start, q_end, device=device, dtype=torch.long), span_source
+
+    @staticmethod
+    def _e006_positive_redundancy(score_ref, signatures, eps=1e-8):
+        # rho_i = max_{j:r_j>r_i} [cos(z_i,z_j)]_+ ; the most relevant
+        # token (and any tie without a strictly-higher-r token) gets rho=0.
+        z = F.normalize(signatures.float(), p=2, dim=-1, eps=eps)
+        sim = torch.matmul(z, z.transpose(0, 1)).clamp(min=0.0, max=1.0)
+        higher = score_ref.view(1, -1) > score_ref.view(-1, 1)
+        masked = sim.masked_fill(~higher, -1.0)
+        rho = masked.max(dim=1).values
+        rho = torch.where(rho < 0, torch.zeros_like(rho), rho)
+        return rho
+
+    def _e006_configure_layer12_side(
+        self, decoder_layer, hidden_states, attention_mask, position_ids,
+        visual_start, visual_count, token_length_list, e006_question_span,
+        e008_candidate_mask=None, e008_mode=None
+    ):
+        attn = decoder_layer.self_attn
+        if not isinstance(attn, LlamaSdpaAttention):
+            raise RuntimeError(
+                f"[E006] SDPA must be preserved; got attention class {attn.__class__.__name__}"
+            )
+        if self.config.output_attentions:
+            raise RuntimeError("[E006] output_attentions=True would break the SDPA fast path")
+
+        visual_end = int(visual_start) + int(visual_count)
+        q_idx, span_source = self._e006_resolve_question_indices(
+            hidden_states.shape[1], visual_end, token_length_list,
+            e006_question_span, hidden_states.device
+        )
+        attn._e006_enabled = True
+        # E012-SD-P1 2026-10-09: random final-K control keeps the same side
+        # Q/K operator workload as Q_ATTN; ONLY the final survivor IDs change.
+        attn._e006_selector = (
+            "Q_ATTN" if self.e012_enable and self.e006_selector == "RANDOM_FINAL"
+            else self.e006_selector
+        )
+        attn._e012_diag = bool(self.e012_diag)
+        attn._e006_target_k = self.e006_target_k
+        attn._e006_visual_start = int(visual_start)
+        attn._e006_visual_count = int(visual_count)
+        attn._e006_question_indices = q_idx
+        attn._e006_profile = bool(self.e006_profile)
+        attn._e006_eps = float(self.e006_eps)
+        attn._e006_last = None
+        attn._e006_span_source = span_source
+        attn._e008_candidate_mask = (
+            None if e008_candidate_mask is None
+            else e008_candidate_mask.to(
+                device=hidden_states.device, dtype=torch.bool
+            )
+        )
+        attn._e008_mode = None if e008_mode is None else str(e008_mode)
+        # E013-P1: expensive GPU syncs in strict audits must be OFF in timing.
+        attn._e008_strict_check = bool(
+            self.e013_strict_check if self.e013_has_context else
+            (self.e009_strict_check if self.e009_enable else self.e008_strict_check)
+        )
+
+    @staticmethod
+    def _e006_prune_sequence(hidden_states, position_ids, attention_mask, visual_start, visual_count, selected_local):
+        visual_end = int(visual_start) + int(visual_count)
+        selected_local = selected_local.to(device=hidden_states.device, dtype=torch.long).unique(sorted=True)
+        selected_abs = selected_local + int(visual_start)
+        before = torch.arange(0, int(visual_start), device=hidden_states.device, dtype=torch.long)
+        after = torch.arange(visual_end, hidden_states.shape[1], device=hidden_states.device, dtype=torch.long)
+        all_keep = torch.cat([before, selected_abs, after], dim=0)
+
+        new_hidden = hidden_states.index_select(1, all_keep)
+        new_position_ids = position_ids.index_select(1, all_keep) if position_ids is not None else None
+        new_attention_mask = attention_mask
+        if attention_mask is not None:
+            if attention_mask.dim() == 4:
+                new_attention_mask = attention_mask.index_select(2, all_keep).index_select(3, all_keep)
+            elif attention_mask.dim() == 2:
+                new_attention_mask = attention_mask.index_select(1, all_keep)
+            else:
+                raise RuntimeError(f"[E006] Unsupported attention mask rank: {attention_mask.dim()}")
+        return new_hidden, new_position_ids, new_attention_mask, all_keep
 
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     def forward(
@@ -1078,6 +1812,7 @@ class LlamaModel(LlamaPreTrainedModel):
         image_shape = 576,
         token_length_list = [],
         pre_prompt_length_list = [],
+        e006_question_span = None,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
             
@@ -1143,26 +1878,81 @@ class LlamaModel(LlamaPreTrainedModel):
         # embed positions
         hidden_states = inputs_embeds
 
+        # E012-SD-P1 2026-10-09: record request's *unpruned* prefill
+        # length so the true per-layer cache shape can be asserted. We
+        # do not manipulate existing caches.
+        if self.e012_enable:
+            if not use_cache:
+                raise RuntimeError("[E012] cache must be enabled in all runs")
+            if seq_length > 1:
+                self.e012_prefill_len = int(seq_length)
+                self.e012_decode_visit = 0
+            else:
+                self.e012_decode_visit += 1
+
+        # E012-SD-P1 2026-10-09: disallow legacy fallback visual_start=35.
+        # The causal intervention must use the exact multimodal prefix span.
+        if self.e012_enable and seq_length > 1:
+            if batch_size != 1 or len(pre_prompt_length_list) != 1 or len(token_length_list) != 1:
+                raise RuntimeError(
+                    "[E012] Requires batch=1 and explicit multimodal "
+                    "pre_prompt_length_list/token_length_list metadata"
+                )
+            if e006_question_span is None and self.e006_require_explicit_question_span:
+                raise RuntimeError("[E012] Explicit question span missing on prefill")
+
+        if seq_length > 1:
+            self.stage2_token_sources = None
+            self.stage2_visual_token_num = None
+            if self.e006_enable:
+                self.e006_prefill_count = 0
+                self.e006_decode_count = 0
+                self.e006_last = {}
+
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
 
-        if self.compute_efficiency and (len(pre_prompt_length_list) != 0 and hidden_states.shape[1] != 1):
-            total_start_event = torch.cuda.Event(enable_timing=True)
-            total_end_event = torch.cuda.Event(enable_timing=True)
-            torch.cuda.synchronize()
-            total_start_event.record()
+        # E012-SD-P1 2026-10-09: strictly per-forward storage, never carried
+        # to decode requests or the next benchmark sample.
+        e012_pending_selected = None
+        e012_pending_visual_start = None
+        e012_pending_visual_count = None
+        if self.e012_enable and seq_length > 1:
+            self.e012_last = {}
 
-        if self.compute_efficiency and (len(pre_prompt_length_list) != 0 and hidden_states.shape[1] == 1):
+        # E001-S1-B 2026-09-18: separate untimed warmup requests from measured
+        # requests without changing model loading or inference semantics.
+        e001_is_multimodal = len(pre_prompt_length_list) != 0
+        e001_is_prefill = e001_is_multimodal and hidden_states.shape[1] != 1
+        e001_is_decode = e001_is_multimodal and hidden_states.shape[1] == 1
+        if e001_is_prefill:
+            self.e001_request_index += 1
+            self.e001_current_request_measured = (
+                self.e001_request_index >= self.e001_warmup_requests
+            )
+            self.e001_decode_token_index = 0
+            if self.compute_efficiency and self.e001_request_index == self.e001_warmup_requests:
+                torch.cuda.reset_peak_memory_stats()
+
+        e001_efficiency_active = (
+            self.compute_efficiency
+            and self.e001_current_request_measured
+            and (e001_is_prefill or e001_is_decode)
+        )
+
+        if e001_efficiency_active:
             total_start_event = torch.cuda.Event(enable_timing=True)
             total_end_event = torch.cuda.Event(enable_timing=True)
             torch.cuda.synchronize()
             total_start_event.record()
 
         for decoder_layer in self.layers:
+            if decoder_layer.self_attn.layer_idx == 0 and seq_length > 1:
+                self._e010_visual_removed = 0
             ## Compute FLOPs, Prefill Latency, Inference Latency (per token)
-            if self.compute_efficiency and (len(pre_prompt_length_list) != 0 and hidden_states.shape[1] != 1):     
+            if e001_efficiency_active and e001_is_prefill:
                 n = hidden_states.shape[1]                                      # number of tokens
                 d = hidden_states.shape[2]                                      # hidden state size 
                 m = self.layers[decoder_layer.self_attn.layer_idx].mlp.up_proj.out_features       # intermediate size of the FFN
@@ -1187,118 +1977,685 @@ class LlamaModel(LlamaPreTrainedModel):
             ## VITCOP
             elif self.use_vitcop:
                 ## Prune based on spatial similarity clustering from visual priors and attention scores from text semantics
-                ### Pruning based on L2 norm
-                def token_filter_l2_norm_cluster(cluster_labels, l2_norm, R, visual_start):
+
+                def token_filter_l2_norm_cluster(cluster_labels, l2_norm, R, visual_start, token_features=None, text_features=None):
                     """
-                    Filter tokens based on the L2 norm of image token key values, selecting the top k smallest values.
-                    
-                    Args:
-                        cluster_labels: Cluster labels.
-                        l2_norm: L2 norm of the key values for image tokens.
-                        R: Number of tokens to keep.
-                        visual_start: Starting position of visual tokens.
+                    ViTCoP Stage-II with optional Summary Reliability Enhancement (SRE).
+
+                    Original ViTCoP Stage-II is kept as the fallback. When SRE is enabled,
+                    the method no longer repeats Stage-1 global importance/diversity. It keeps
+                    the original cluster-and-merge structure, but changes two local decisions:
+
+                    1) cluster residual routing:
+                       baseline quota is still size-based, but a small fraction is reallocated
+                       toward clusters whose merged summary is unreliable, measured by residual
+                       distance to the cluster centroid and K-norm importance.
+
+                    2) intra-cluster elite choice:
+                       elites are not selected by pure K-norm only. They are selected by
+                       K-norm importance plus residual complementarity to the group summary,
+                       with a mild penalty for choosing duplicate elites.
+
+                    This creates a Stage-II objective different from Stage-1:
+                    Stage-1 = global token selection before LLM.
+                    Stage-2 = reliability-aware evidence group compression inside LLM.
                     """
                     device = l2_norm.device
                     cluster_mask = cluster_labels >= -1
                     labels = torch.unique(cluster_labels[cluster_mask])
-                    K = labels.size(0)  # Number of clusters
-                    
-                    # Calculate the sum of L2 norms for each cluster (Note: this is still a sum, but the smallest values will be selected later)
+                    K = labels.size(0)
+
+                    selected_abs, merged_groups, merged_positions = [], [], []
+                    selected_source_groups, merged_source_groups = [], []
+
+                    if K == 0 or R <= 0:
+                        return selected_abs, merged_groups, merged_positions, selected_source_groups, merged_source_groups
+
+                    l2_norm = l2_norm.float()
+
+                    # E001-S1-A 2026-09-18: exact upstream ViTCoP Stage-II
+                    # fallback.  Do not route S0-S3 through the modified SRE quota
+                    # implementation when SRE/Lite Router are OFF.  The quota,
+                    # K-norm elite selection, anchor position and merge groups below
+                    # mirror chaser682/ViTCoP main exactly for valid experiment inputs.
+                    if (not self.use_stage2_sre) and (not self.use_stage2_lite_router):
+                        cluster_l2_sum = torch.stack([
+                            l2_norm[cluster_labels == cid].sum() for cid in labels
+                        ])
+                        sizes = torch.tensor([
+                            (cluster_labels == cid).sum() for cid in labels
+                        ], device=device)
+
+                        if K > R:
+                            topk_indices = torch.topk(
+                                cluster_l2_sum, k=R - 1, largest=False
+                            ).indices
+                            retained_cids = labels[topk_indices]
+                            merged_cids = [
+                                cid for cid in labels.tolist()
+                                if cid not in retained_cids.tolist()
+                            ]
+
+                            for cid in retained_cids:
+                                abs_indices = (cluster_labels == cid).nonzero(
+                                    as_tuple=False).squeeze(1)
+                                merged_groups.append(
+                                    (abs_indices + visual_start).tolist())
+                                sorted_idx = torch.sort(abs_indices).values
+                                mid_idx = len(sorted_idx) // 2
+                                merged_positions.append(
+                                    sorted_idx[mid_idx].item() + visual_start)
+                                merged_source_groups.append((int(cid.item()),))
+
+                            merged_indices = torch.cat([
+                                (cluster_labels == cid).nonzero(
+                                    as_tuple=False).squeeze(1)
+                                for cid in merged_cids
+                            ])
+                            if merged_indices.numel() > 0:
+                                merged_groups.append(
+                                    (merged_indices + visual_start).tolist())
+                                sorted_idx = torch.sort(merged_indices).values
+                                mid_idx = len(sorted_idx) // 2
+                                merged_positions.append(
+                                    sorted_idx[mid_idx].item() + visual_start)
+                                merged_source_groups.append(tuple(sorted(
+                                    int(cid) for cid in merged_cids)))
+                        else:
+                            cluster_sizes = torch.stack([
+                                (cluster_labels == label).sum() for label in labels
+                            ])
+                            total_cluster_tokens = cluster_sizes.sum()
+                            weights = (cluster_sizes.float() - 1) / (
+                                total_cluster_tokens - K)
+                            initial_quota = (weights * (R - K)).round().to(torch.long)
+                            max_quota = torch.clamp(sizes - 1, min=0)
+                            quotas = torch.minimum(initial_quota, max_quota)
+
+                            diff = (R - K) - quotas.sum().item()
+                            if diff != 0:
+                                sort_idx = torch.argsort(
+                                    cluster_l2_sum, descending=(diff < 0))
+                                for i in sort_idx:
+                                    if diff > 0 and quotas[i] < max_quota[i]:
+                                        quotas[i] += 1
+                                        diff -= 1
+                                    elif diff < 0 and quotas[i] > 0:
+                                        quotas[i] -= 1
+                                        diff += 1
+                                    if diff == 0:
+                                        break
+
+                            for i, cid in enumerate(labels):
+                                abs_indices = (cluster_labels == cid).nonzero(
+                                    as_tuple=False).squeeze(1)
+                                size = abs_indices.size(0)
+                                keep_count = min(quotas[i].item(), size - 1)
+                                if keep_count > 0:
+                                    _, topk_idx = torch.topk(
+                                        l2_norm[abs_indices],
+                                        k=keep_count,
+                                        largest=False,
+                                    )
+                                    top_indices = abs_indices[topk_idx]
+                                    selected_abs.extend(
+                                        (top_indices + visual_start).tolist())
+                                    selected_source_groups.extend(
+                                        [(int(cid.item()),)] * int(top_indices.numel()))
+                                    keep_mask = torch.ones(
+                                        size, dtype=torch.bool, device=device)
+                                    keep_mask[topk_idx] = False
+                                    merge_indices = abs_indices[keep_mask]
+                                else:
+                                    merge_indices = abs_indices
+
+                                if merge_indices.numel() > 0:
+                                    merged_groups.append(
+                                        (merge_indices + visual_start).tolist())
+                                    sorted_idx = torch.sort(merge_indices).values
+                                    mid_idx = len(sorted_idx) // 2
+                                    merged_positions.append(
+                                        sorted_idx[mid_idx].item() + visual_start)
+                                    merged_source_groups.append((int(cid.item()),))
+
+                        return (
+                            selected_abs,
+                            merged_groups,
+                            merged_positions,
+                            selected_source_groups,
+                            merged_source_groups,
+                        )
+
+                    def _norm01(x, eps=1e-6):
+                        x = x.float()
+                        if x.numel() == 0:
+                            return x
+                        x_min = x.min()
+                        x_max = x.max()
+                        if (x_max - x_min).abs() < eps:
+                            return torch.zeros_like(x)
+                        return (x - x_min) / (x_max - x_min + eps)
+
+                    def _get_feat_norm():
+                        if (not self.use_stage2_sre) or token_features is None:
+                            return None
+                        if token_features.numel() == 0:
+                            return None
+                        return F.normalize(token_features.float(), p=2, dim=-1, eps=1e-6)
+
+                    feat_norm = _get_feat_norm()
+
+                    def _token_query_score():
+                        if (not self.use_stage2_lite_router) or feat_norm is None or text_features is None:
+                            return None
+                        if text_features.numel() == 0 or feat_norm.numel() == 0:
+                            return None
+                        txt = text_features.float()
+                        if txt.dim() == 3:
+                            txt = txt[0]
+                        if txt.numel() == 0:
+                            return None
+                        txt = F.normalize(txt, p=2, dim=-1, eps=1e-6)
+                        # Lightweight query prior: one norm-weighted text summary, not attention maps.
+                        tw = torch.softmax(text_features.float().norm(p=2, dim=-1).view(-1), dim=0)
+                        text_summary = F.normalize((tw.unsqueeze(-1) * txt).sum(dim=0), p=2, dim=0, eps=1e-6)
+                        return torch.matmul(feat_norm, text_summary).float()
+
+                    query_score_all = _token_query_score()
+
+                    def _coverage_score(abs_indices):
+                        # Fast spatial coverage proxy: clusters with larger 2-D spread deserve safer routing.
+                        if (not self.use_stage2_lite_router) or abs_indices.numel() <= 1:
+                            return torch.tensor(0.0, device=device)
+                        side = int(round(math.sqrt(float(l2_norm.numel()))))
+                        if side <= 1:
+                            return torch.tensor(0.0, device=device)
+                        y = (abs_indices.float() // side) / max(float(side - 1), 1.0)
+                        x = (abs_indices.float() % side) / max(float(side - 1), 1.0)
+                        xy = torch.stack([x, y], dim=-1)
+                        center = xy.mean(dim=0, keepdim=True)
+                        return torch.norm(xy - center, dim=-1).mean()
+
+                    def _rarity_score(abs_indices):
+                        # Small clusters are often OCR/small-object/spatial evidence.
+                        if (not self.use_stage2_lite_router) or abs_indices.numel() == 0:
+                            return torch.tensor(0.0, device=device)
+                        return torch.tensor(1.0 / math.sqrt(float(abs_indices.numel()) + 1.0), device=device, dtype=torch.float32)
+
+                    def _cluster_query(abs_indices):
+                        if query_score_all is None or abs_indices.numel() == 0:
+                            return torch.tensor(0.0, device=device)
+                        return query_score_all.index_select(0, abs_indices).mean()
+
+                    def _cluster_indices(cid):
+                        return (cluster_labels == cid).nonzero(as_tuple=False).squeeze(1)
+
+                    def _original_mid_position(abs_indices):
+                        # Keep the engineered ViTCoP anchor behavior unchanged by default.
+                        sorted_idx = torch.sort(abs_indices).values
+                        mid_idx = len(sorted_idx) // 2
+                        return sorted_idx[mid_idx].item() + visual_start
+
+                    def _importance_rep_position(abs_indices):
+                        rep = abs_indices[torch.argmin(l2_norm.index_select(0, abs_indices))]
+                        return int(rep.item()) + visual_start
+
+                    def _merged_position(abs_indices):
+                        if self.use_stage2_sre and (not self.sre_keep_original_anchor):
+                            return _importance_rep_position(abs_indices)
+                        return _original_mid_position(abs_indices)
+
+                    def _cluster_residual(abs_indices):
+                        """How much information would be lost if this cluster becomes one summary."""
+                        if feat_norm is None or abs_indices.numel() <= 1:
+                            return torch.tensor(0.0, device=device)
+                        z = feat_norm.index_select(0, abs_indices)  # [n, d]
+                        center = F.normalize(z.mean(dim=0), p=2, dim=0, eps=1e-6)
+                        residual = (1.0 - torch.matmul(z, center)).clamp(min=0.0, max=2.0)
+                        return residual.mean()
+
+                    def _cluster_importance(abs_indices):
+                        # Smaller K-norm means more important.
+                        vals = l2_norm.index_select(0, abs_indices)
+                        return -vals.mean()
+
+                    # Original ViTCoP statistics.
                     cluster_l2_sum = torch.stack([l2_norm[cluster_labels == cid].sum() for cid in labels])
                     sizes = torch.tensor([(cluster_labels == cid).sum() for cid in labels], device=device)
-                    
-                    selected_abs, merged_groups, merged_positions = [], [], []
-                    
-                    if K > R:
-                        # Case 1: Select the R-1 clusters with the smallest L2 norm sums, merge each into 1 token, and merge all remaining clusters into 1 token.
-                        topk_indices = torch.topk(cluster_l2_sum, k=R-1, largest=False).indices  # Select the smallest
-                        retained_cids = labels[topk_indices]
-                        merged_cids = [cid for cid in labels.tolist() if cid not in retained_cids.tolist()]
-                        
-                        # The R-1 clusters with the smallest L2 norms, each merged into a single token
-                        for cid in retained_cids:
-                            abs_indices = (cluster_labels == cid).nonzero(as_tuple=False).squeeze(1)
-                            merged_groups.append((abs_indices + visual_start).tolist())
-                            sorted_idx = torch.sort(abs_indices).values
-                            mid_idx = len(sorted_idx) // 2
-                            merged_positions.append(sorted_idx[mid_idx].item() + visual_start)
-                        
-                        # Merge all remaining clusters into a single token
-                        merged_indices = torch.cat([(cluster_labels == cid).nonzero(as_tuple=False).squeeze(1) for cid in merged_cids])
-                        if merged_indices.numel() > 0:
-                            merged_groups.append((merged_indices + visual_start).tolist())
-                            sorted_idx = torch.sort(merged_indices).values
-                            mid_idx = len(sorted_idx) // 2
-                            merged_positions.append(sorted_idx[mid_idx].item() + visual_start)
+
+                    # SRE statistics. They are used only when SRE is enabled and token features exist.
+                    if self.use_stage2_sre and feat_norm is not None:
+                        group_indices = [_cluster_indices(cid) for cid in labels]
+                        group_residual = torch.stack([_cluster_residual(idx) for idx in group_indices])
+                        group_importance = torch.stack([_cluster_importance(idx) for idx in group_indices])
+                        group_residual_n = _norm01(group_residual).pow(max(float(self.sre_group_reliability_power), 0.1))
+                        group_importance_n = _norm01(group_importance)
+                        # A cluster deserves extra elites when it is both important and hard to summarize.
+                        sre_group_score = 0.55 * group_importance_n + 0.45 * group_residual_n
+
+                        if self.use_stage2_lite_router:
+                            group_query = torch.stack([_cluster_query(idx) for idx in group_indices])
+                            group_coverage = torch.stack([_coverage_score(idx) for idx in group_indices])
+                            group_rarity = torch.stack([_rarity_score(idx) for idx in group_indices])
+                            sre_group_score = (
+                                sre_group_score
+                                + max(float(self.stage2_query_lambda), 0.0) * _norm01(group_query)
+                                + max(float(self.stage2_coverage_lambda), 0.0) * _norm01(group_coverage)
+                                + max(float(self.stage2_rarity_lambda), 0.0) * _norm01(group_rarity)
+                            )
                     else:
-                        # Case 2: Merge each cluster into 1 token, then select R-K tokens from the clusters to be kept individually.
-                        # Get the size of each cluster
-                        cluster_sizes = torch.stack([
-                            (cluster_labels == label).sum() for label in labels
-                        ])  # shape: [K]
-                        
-                        # Total number of tokens in all clusters
-                        total_cluster_tokens = cluster_sizes.sum()
-                        weights = (cluster_sizes.float() - 1) / (total_cluster_tokens - K)
-                        initial_quota = (weights * (R - K)).round().to(torch.long)
-                        max_quota = torch.clamp(sizes - 1, min=0)  # Limit selection to leave at least one token for merging
-                        quotas = torch.minimum(initial_quota, max_quota)
-                        
-                        # Adjust quotas so that their sum is R - K
-                        diff = (R - K) - quotas.sum().item()
-                        if diff != 0:
-                            # Sort based on L2 norm: ascending if diff > 0 (prioritize smaller L2 norms), descending if diff < 0
-                            sort_idx = torch.argsort(cluster_l2_sum, descending=(diff < 0))
-                            for i in sort_idx:
-                                if diff > 0 and quotas[i] < max_quota[i]:
-                                    quotas[i] += 1
-                                    diff -= 1
-                                elif diff < 0 and quotas[i] > 0:
-                                    quotas[i] -= 1
-                                    diff += 1
-                                if diff == 0:
-                                    break
-                        
-                        # Execute merge and keep logic
-                        for i, cid in enumerate(labels):
-                            abs_indices = (cluster_labels == cid).nonzero(as_tuple=False).squeeze(1)
-                            size = abs_indices.size(0)
-                            
-                            # Select tokens to keep (choosing those with the smallest L2 norm)
-                            keep_count = min(quotas[i].item(), size - 1)
-                            if keep_count > 0:
-                                # Select the top keep_count tokens with the smallest L2 norm
-                                _, topk_idx = torch.topk(l2_norm[abs_indices], k=keep_count, largest=False)
-                                top_indices = abs_indices[topk_idx]
-                                selected_abs.extend((top_indices + visual_start).tolist())
-                                # Remove the kept tokens, the rest are for merging
-                                keep_mask = torch.ones(size, dtype=torch.bool, device=device)
-                                keep_mask[topk_idx] = False
-                                merge_indices = abs_indices[keep_mask]
+                        group_indices = None
+                        group_residual = None
+                        sre_group_score = None
+
+                    if K > R:
+                        # Original case: more clusters than budget. Conservative modification:
+                        # mostly follow K-norm cluster cost, with a small SRE bias toward unreliable clusters.
+                        if self.use_stage2_sre and sre_group_score is not None:
+                            original_keep_score = _norm01(-cluster_l2_sum)
+                            blend = min(max(float(self.sre_quota_blend), 0.0), 1.0)
+                            keep_score = (1.0 - blend) * original_keep_score + blend * sre_group_score
+                            topk_indices = torch.topk(keep_score, k=R - 1, largest=True).indices
+                            retained_cids = labels[topk_indices]
+                        else:
+                            topk_indices = torch.topk(cluster_l2_sum, k=R - 1, largest=False).indices
+                            retained_cids = labels[topk_indices]
+
+                        merged_cids = [cid for cid in labels.tolist() if cid not in retained_cids.tolist()]
+
+                        for cid in retained_cids:
+                            abs_indices = _cluster_indices(cid)
+                            merged_groups.append((abs_indices + visual_start).tolist())
+                            merged_positions.append(_merged_position(abs_indices))
+                            merged_source_groups.append((int(cid.item()),))
+
+                        if len(merged_cids) > 0:
+                            merged_indices = torch.cat([_cluster_indices(cid) for cid in merged_cids])
+                            if merged_indices.numel() > 0:
+                                merged_groups.append((merged_indices + visual_start).tolist())
+                                merged_positions.append(_merged_position(merged_indices))
+                                merged_source_groups.append(tuple(sorted(int(cid) for cid in merged_cids)))
+
+                        if self.debug_stage2_sre:
+                            print(f"[Stage2-SRE] K>R: K={int(K)}, R={int(R)}, kept={int(R-1)}")
+
+                        return selected_abs, merged_groups, merged_positions, selected_source_groups, merged_source_groups
+
+                    # Original case: one summary per cluster, then keep R-K elite tokens.
+                    cluster_sizes = torch.stack([(cluster_labels == label).sum() for label in labels])
+                    total_cluster_tokens = cluster_sizes.sum()
+                    denom = torch.clamp(total_cluster_tokens - K, min=1)
+                    original_weights = (cluster_sizes.float() - 1) / denom
+                    extra_budget = max(0, int(R - K))
+                    original_raw_quota = original_weights * extra_budget
+
+                    max_quota = torch.clamp(sizes - 1, min=0)
+
+                    if self.use_stage2_sre and sre_group_score is not None and extra_budget > 0:
+                        capacity_mask = (max_quota.float() > 0).float()
+                        sre_alloc = sre_group_score * capacity_mask
+                        if sre_alloc.sum() <= 1e-6:
+                            sre_raw_quota = original_raw_quota
+                        else:
+                            sre_raw_quota = sre_alloc / torch.clamp(sre_alloc.sum(), min=1e-6) * extra_budget
+                        blend = min(max(float(self.sre_quota_blend), 0.0), 1.0)
+                        raw_quota = (1.0 - blend) * original_raw_quota + blend * sre_raw_quota
+                    else:
+                        raw_quota = original_raw_quota
+
+                    quotas = torch.floor(raw_quota).long()
+                    quotas = torch.minimum(quotas, max_quota)
+
+                    # Adjust quotas so that their sum is R-K.
+                    diff = extra_budget - quotas.sum().item()
+                    if diff > 0:
+                        frac = raw_quota - torch.floor(raw_quota)
+                        order_score = frac
+                        if self.use_stage2_sre and sre_group_score is not None:
+                            order_score = order_score + 1e-4 * sre_group_score
+                        order = torch.argsort(order_score, descending=True)
+                        for i in order.tolist():
+                            if diff <= 0:
+                                break
+                            if quotas[i] < max_quota[i]:
+                                quotas[i] += 1
+                                diff -= 1
+                    elif diff < 0:
+                        order = torch.argsort(raw_quota, descending=False)
+                        for i in order.tolist():
+                            if diff >= 0:
+                                break
+                            if quotas[i] > 0:
+                                quotas[i] -= 1
+                                diff += 1
+
+                    def _select_elites(abs_indices, keep_count):
+                        keep_count = min(int(keep_count), max(0, abs_indices.numel() - 1))
+                        if keep_count <= 0:
+                            return abs_indices[:0], None
+                        vals = l2_norm.index_select(0, abs_indices)
+
+                        if (not self.use_stage2_sre) or feat_norm is None or abs_indices.numel() <= 1:
+                            _, topk_idx = torch.topk(vals, k=keep_count, largest=False)
+                            return abs_indices[topk_idx], topk_idx
+
+                        z = feat_norm.index_select(0, abs_indices)
+                        center = F.normalize(z.mean(dim=0), p=2, dim=0, eps=1e-6)
+                        sim_to_center = torch.matmul(z, center)
+                        residual = _norm01((1.0 - sim_to_center).clamp(min=0.0, max=2.0))
+                        importance = _norm01(-vals)
+                        sim = torch.mm(z, z.t()).clamp(min=-1.0, max=1.0)
+
+                        residual_lambda = max(float(self.sre_residual_lambda), 0.0)
+                        redundancy_lambda = max(float(self.sre_redundancy_lambda), 0.0)
+
+                        selected_local = []
+                        available = torch.ones(abs_indices.numel(), dtype=torch.bool, device=device)
+
+                        # First elite: still strongest importance for safety.
+                        seed = int(torch.argmax(importance).item())
+                        selected_local.append(seed)
+                        available[seed] = False
+
+                        while len(selected_local) < keep_count and available.any():
+                            sel_t = torch.tensor(selected_local, device=device, dtype=torch.long)
+                            max_sim = sim[:, sel_t].max(dim=1).values if len(selected_local) > 0 else torch.zeros_like(importance)
+                            score = importance + residual_lambda * residual - redundancy_lambda * torch.clamp(max_sim, min=0.0)
+                            if self.use_stage2_lite_router:
+                                if query_score_all is not None:
+                                    q_local = _norm01(query_score_all.index_select(0, abs_indices))
+                                    score = score + max(float(self.stage2_mmr_query_lambda), 0.0) * q_local
+                                # Local spatial coverage: prefer candidates far from already selected local positions.
+                                side = int(round(math.sqrt(float(l2_norm.numel()))))
+                                if side > 1 and len(selected_local) > 0:
+                                    yy = (abs_indices.float() // side) / max(float(side - 1), 1.0)
+                                    xx = (abs_indices.float() % side) / max(float(side - 1), 1.0)
+                                    xy = torch.stack([xx, yy], dim=-1)
+                                    sel_xy = xy.index_select(0, sel_t)
+                                    min_dist = torch.cdist(xy, sel_xy).min(dim=1).values
+                                    score = score + max(float(self.stage2_mmr_coverage_lambda), 0.0) * _norm01(min_dist)
+                            score[~available] = torch.finfo(score.dtype).min
+                            best = int(torch.argmax(score).item())
+                            if not available[best]:
+                                break
+                            selected_local.append(best)
+                            available[best] = False
+
+                        selected_local_t = torch.tensor(selected_local[:keep_count], device=device, dtype=torch.long)
+                        return abs_indices[selected_local_t], selected_local_t
+
+                    # Execute merge and keep logic.
+                    for i, cid in enumerate(labels):
+                        abs_indices = _cluster_indices(cid)
+                        size = abs_indices.size(0)
+                        keep_count = min(quotas[i].item(), size - 1)
+                        if keep_count > 0:
+                            top_indices, topk_idx = _select_elites(abs_indices, keep_count)
+                            selected_abs.extend((top_indices + visual_start).tolist())
+                            selected_source_groups.extend([(int(cid.item()),)] * int(top_indices.numel()))
+
+                            keep_mask = torch.ones(size, dtype=torch.bool, device=device)
+                            if topk_idx is None:
+                                # Fallback: map selected ids to local positions.
+                                selected_set = set(int(x) for x in top_indices.tolist())
+                                for local_pos, global_local_idx in enumerate(abs_indices.tolist()):
+                                    if int(global_local_idx) in selected_set:
+                                        keep_mask[local_pos] = False
                             else:
-                                merge_indices = abs_indices  # Merge all
-                            
-                            # Merge the remaining tokens
-                            if merge_indices.numel() > 0:
-                                merged_groups.append((merge_indices + visual_start).tolist())
-                                sorted_idx = torch.sort(merge_indices).values
-                                mid_idx = len(sorted_idx) // 2
-                                merged_positions.append(sorted_idx[mid_idx].item() + visual_start)
-                    
-                    return selected_abs, merged_groups, merged_positions
-                ###
+                                keep_mask[topk_idx] = False
+                            merge_indices = abs_indices[keep_mask]
+                        else:
+                            merge_indices = abs_indices
+
+                        if merge_indices.numel() > 0:
+                            merged_groups.append((merge_indices + visual_start).tolist())
+                            merged_positions.append(_merged_position(merge_indices))
+                            merged_source_groups.append((int(cid.item()),))
+
+                    if self.debug_stage2_sre:
+                        qsum = int(quotas.sum().item()) if 'quotas' in locals() else -1
+                        avg_res = float(group_residual.mean().item()) if group_residual is not None else -1.0
+                        print(
+                            f"[Stage2-SRE] K<=R: K={int(K)}, R={int(R)}, extra={extra_budget}, "
+                            f"quota_sum={qsum}, selected={len(selected_abs)}, merged={len(merged_groups)}, "
+                            f"avg_residual={avg_res:.4f}"
+                        )
+
+                    return selected_abs, merged_groups, merged_positions, selected_source_groups, merged_source_groups
+
+                def normalize_score(score, eps=1e-6):
+                    if score.numel() == 0:
+                        return score
+                    score = score.float()
+                    score_min = score.min()
+                    score_max = score.max()
+                    denom = torch.clamp(score_max - score_min, min=eps)
+                    return (score - score_min) / denom
+
+                def compute_text_conditioned_score(hidden_states, visual_start, visual_end, text_start, temperature=1.0, eps=1e-6):
+                    num_visual = max(visual_end - visual_start, 0)
+                    if num_visual <= 0:
+                        return hidden_states.new_zeros((0,), dtype=torch.float32)
+                    if text_start >= hidden_states.shape[1]:
+                        return hidden_states.new_zeros((num_visual,), dtype=torch.float32)
+
+                    text_hidden = hidden_states[:, text_start:, :].float()
+                    visual_hidden = hidden_states[:, visual_start:visual_end, :].float()
+
+                    if text_hidden.shape[1] == 0 or visual_hidden.shape[1] == 0:
+                        return hidden_states.new_zeros((num_visual,), dtype=torch.float32)
+
+                    temperature = max(float(temperature), eps)
+
+                    # Dynamic text-token importance prior
+                    text_importance = text_hidden.norm(p=2, dim=-1)
+                    text_weights = torch.softmax(text_importance / temperature, dim=-1)
+
+                    # Text-guided visual evidence score via text-visual similarity
+                    text_hidden = F.normalize(text_hidden, p=2, dim=-1, eps=eps)
+                    visual_hidden = F.normalize(visual_hidden, p=2, dim=-1, eps=eps)
+                    text_to_visual = torch.matmul(text_hidden, visual_hidden.transpose(1, 2))
+                    text_score = (text_weights.unsqueeze(-1) * text_to_visual).sum(dim=1).squeeze(0)
+
+                    return text_score.float()
+
+                def fuse_visual_text_scores(text_score, visual_l2_norm, lambda_text=0.8):
+                    lambda_text = min(max(float(lambda_text), 0.0), 1.0)
+                    text_score = normalize_score(text_score)
+                    visual_score = normalize_score(-visual_l2_norm.float())
+                    return lambda_text * text_score + (1.0 - lambda_text) * visual_score
+
+                def select_topk_with_source_protection(score, source_groups, k):
+                    device = score.device
+                    num_tokens = score.numel()
+                    if num_tokens == 0:
+                        return torch.empty(0, device=device, dtype=torch.long)
+
+                    k = max(1, min(int(k), num_tokens))
+                    if source_groups is None or len(source_groups) != num_tokens:
+                        return torch.topk(score, k=k, largest=True).indices.sort().values
+
+                    cluster_best = {}
+                    for token_idx, source_group in enumerate(source_groups):
+                        if source_group is None:
+                            continue
+                        for cid in source_group:
+                            cid = int(cid)
+                            token_score = float(score[token_idx].item())
+                            best_entry = cluster_best.get(cid)
+                            if best_entry is None or token_score > best_entry[1]:
+                                cluster_best[cid] = (token_idx, token_score)
+
+                    if len(cluster_best) == 0:
+                        return torch.topk(score, k=k, largest=True).indices.sort().values
+
+                    protected = sorted({entry[0] for entry in cluster_best.values()})
+                    protected_tensor = torch.tensor(protected, device=device, dtype=torch.long)
+
+                    if protected_tensor.numel() > k:
+                        protected_scores = score.index_select(0, protected_tensor)
+                        protected_tensor = protected_tensor[torch.topk(protected_scores, k=k, largest=True).indices]
+                        return protected_tensor.sort().values
+
+                    if protected_tensor.numel() == k:
+                        return protected_tensor.sort().values
+
+                    all_indices = torch.arange(num_tokens, device=device)
+                    keep_mask = torch.ones(num_tokens, dtype=torch.bool, device=device)
+                    keep_mask[protected_tensor] = False
+                    remaining = all_indices[keep_mask]
+
+                    extra_k = min(k - protected_tensor.numel(), remaining.numel())
+                    if extra_k > 0:
+                        remaining_scores = score.index_select(0, remaining)
+                        extra = remaining[torch.topk(remaining_scores, k=extra_k, largest=True).indices]
+                    else:
+                        extra = remaining[:0]
+
+                    keep = torch.cat([protected_tensor, extra]).unique(sorted=True)
+                    if keep.numel() > k:
+                        keep_scores = score.index_select(0, keep)
+                        keep = keep[torch.topk(keep_scores, k=k, largest=True).indices].sort().values
+                    return keep.sort().values
+
                 v_token_start = pre_prompt_length_list[0] if len(pre_prompt_length_list) != 0 else 35 # 35
                 text_token_start = v_token_start + image_shape # 611
-                text_token_num = seq_length - text_token_start
+                text_token_num = max(seq_length - text_token_start, 0)
                 v_token_num = image_shape
+
+                e008_candidate_mask = None
+                if (self.e008_enable or self.e009_enable or self.e013_has_context) and seq_length > 1:
+                    tag = "E013" if self.e013_has_context else ("E009" if self.e009_enable else "E008")
+                    if cluster_labels is None:
+                        raise RuntimeError(f"[{tag}] cluster_labels metadata is missing")
+                    if cluster_labels.dim() != 2 or cluster_labels.shape[0] != 1:
+                        raise RuntimeError(
+                            f"[{tag}] expected cluster_labels [1,N], got "
+                            f"{tuple(cluster_labels.shape)}"
+                        )
+                    if int(cluster_labels.shape[1]) != int(v_token_num):
+                        raise RuntimeError(
+                            f"[{tag}] label length={cluster_labels.shape[1]} "
+                            f"!= visual_count={v_token_num}"
+                        )
+                    e008_candidate_mask = (
+                        cluster_labels[0].to(hidden_states.device) >= 0
+                    )
+
+                    strict = (
+                        self.e013_strict_check if self.e013_has_context else
+                        (self.e009_strict_check if self.e009_enable else self.e008_strict_check)
+                    )
+                    if strict and decoder_layer.self_attn.layer_idx == 0:
+                        core_count = int(e008_candidate_mask.sum().item())
+                        context_count = int((~e008_candidate_mask).sum().item())
+                        expected_context = (
+                            self.e013_b if self.e013_has_context else
+                            (16 if self.e009_enable else 20)
+                        )
+                        region_mode = self.e009_enable and self.e009_mode == "REGION_TRANSIENT"
+                        if core_count != 172:
+                            raise RuntimeError(
+                                f"[{tag}] Core candidate count={core_count}, expected 172"
+                            )
+                        if not region_mode and context_count != expected_context:
+                            raise RuntimeError(
+                                f"[{tag}] context count={context_count}, "
+                                f"expected {expected_context}"
+                            )
+                        if region_mode and context_count < 1:
+                            raise RuntimeError("[E010] region transient context is empty")
+                        if self.e009_enable and not region_mode and int(v_token_num) != 188:
+                            raise RuntimeError(
+                                f"[E009] visual_count={v_token_num}, expected 188"
+                            )
+
+                # E007 cross-file invariant: clip_encoder and Llama must agree
+                # on the candidate-pool size. Check once at layer 0 during prefill.
+                if (
+                    self.e007_enable
+                    and not self.e009_enable
+                    and not self.e013_has_context
+                    and decoder_layer.self_attn.layer_idx == 0
+                    and seq_length > 1
+                ):
+                    expected_stage1 = self._e007_stage1_expected[self.e007_stage1_mode]
+                    if int(v_token_num) != int(expected_stage1):
+                        raise RuntimeError(
+                            f"[E007] Stage1/Llama mismatch: mode={self.e007_stage1_mode} "
+                            f"expected={expected_stage1} actual={v_token_num}"
+                        )
+
+                # E001-S1-B 2026-09-18: record actual post-Stage1 visual count
+                # without adding tensor work to the pruning algorithm.
+                if decoder_layer.self_attn.layer_idx == 0 or not self.e010.enabled:
+                    self.e001_last_stage1_visual_tokens = int(v_token_num)
                 ## Calculate the number of tokens for shallow and deep pruning based on the overall pruning ratio
                 shallow_token_num = round((32 * self.vitcop_pruned_ratio / self.vision_prune_ratio - self.shallow_pruned_layer) / (self.deep_pruned_layer - self.shallow_pruned_layer + (32 - self.deep_pruned_layer) / 5) * v_token_num)
                 deep_token_num = round(shallow_token_num / 5)
-                # print(f"token_length_list : {token_length_list}, pre_prompt_length_list: {pre_prompt_length_list}")
-                # print(decoder_layer.self_attn.layer_idx, shallow_token_num, deep_token_num, hidden_states.shape, v_token_start, text_token_start, v_token_num)
 
+                # ===============================================================
+                # E006-QED-R1 G0: existing cheap Global K-norm anchor.
+                # This intentionally keeps the historical semantics: k_shallow is
+                # captured from the previous layer (layer 11 when prune layer=12).
+                # G1-G4 are NOT pruned here; they run layer 12 with all 172 visual
+                # tokens, reuse its post-RoPE Q/K side statistics, then prune after
+                # the full decoder block.
+                # ===============================================================
+                if (
+                    self.e006_enable
+                    and self.e006_selector == "GLOBAL_KNORM"
+                    and decoder_layer.self_attn.layer_idx == self.e006_layer
+                    and seq_length > 1
+                ):
+                    if self.shallow_pruned_layer != self.e006_layer:
+                        raise RuntimeError(
+                            f"[E006] SHALLOW_PRUNED_LAYER must equal E006_LAYER={self.e006_layer} "
+                            f"for GLOBAL_KNORM; got {self.shallow_pruned_layer}"
+                        )
+                    if getattr(self, "k_shallow", None) is None:
+                        raise RuntimeError("[E006] GLOBAL_KNORM requires layer-11 k_shallow cache")
+                    visual_start = v_token_start
+                    visual_end = visual_start + v_token_num
+                    if self.e006_target_k > v_token_num:
+                        raise RuntimeError(f"[E006] target_k={self.e006_target_k} > visual_count={v_token_num}")
+                    image_k_l2_norm = self.k_shallow.mean(dim=1).norm(p=2, dim=-1)[0][visual_start:visual_end]
+                    selected_local = torch.topk(
+                        image_k_l2_norm, self.e006_target_k, largest=False
+                    ).indices.sort().values
+                    hidden_states, position_ids, attention_mask, _ = self._e006_prune_sequence(
+                        hidden_states, position_ids, attention_mask, visual_start, v_token_num, selected_local
+                    )
+                    self.stage2_visual_token_num = int(self.e006_target_k)
+                    # Stage3 is forced to TRUE-SKIP in E006, so cluster/source
+                    # provenance is intentionally not materialized (avoids an
+                    # unnecessary GPU->CPU sync in canonical TTFT runs).
+                    self.stage2_token_sources = None
+                    self.e001_last_stage2_visual_tokens = int(self.e006_target_k)
+                    if self.stage3_policy == "skip":
+                        self.e001_last_final_visual_tokens = int(self.e006_target_k)
+                    self.e006_prefill_count += 1
+                    self.e006_last = {
+                        "selector": "GLOBAL_KNORM",
+                        "visual_in": int(v_token_num),
+                        "visual_out": int(self.e006_target_k),
+                        "selected_local": selected_local.detach(),
+                        "prefill_count": int(self.e006_prefill_count),
+                        "decode_count": int(self.e006_decode_count),
+                        "sdpa_preserved": bool(self._use_sdpa),
+                    }
+                    if self.e006_debug:
+                        print(
+                            "[E006_G0] "
+                            f"visual_in={v_token_num} visual_out={self.e006_target_k} "
+                            f"selected={selected_local.detach().cpu().tolist()}"
+                        )
+
+                # Original ViTCoP Stage2 remains byte-for-byte active when E006
+                # is disabled.  E006 G1-G4 deliberately bypass this pre-layer
+                # pruning because their evidence is measured at layer 12 itself.
                 # Shallow pruning logic (pruning based on spatial similarity clusters)
-                if decoder_layer.self_attn.layer_idx == self.shallow_pruned_layer and seq_length > 1:
+                if decoder_layer.self_attn.layer_idx == self.shallow_pruned_layer and seq_length > 1 and not self.e006_enable:
                     device = hidden_states.device
                     visual_start = v_token_start
                     visual_end = v_token_start + v_token_num
@@ -1306,11 +2663,13 @@ class LlamaModel(LlamaPreTrainedModel):
                     # Get the L2 norm of k_shallow, and prune based on visual token cluster information and the L2 norm of k_shallow
                     image_k_l2_norm = self.k_shallow.mean(dim=1).norm(p=2, dim=-1)[0][visual_start:visual_end]
 
-                    selected_abs, merged_groups, merged_positions = token_filter_l2_norm_cluster(
+                    selected_abs, merged_groups, merged_positions, selected_source_groups, merged_source_groups = token_filter_l2_norm_cluster(
                         cluster_labels[0],
                         image_k_l2_norm,
                         shallow_token_num,
-                        visual_start
+                        visual_start,
+                        token_features=hidden_states[0, visual_start:visual_end, :],
+                        text_features=hidden_states[:, visual_end:, :]
                     )
 
                     # Build all position indices
@@ -1320,72 +2679,174 @@ class LlamaModel(LlamaPreTrainedModel):
                     selected_abs_tensor = torch.tensor(selected_abs, device=device, dtype=torch.long)
                     merged_positions_tensor = torch.tensor(merged_positions, device=device, dtype=torch.long)
 
-
-                    # Create merged_tokens: each group is merged into a single token (by averaging)
+                    # Create merged_tokens.  Default keeps ViTCoP's anchor + mean.
+                    # Stage2 weighted merge is a lightweight replacement for plain mean:
+                    # it emphasizes K-norm important tokens, residual evidence, and a small
+                    # query prior, without computing attention maps or adding parameters.
                     merged_tokens = []
                     for i, group in enumerate(merged_groups):
                         group_tensor = torch.tensor(group, device=device, dtype=torch.long)
-                        merged_token = hidden_states[:, merged_positions_tensor[i], :] + hidden_states[:, group_tensor, :].mean(dim=1, keepdim=True)
+                        anchor = hidden_states[:, merged_positions_tensor[i], :]
+                        if self.use_stage2_weighted_merge and group_tensor.numel() > 1:
+                            local_group = group_tensor - visual_start
+                            group_hidden = hidden_states[:, group_tensor, :]
+                            imp = normalize_score(-image_k_l2_norm.index_select(0, local_group))
+
+                            z = F.normalize(hidden_states[0, group_tensor, :].float(), p=2, dim=-1, eps=1e-6)
+                            center = F.normalize(z.mean(dim=0), p=2, dim=0, eps=1e-6)
+                            residual = normalize_score((1.0 - torch.matmul(z, center)).clamp(min=0.0, max=2.0))
+
+                            merge_score = imp + max(float(self.stage2_merge_residual_lambda), 0.0) * residual
+                            if hidden_states.shape[1] > visual_end and self.stage2_merge_query_lambda > 0:
+                                txt = hidden_states[:, visual_end:, :].float()
+                                if txt.shape[1] > 0:
+                                    tw = torch.softmax(txt.norm(p=2, dim=-1).view(-1), dim=0)
+                                    txtn = F.normalize(txt[0], p=2, dim=-1, eps=1e-6)
+                                    text_summary = F.normalize((tw.unsqueeze(-1) * txtn).sum(dim=0), p=2, dim=0, eps=1e-6)
+                                    q = normalize_score(torch.matmul(z, text_summary))
+                                    merge_score = merge_score + max(float(self.stage2_merge_query_lambda), 0.0) * q
+
+                            temp = max(float(self.stage2_merge_temperature), 1e-6)
+                            weight = torch.softmax(merge_score / temp, dim=0).view(1, -1, 1).to(group_hidden.dtype)
+                            summary = (weight * group_hidden).sum(dim=1, keepdim=True)
+                            merged_token = anchor + summary
+                        else:
+                            merged_token = anchor + hidden_states[:, group_tensor, :].mean(dim=1, keepdim=True)
                         merged_tokens.append(merged_token)
 
-                    merged_tokens_tensor = torch.cat(merged_tokens, dim=1) if merged_tokens else torch.empty(0, device=device)
-
-                    # Create selected_tokens
-                    selected_tokens_tensor = hidden_states[:, selected_abs_tensor, :] if selected_abs else torch.empty(0, device=device)
+                    merged_tokens_tensor = torch.cat(merged_tokens, dim=1) if merged_tokens else hidden_states[:, :0, :]
+                    selected_tokens_tensor = hidden_states[:, selected_abs_tensor, :] if selected_abs else hidden_states[:, :0, :]
 
                     # Extract non-visual tokens
                     non_visual_before_tensor = hidden_states[:, non_visual_before, :]
                     non_visual_after_tensor = hidden_states[:, non_visual_after, :]
 
                     # Concatenate tokens in order: non-visual-before + kept tokens + merged tokens + non-visual-after
-                    # Note: a re-sorting of selected and merged tokens is needed based on their post-merge positions
-
-                    # Merge positions and tokens
                     mid_positions = torch.cat([selected_abs_tensor, merged_positions_tensor])
                     mid_tokens = torch.cat([selected_tokens_tensor, merged_tokens_tensor], dim=1)
+
+                    # Keep provenance of stage-II tokens for cluster-protected Stage III
+                    mid_source_groups = selected_source_groups + merged_source_groups
 
                     # Get sorting indices
                     sorted_mid, indices = torch.sort(mid_positions)
                     mid_tokens_sorted = mid_tokens[:, indices, :]
-
+                    self.stage2_token_sources = [mid_source_groups[i] for i in indices.tolist()]
+                    self.stage2_visual_token_num = len(self.stage2_token_sources)
+                    # E001-S1-B 2026-09-18: diagnostic Stage2 token count.
+                    self.e001_last_stage2_visual_tokens = int(self.stage2_visual_token_num)
+                    if self.e001_token_audit:
+                        print(
+                            f"[E001_STAGE2_TOKENS] method_id={self.e001_method_id} "
+                            f"stage2_policy={'sre' if self.use_stage2_sre else 'original_vitcop'} "
+                            f"stage2_visual_tokens={self.e001_last_stage2_visual_tokens}"
+                        )
                     # Final concatenation
-                    hidden_states = torch.cat([non_visual_before_tensor,mid_tokens_sorted,non_visual_after_tensor], dim=1)
+                    hidden_states = torch.cat([non_visual_before_tensor, mid_tokens_sorted, non_visual_after_tensor], dim=1)
                     # Update position_ids
-                    position_ids = torch.cat([non_visual_before,sorted_mid,non_visual_after], dim=0).unsqueeze(0)
-                    # position_ids = position_ids[:, :hidden_states.shape[1]]
+                    position_ids = torch.cat([non_visual_before, sorted_mid, non_visual_after], dim=0).unsqueeze(0)
 
                     if attention_mask is not None:
                         attention_mask = attention_mask[:, :, :hidden_states.shape[1], :hidden_states.shape[1]]
 
-                # Deep pruning logic (global pruning)
+                # Deep pruning policy.  For the latency-first story, Stage-III can be
+                # skipped or replaced by deterministic uniform tail pruning.  This avoids
+                # expensive/unreliable deep semantic scoring while preserving a fair ablation
+                # path back to original ViTCoP/T3Guide.
                 if decoder_layer.self_attn.layer_idx == self.deep_pruned_layer and seq_length > 1:
-                    device = hidden_states.device
-                    visual_start = v_token_start
-                    visual_end = v_token_start + shallow_token_num
-                    
-                    # Get the L2 norm of k_deep and prune
-                    image_k_l2_norm = self.k_deep.mean(dim=1).norm(p=2, dim=-1)[0][visual_start:visual_end]
-                    topk = torch.topk(image_k_l2_norm, deep_token_num, largest=False).indices
-                    
-                    # Merge indices and update
-                    selected_indices = topk + visual_start  # Already a CUDA Tensor
+                    if self.stage3_policy != "skip":
+                        device = hidden_states.device
+                        visual_start = v_token_start
+                        current_visual_token_num = self.stage2_visual_token_num if self.stage2_visual_token_num is not None else shallow_token_num
+                        visual_end = v_token_start + current_visual_token_num
+                        deep_token_num = max(1, min(deep_token_num, current_visual_token_num))
 
-                    # Build non-visual region indices
-                    # print(shallow_token_num, deep_token_num, visual_start, visual_end, text_token_num, hidden_states.shape)
-                    non_visual_before = torch.arange(0, visual_start, device=device)
-                    non_visual_after = torch.arange(visual_end, hidden_states.shape[1], device=device)
+                        if self.stage3_policy in ["uniform", "random", "lite"]:
+                            # Deterministic uniform selection: random-like cost/assumption, stable results.
+                            if self.stage3_uniform_protect_clusters and self.stage2_token_sources is not None:
+                                # First keep one representative per source group when possible.
+                                protected = []
+                                seen = set()
+                                for idx, src in enumerate(self.stage2_token_sources):
+                                    key = tuple(src) if src is not None else (idx,)
+                                    if key not in seen:
+                                        protected.append(idx)
+                                        seen.add(key)
+                                protected = protected[:deep_token_num]
+                                if len(protected) < deep_token_num:
+                                    all_local = torch.linspace(0, current_visual_token_num - 1, steps=deep_token_num, device=device).round().long().unique(sorted=True)
+                                    extra = [int(x) for x in all_local.tolist() if int(x) not in protected]
+                                    protected.extend(extra[:deep_token_num - len(protected)])
+                                topk_local = torch.tensor(protected[:deep_token_num], device=device, dtype=torch.long).sort().values
+                            else:
+                                topk_local = torch.linspace(0, current_visual_token_num - 1, steps=deep_token_num, device=device).round().long().unique(sorted=True)
+                                if topk_local.numel() < deep_token_num:
+                                    fill = torch.arange(current_visual_token_num, device=device, dtype=torch.long)
+                                    mask = torch.ones(current_visual_token_num, device=device, dtype=torch.bool)
+                                    mask[topk_local] = False
+                                    topk_local = torch.cat([topk_local, fill[mask][:deep_token_num - topk_local.numel()]]).sort().values
+                        else:
+                            # Original ViTCoP/T3Guide branch.
+                            image_k_l2_norm = self.k_deep.mean(dim=1).norm(p=2, dim=-1)[0][visual_start:visual_end]
 
-                    # Concatenate all indices to be kept, and sort them
-                    all_keep = torch.cat([non_visual_before, selected_indices, non_visual_after]).unique(sorted=True)
+                            if self.use_t3guide:
+                                text_token_start = visual_end
+                                text_conditioned_score = compute_text_conditioned_score(
+                                    hidden_states=hidden_states,
+                                    visual_start=visual_start,
+                                    visual_end=visual_end,
+                                    text_start=text_token_start,
+                                    temperature=self.t3guide_temperature,
+                                )
+                                fused_score = fuse_visual_text_scores(
+                                    text_score=text_conditioned_score,
+                                    visual_l2_norm=image_k_l2_norm,
+                                    lambda_text=self.t3guide_lambda,
+                                )
 
-                    # Use all_keep to update hidden_states and position_ids
-                    hidden_states = hidden_states.index_select(1, all_keep)
-                    position_ids = all_keep.unsqueeze(0)
-                    # position_ids = position_ids[:, :hidden_states.shape[1]]
+                                if self.t3guide_cluster_protect:
+                                    topk_local = select_topk_with_source_protection(
+                                        fused_score,
+                                        self.stage2_token_sources,
+                                        deep_token_num,
+                                    )
+                                else:
+                                    topk_local = torch.topk(fused_score, deep_token_num, largest=True).indices.sort().values
+                            else:
+                                topk_local = torch.topk(image_k_l2_norm, deep_token_num, largest=False).indices.sort().values
 
-                    if attention_mask is not None:
-                        attention_mask = attention_mask[:, :, :hidden_states.shape[1], :hidden_states.shape[1]]
-                    
+                        selected_indices = topk_local + visual_start
+                        non_visual_before = torch.arange(0, visual_start, device=device)
+                        non_visual_after = torch.arange(visual_end, hidden_states.shape[1], device=device)
+                        all_keep = torch.cat([non_visual_before, selected_indices, non_visual_after]).unique(sorted=True)
+
+                        hidden_states = hidden_states.index_select(1, all_keep)
+                        position_ids = all_keep.unsqueeze(0)
+                        # E001-S1-A/B 2026-09-18: Stage3 stays Original in strict
+                        # Stage1 experiments; record the resulting visual count only.
+                        self.e001_last_final_visual_tokens = int(deep_token_num)
+                        if self.e001_token_audit:
+                            print(
+                                f"[E001_STAGE3_TOKENS] method_id={self.e001_method_id} "
+                                f"stage3_policy={self.stage3_policy} "
+                                f"t3guide_enabled={self.use_t3guide} "
+                                f"final_visual_tokens={self.e001_last_final_visual_tokens}"
+                            )
+
+                        if attention_mask is not None:
+                            attention_mask = attention_mask[:, :, :hidden_states.shape[1], :hidden_states.shape[1]]
+
+                # E006-QED-R1 decode audit: selectors must never execute during
+                # decode.  We count the layer-12 decode visit only; the side selector
+                # itself remains disabled.
+                if (
+                    self.e006_enable
+                    and decoder_layer.self_attn.layer_idx == self.e010_qed_layer
+                    and seq_length == 1
+                ):
+                    # This counter is a visit counter, not a selector-execution counter.
+                    # e006_last['decode_count'] remains selector executions (=0).
+                    pass
 
                 # Attention mask adjustment for the generation phase (seq_length=1)
                 if decoder_layer.self_attn.layer_idx == self.shallow_pruned_layer and seq_length == 1:
@@ -1398,6 +2859,78 @@ class LlamaModel(LlamaPreTrainedModel):
                         past_key_values_length = past_key_values.get_usable_length(seq_length, self.deep_pruned_layer)
                         attention_mask = attention_mask[:, :, :seq_length, :past_key_values_length + seq_length]
 
+                # E006-QED-R1: configure the layer-12 SDPA module to collect
+                # only the side question-row x prefix-key scores.  The normal
+                # scaled_dot_product_attention call still executes unchanged.
+                if (
+                    self.e006_enable
+                    and self.e006_selector in {"Q_ATTN", "Q_RESP", "QED", "QED_VISUAL", "RANDOM_FINAL"}
+                    and decoder_layer.self_attn.layer_idx == self.e010_qed_layer
+                    and seq_length > 1
+                ):
+                    if output_attentions:
+                        raise RuntimeError("[E006] output_attentions must remain False")
+                    removed = int(getattr(self, "_e010_visual_removed", 0))
+                    qed_span = e006_question_span
+                    if removed and e006_question_span is not None:
+                        qed_span = (
+                            int(e006_question_span[0]) - removed,
+                            int(e006_question_span[1]) - removed,
+                        )
+                    self._e006_configure_layer12_side(
+                        decoder_layer=decoder_layer,
+                        hidden_states=hidden_states,
+                        attention_mask=attention_mask,
+                        position_ids=position_ids,
+                        visual_start=v_token_start,
+                        visual_count=v_token_num,
+                        token_length_list=token_length_list,
+                        e006_question_span=qed_span,
+                        e008_candidate_mask=e008_candidate_mask,
+                        e008_mode=(
+                            "CONTEXT_ONLY"
+                            if (self.e009_enable or self.e013_has_context)
+                            else (self.e008_mode if self.e008_enable else None)
+                        ),
+                    )
+                    self.e006_prefill_count += 1
+
+                # Post-layer pruning changes cache geometry: layer 12 keeps the
+                # full Stage1 candidate-pool cache, while layer 13+ cache only the selected
+                # E006_TARGET_K visual tokens. On decode, shrink the causal mask exactly
+                # when entering layer 13 so it matches that layer's cache length.
+                if (
+                    self.e006_enable
+                    and self.e006_selector in {"Q_ATTN", "Q_RESP", "QED", "QED_VISUAL", "RANDOM_FINAL"}
+                    and decoder_layer.self_attn.layer_idx == self.e010_qed_layer + 1
+                    and seq_length == 1
+                    and attention_mask is not None
+                ):
+                    layer_past = past_key_values.get_usable_length(seq_length, decoder_layer.self_attn.layer_idx)
+                    attention_mask = attention_mask[:, :, :seq_length, :layer_past + seq_length]
+
+                if self.e010.enabled and seq_length == 1 and attention_mask is not None and past_key_values is not None:
+                    layer_past = past_key_values.get_usable_length(
+                        seq_length, decoder_layer.self_attn.layer_idx
+                    )
+                    attention_mask = attention_mask[:, :, :seq_length, :layer_past + seq_length]
+                if self.e010.enabled and seq_length > 1:
+                    decoder_layer.self_attn._e010_collect_local_influence = bool(
+                        self.e010.collect_local_influence
+                        and int(decoder_layer.self_attn.layer_idx) in set(int(x) for x in self.e010.analysis_layers)
+                    )
+                    decoder_layer.self_attn._e010_analysis_full576 = bool(self.e010.analysis_full576)
+                    span_now = e006_question_span
+                    removed_now = int(getattr(self, "_e010_visual_removed", 0))
+                    if removed_now and span_now is not None:
+                        span_now = (
+                            int(span_now[0]) - removed_now,
+                            int(span_now[1]) - removed_now,
+                        )
+                    decoder_layer.self_attn._e010_question_span = span_now
+                    decoder_layer.self_attn._e010_visual_start = int(v_token_start)
+                    decoder_layer.self_attn._e010_visual_count = int(v_token_num)
+
                 layer_outputs = decoder_layer(
                     hidden_states,
                     attention_mask=attention_mask,
@@ -1406,6 +2939,348 @@ class LlamaModel(LlamaPreTrainedModel):
                     output_attentions=output_attentions,
                     use_cache=use_cache,
                 )
+
+                # E006-QED-R1 G1-G4 prune AFTER the full layer-12 decoder block.
+                # This is the key topology change relative to Original ViTCoP:
+                # layer 12 supplies mature cross-modal response evidence, then
+                # layers 13+ process only the selected E006_TARGET_K visual tokens.
+                if (
+                    self.e006_enable
+                    and self.e006_selector in {"Q_ATTN", "Q_RESP", "QED", "QED_VISUAL", "RANDOM_FINAL"}
+                    and decoder_layer.self_attn.layer_idx == self.e010_qed_layer
+                    and seq_length > 1
+                    and not (self.e010.enabled and self.e010.qed_side_only)
+                ):
+                    attn = decoder_layer.self_attn
+                    side = getattr(attn, "_e006_last", None)
+                    if side is None:
+                        raise RuntimeError("[E006] layer-12 side selector did not produce statistics")
+
+                    raw_score = side["score"]
+                    score = side.get("selection_score", raw_score)
+                    rho = side.get("rho")
+                    if self.e006_selector == "QED_VISUAL":
+                        visual_start = int(side["visual_start"])
+                        visual_count = int(side["visual_count"])
+                        post_layer_hidden = layer_outputs[0]
+                        visual_hidden = post_layer_hidden[0, visual_start:visual_start + visual_count, :]
+                        rho = self._e006_positive_redundancy(
+                            side["r"], visual_hidden, eps=float(self.e006_eps)
+                        )
+                        score = side["r"] * (1.0 - side["D_Q"] * rho)
+
+                    # E012-SD-P1 2026-10-09: final RANDOM K96 control is
+                    # reproducible by request order and seed. It is an
+                    # ACCURACY control, not a latency-equal selector.
+                    if self.e012_enable and self.e006_selector == "RANDOM_FINAL":
+                        rng = torch.Generator(device="cpu")
+                        rng.manual_seed(
+                            self.e012_random_seed + 100003 * int(self.e001_request_index)
+                        )
+                        selected_local = torch.randperm(
+                            int(side["visual_count"]), generator=rng
+                        )[:self.e006_target_k].to(
+                            device=score.device, dtype=torch.long
+                        ).sort().values
+                    else:
+                        selected_local = torch.topk(
+                            score, k=self.e006_target_k, largest=True, sorted=False
+                        ).indices.sort().values
+                    if selected_local.unique().numel() != self.e006_target_k:
+                        raise RuntimeError("[E006] selected visual indices are not unique")
+
+                    e008_would_select_transient = None
+                    if self.e008_enable or self.e009_enable or self.e013_has_context:
+                        candidate_mask = side.get("e008_candidate_mask")
+                        if candidate_mask is None:
+                            raise RuntimeError("[E008] layer-12 candidate mask missing")
+
+                        if (self.e013_strict_check if self.e013_has_context else self.e008_strict_check):
+                            if bool(
+                                (
+                                    ~candidate_mask.index_select(
+                                        0, selected_local
+                                    )
+                                ).any().item()
+                            ):
+                                raise RuntimeError(
+                                    "[E008] transient token survived final QED selection"
+                                )
+
+                        if self.e008_enable and self.e008_audit:
+                            unmasked_topk = torch.topk(
+                                raw_score,
+                                k=self.e006_target_k,
+                                largest=True,
+                                sorted=False,
+                            ).indices
+                            e008_would_select_transient = int(
+                                (
+                                    ~candidate_mask.index_select(
+                                        0, unmasked_topk
+                                    )
+                                ).sum().item()
+                            )
+
+                    keep_local = selected_local
+                    if (
+                        self.e010.enabled
+                        and self.e010.keep_context_after_qed
+                        and int(self.e010.context_exit_layer) > int(self.e010_qed_layer)
+                        and (self.e008_enable or self.e009_enable)
+                    ):
+                        candidate_mask = side.get("e008_candidate_mask")
+                        if candidate_mask is None:
+                            raise RuntimeError("[E010] candidate mask missing for context lifetime")
+                        context_local = torch.arange(
+                            candidate_mask.numel(), device=selected_local.device
+                        )[~candidate_mask.to(selected_local.device)]
+                        if int(context_local.numel()) > 0:
+                            keep_local = torch.cat(
+                                [selected_local, context_local]
+                            ).unique(sorted=True)
+
+                    # E012-SD-P1 2026-10-09: the same S-layer selected IDs
+                    # are either deleted NOW (S==D; legacy path) or stored
+                    # for post-layer D. No QED re-scoring happens at D.
+                    e012_defer = (
+                        self.e012_enable
+                        and self.e012_delete_layer > self.e010_qed_layer
+                    )
+                    if e012_defer:
+                        if e012_pending_selected is not None:
+                            raise RuntimeError("[E012] selector fired twice in one prefill")
+                        e012_pending_selected = selected_local.detach()
+                        e012_pending_visual_start = int(side["visual_start"])
+                        e012_pending_visual_count = int(side["visual_count"])
+                        # Keep entire Core172 in hidden_states/position_ids/mask
+                        # through the end of decoder layer D.
+                    else:
+                        pruned_hidden, position_ids, attention_mask, all_keep = self._e006_prune_sequence(
+                            layer_outputs[0],
+                            position_ids,
+                            attention_mask,
+                            int(side["visual_start"]),
+                            int(side["visual_count"]),
+                            keep_local,
+                        )
+                        if self.e010.enabled:
+                            if cluster_labels is not None and int(cluster_labels.shape[-1]) == int(side["visual_count"]):
+                                cluster_labels = cluster_labels.index_select(
+                                    1, keep_local.to(device=cluster_labels.device)
+                                )
+                            image_shape = int(keep_local.numel())
+                            self._e010_visual_removed = int(getattr(self, "_e010_visual_removed", 0)) + (
+                                int(side["visual_count"]) - image_shape
+                            )
+                        layer_outputs = (pruned_hidden,) + tuple(layer_outputs[1:])
+
+                    # Resolve diagnostic CUDA events only in profile mode.
+                    timing = {}
+                    if self.e006_profile and side.get("events") is not None:
+                        torch.cuda.synchronize()
+                        ev = side["events"]
+                        timing = {
+                            "side_qk_ms": float(ev[0].elapsed_time(ev[1])),
+                            "response_similarity_ms": float(ev[1].elapsed_time(ev[2])),
+                            "score_ms": float(ev[2].elapsed_time(ev[3])),
+                        }
+
+                    if not e012_defer:
+                        self.stage2_visual_token_num = int(self.e006_target_k)
+                        self.stage2_token_sources = None
+                        self.e001_last_stage2_visual_tokens = int(self.e006_target_k)
+                        if self.stage3_policy == "skip":
+                            self.e001_last_final_visual_tokens = int(self.e006_target_k)
+
+                    # Keep diagnostics on-device in normal runs so canonical
+                    # outer wall-clock TTFT is not polluted by .item()/.cpu()
+                    # synchronization.  Debug/profile mode may materialize them.
+                    self.e006_last = {
+                        "selector": self.e006_selector,
+                        "e010_qed_layer": int(self.e010_qed_layer),
+                        "e010_enabled": bool(self.e010.enabled),
+                        "span_source": side["span_source"],
+                        "question_indices": side["question_indices"].detach(),
+                        "visual_in": int(side["visual_count"]),
+                        "visual_out": int(self.e006_target_k),
+                        # E012-SD-P1 2026-10-09: planned final K vs physical K.
+                        "e012_deferred": bool(e012_defer),
+                        "e012_selection_layer": int(self.e010_qed_layer),
+                        "e012_deletion_layer": int(self.e012_delete_layer),
+                        "visual_physical_after_selection": (
+                            int(side["visual_count"]) if e012_defer else int(self.e006_target_k)
+                        ),
+                        "D_Q": None if side["D_Q"] is None else side["D_Q"].detach(),
+                        "r": side["r"].detach(),
+                        "rho": None if rho is None else rho.detach(),
+                        "selected_local": selected_local.detach(),
+                        "prefill_count": int(self.e006_prefill_count),
+                        "decode_count": int(self.e006_decode_count),
+                        "sdpa_preserved": True,
+                        "output_attentions": False,
+                        "e007_enable": bool(self.e007_enable),
+                        "e007_stage1_mode": (
+                            self.e007_stage1_mode if self.e007_enable else None
+                        ),
+                        "e007_request_id": (
+                            int(self.e001_request_index) if self.e007_enable else None
+                        ),
+                        "e008_enable": bool(self.e008_enable),
+                        "e008_mode": (
+                            self.e008_mode if self.e008_enable else None
+                        ),
+                        "e008_would_select_transient": e008_would_select_transient,
+                        "e009_enable": bool(self.e009_enable),
+                        "e009_mode": (
+                            self.e009_mode if self.e009_enable else None
+                        ),
+                        **timing,
+                    }
+
+                    # E012-SD-P1 2026-10-09: OFFLINE-ONLY diagnostic.
+                    # Avoid E012_DIAG=True for publication-facing latency: JSON
+                    # conversion synchronizes CUDA and adds massive CPU I/O.
+                    if self.e012_enable and self.e012_diag:
+                        r_cpu = side["r"].detach().float().cpu()
+                        relevance_ids = torch.topk(
+                            r_cpu, self.e006_target_k, sorted=False
+                        ).indices.sort().values.tolist()
+                        audit_record = {
+                            "request_index": int(self.e001_request_index),
+                            "selector": self.e006_selector,
+                            "selection_layer": int(self.e010_qed_layer),
+                            "deletion_layer": int(self.e012_delete_layer),
+                            "visual_in": int(side["visual_count"]),
+                            "final_k": int(self.e006_target_k),
+                            "selected_local": selected_local.detach().cpu().tolist(),
+                            "qattn_selected_local": relevance_ids,
+                            "r": r_cpu.tolist(),
+                            "D_Q": (
+                                None if side["D_Q"] is None
+                                else float(side["D_Q"].detach().float().cpu().item())
+                            ),
+                            "rho": (
+                                None if rho is None
+                                else rho.detach().float().cpu().tolist()
+                            ),
+                            "w": (
+                                None if side.get("w") is None
+                                else side["w"].detach().float().cpu().tolist()
+                            ),
+                            "P": (
+                                None if side.get("P") is None
+                                else side["P"].detach().float().cpu().tolist()
+                            ),
+                            "random_seed": (
+                                self.e012_random_seed
+                                if self.e006_selector == "RANDOM_FINAL" else None
+                            ),
+                        }
+                        print("[E012_DIAG_JSON] " + json.dumps(audit_record, separators=(",", ":")))
+
+                    if self.e009_enable and self.e009_audit:
+                        candidate_mask = side.get("e008_candidate_mask")
+                        final_context = int(
+                            (
+                                ~candidate_mask.index_select(0, selected_local)
+                            ).sum().item()
+                        )
+                        payload = {
+                            "request_id": int(self.e001_request_index),
+                            "mode": self.e009_mode,
+                            "visual_in": int(side["visual_count"]),
+                            "candidate_count": 172,
+                            "context_count": 16,
+                            "target_k": int(self.e006_target_k),
+                            "final_context_survivors": final_context,
+                            "side_mode": "CONTEXT_ONLY",
+                            "sdpa_preserved": True,
+                        }
+                        print(
+                            "[E009_QED_JSON] "
+                            + json.dumps(payload, separators=(",", ":"))
+                        )
+
+                    if self.e008_enable and self.e008_audit:
+                        e008_payload = {
+                            "request_id": int(self.e001_request_index),
+                            "mode": self.e008_mode,
+                            "target_k": int(self.e006_target_k),
+                            "visual_in": int(side["visual_count"]),
+                            "candidate_count": 172,
+                            "transient_count": 20,
+                            "would_select_transient_unmasked": (
+                                int(e008_would_select_transient)
+                                if e008_would_select_transient is not None
+                                else None
+                            ),
+                            "final_selected_transient": 0,
+                        }
+                        print(
+                            "[E008_QED_JSON] "
+                            + json.dumps(e008_payload, separators=(",", ":"))
+                        )
+
+                    # Diagnostic-only provenance line. selected_local indexes
+                    # directly into the Stage1 output order emitted by
+                    # clip_encoder's [E007_STAGE1_JSON].
+                    if self.e007_enable and self.e007_token_audit:
+                        selected_local_cpu = selected_local.detach().cpu().tolist()
+                        audit_payload = {
+                            "request_id": int(self.e001_request_index),
+                            "stage1_mode": self.e007_stage1_mode,
+                            "visual_in": int(side["visual_count"]),
+                            "visual_out": int(self.e006_target_k),
+                            "selected_local": selected_local_cpu,
+                            "selector": self.e006_selector,
+                            "layer": int(
+                                self.e010_qed_layer if self.e012_enable else self.e006_layer
+                            ),
+                            "stage3_policy": self.stage3_policy,
+                            "sdpa_preserved": True,
+                        }
+                        print(
+                            "[E007_QED_JSON] "
+                            + json.dumps(audit_payload, separators=(",", ":"))
+                        )
+
+                    if self.e006_debug:
+                        q_cpu = side["question_indices"].detach().cpu()
+                        r_cpu = side["r"].detach().float().cpu()
+                        rho_cpu = None if rho is None else rho.detach().float().cpu()
+                        dq = None if side["D_Q"] is None else float(side["D_Q"].item())
+                        debug_log = {
+                            "selector": self.e006_selector,
+                            "span_source": side["span_source"],
+                            "question_start": int(q_cpu[0].item()),
+                            "question_end": int(q_cpu[-1].item()) + 1,
+                            "question_token_count": int(q_cpu.numel()),
+                            "visual_in": int(side["visual_count"]),
+                            "visual_out": int(self.e006_target_k),
+                            "D_Q": dq,
+                            "r_min": float(r_cpu.min().item()),
+                            "r_mean": float(r_cpu.mean().item()),
+                            "r_max": float(r_cpu.max().item()),
+                            "rho_min": None if rho_cpu is None else float(rho_cpu.min().item()),
+                            "rho_mean": None if rho_cpu is None else float(rho_cpu.mean().item()),
+                            "rho_max": None if rho_cpu is None else float(rho_cpu.max().item()),
+                            "selected_local": selected_local.detach().cpu().tolist(),
+                            "prefill_count": int(self.e006_prefill_count),
+                            "decode_count": int(self.e006_decode_count),
+                            "sdpa_preserved": True,
+                            "output_attentions": False,
+                            **timing,
+                        }
+                        print(f"[E006_QED] {debug_log}")
+
+                # Clear one-shot side context after the prefill layer executes.
+                if (
+                    self.e006_enable
+                    and decoder_layer.self_attn.layer_idx == self.e010_qed_layer
+                    and hasattr(decoder_layer.self_attn, "_e006_enabled")
+                ):
+                    decoder_layer.self_attn._e006_enabled = False
                 if decoder_layer.self_attn.layer_idx == self.shallow_pruned_layer - 1 and seq_length > 1:
                     self.k_shallow = layer_outputs[2 if output_attentions else 1][decoder_layer.self_attn.layer_idx][0]
 
@@ -1424,7 +3299,124 @@ class LlamaModel(LlamaPreTrainedModel):
                     use_cache=use_cache,
                 )
 
+            if (
+                self.e010.enabled
+                and int(self.e010.context_exit_layer) >= 0
+                and decoder_layer.self_attn.layer_idx == int(self.e010.context_exit_layer)
+                and seq_length > 1
+                and cluster_labels is not None
+                and cluster_labels.dim() == 2
+            ):
+                labels_now = cluster_labels[0]
+                keep_context_free = torch.arange(
+                    labels_now.numel(), device=labels_now.device
+                )[labels_now >= 0]
+                removed_now = int(labels_now.numel() - keep_context_free.numel())
+                if removed_now > 0:
+                    v_start = pre_prompt_length_list[0] if len(pre_prompt_length_list) != 0 else 35
+                    pruned_hidden, position_ids, attention_mask, _all_keep = self._e006_prune_sequence(
+                        layer_outputs[0],
+                        position_ids,
+                        attention_mask,
+                        int(v_start),
+                        int(labels_now.numel()),
+                        keep_context_free,
+                    )
+                    layer_outputs = (pruned_hidden,) + tuple(layer_outputs[1:])
+                    cluster_labels = cluster_labels.index_select(1, keep_context_free)
+                    image_shape = int(keep_context_free.numel())
+                    self._e010_visual_removed = int(getattr(self, "_e010_visual_removed", 0)) + removed_now
+                    self._e010_last_context_exit = {
+                        "layer": int(decoder_layer.self_attn.layer_idx),
+                        "removed": removed_now,
+                        "visual_after": image_shape,
+                    }
+
+            # E012-SD-P1 2026-10-09: physically delete the exact S-layer
+            # survivor complement AFTER decoder layer D, without re-selection.
+            # Layers <=D keep full Core172 KV; layers >D receive K96 tokens.
+            if (
+                self.e012_enable
+                and seq_length > 1
+                and self.e012_delete_layer > self.e010_qed_layer
+                and decoder_layer.self_attn.layer_idx == self.e012_delete_layer
+            ):
+                if e012_pending_selected is None:
+                    raise RuntimeError("[E012] D reached without frozen S-layer selection")
+                if int(v_token_start) != e012_pending_visual_start or int(image_shape) != e012_pending_visual_count:
+                    raise RuntimeError(
+                        "[E012] visual span changed between S and D; "
+                        "the fixed-survivor intervention is invalid"
+                    )
+                pruned_hidden, position_ids, attention_mask, _keep = self._e006_prune_sequence(
+                    layer_outputs[0],
+                    position_ids,
+                    attention_mask,
+                    int(e012_pending_visual_start),
+                    int(e012_pending_visual_count),
+                    e012_pending_selected,
+                )
+                if cluster_labels is not None:
+                    if cluster_labels.dim() != 2 or int(cluster_labels.shape[-1]) != e012_pending_visual_count:
+                        raise RuntimeError("[E012] cluster metadata length changed before D")
+                    cluster_labels = cluster_labels.index_select(
+                        1, e012_pending_selected.to(device=cluster_labels.device)
+                    )
+                removed = e012_pending_visual_count - int(e012_pending_selected.numel())
+                image_shape = int(e012_pending_selected.numel())
+                self._e010_visual_removed += removed
+                self.stage2_visual_token_num = image_shape
+                self.stage2_token_sources = None
+                self.e001_last_stage2_visual_tokens = image_shape
+                self.e001_last_final_visual_tokens = image_shape
+                layer_outputs = (pruned_hidden,) + tuple(layer_outputs[1:])
+                self.e012_last = {
+                    "selection_layer": int(self.e010_qed_layer),
+                    "deletion_layer": int(self.e012_delete_layer),
+                    "selected_local": e012_pending_selected.detach(),
+                    "visual_before": int(e012_pending_visual_count),
+                    "visual_after": image_shape,
+                    "selector_calls": int(self.e006_prefill_count),
+                }
+                e012_pending_selected = None
+
             hidden_states = layer_outputs[0]
+
+            # E012-SD-P1 2026-10-09: verify prefill KV topology and the
+            # first two decode visits.  This checks the REAL per-layer
+            # DynamicCache lengths; no fake all-layer KV compaction claims.
+            if self.e012_enable and self.e012_kv_audit and (
+                seq_length > 1 or self.e012_decode_visit <= 2
+            ):
+                layer_idx = int(decoder_layer.self_attn.layer_idx)
+                kv_len = int(past_key_values.get_seq_length(layer_idx))
+                prefix_len = self.e012_prefill_len
+                if prefix_len is None:
+                    raise RuntimeError("[E012] missing matching multimodal prefill")
+                # E013-P1 2026-10-09: EXTRA uses 172+b prefill visual positions;
+                # compaction removes (172+b-K), not the Core172-only (172-K).
+                visual_before = 172 + (int(self.e013_b) if self.e013_has_context else 0)
+                removed_at_layer = (
+                    0 if layer_idx <= self.e012_delete_layer
+                    else int(self.e006_target_k) - visual_before
+                )
+                expected = prefix_len + (0 if seq_length > 1 else self.e012_decode_visit) + removed_at_layer
+                if kv_len != expected:
+                    raise RuntimeError(
+                        f"[E012_KV] layer={layer_idx} prefill={seq_length > 1} "
+                        f"observed={kv_len} expected={expected}"
+                    )
+                print("[E012_KV_JSON] " + json.dumps({
+                    "request_index": int(self.e001_request_index),
+                    "layer": layer_idx,
+                    "phase": "prefill" if seq_length > 1 else f"decode{self.e012_decode_visit}",
+                    "cache_tokens": kv_len,
+                    "expected_tokens": expected,
+                    "S": int(self.e010_qed_layer),
+                    "D": int(self.e012_delete_layer),
+                    "K": int(self.e006_target_k),
+                    "visual_before": int(visual_before),
+                }, separators=(",", ":")))
 
             if use_cache:
                 next_decoder_cache = layer_outputs[2 if output_attentions else 1]
@@ -1432,25 +3424,53 @@ class LlamaModel(LlamaPreTrainedModel):
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)
 
-        if self.compute_efficiency and len(pre_prompt_length_list) != 0 and hidden_states.shape[1] != 1:
+        # E012-SD-P1 2026-10-09: never accept a truncated prefill where
+        # S ran but D did not execute.
+        if self.e012_enable and seq_length > 1 and e012_pending_selected is not None:
+            raise RuntimeError("[E012] prefill ended with pending, undeleted Core tokens")
+
+        if e001_efficiency_active and e001_is_prefill:
             total_end_event.record()
-            torch.cuda.synchronize()  
+            torch.cuda.synchronize()
             prefill_time_ms = total_start_event.elapsed_time(total_end_event)
             self.prefill_time += prefill_time_ms
             self.num_forward += 1
             FLOPs_avg_sample = (self.all_FLOPs / self.num_forward) * 1e-12
-            ## Calculate max GPU mem, TFLOPs, and prefill_time
-            self.max_gpu_mem = max(self.max_gpu_mem, torch.cuda.max_memory_allocated() / 1024 / 1024)
-            print(f"TFLOPs_avg_sample:{FLOPs_avg_sample},prefill_time:{self.prefill_time}, prefill_time_avg:{self.prefill_time / self.num_forward}, max_gpu_mem:{self.max_gpu_mem}MB")
+            self.max_gpu_mem = max(
+                self.max_gpu_mem,
+                torch.cuda.max_memory_allocated() / 1024 / 1024,
+            )
+            # E001-S1-B 2026-09-18: structured raw timing line. CUDA timing
+            # covers the Llama decoder prefill only; it is NOT full VLM TTFT.
+            print(
+                f"[E001_EFF] timing_mode={self.e001_timing_mode} "
+                f"method_id={self.e001_method_id} request_id={self.e001_request_index} "
+                f"metric=prefill_ms value={prefill_time_ms:.6f} "
+                f"stage1_visual_tokens={self.e001_last_stage1_visual_tokens} "
+                f"stage2_visual_tokens={self.e001_last_stage2_visual_tokens} "
+                f"final_visual_tokens={self.e001_last_final_visual_tokens} "
+                f"peak_gpu_memory_mb={self.max_gpu_mem:.3f} "
+                f"tflops_avg_sample={FLOPs_avg_sample:.6f}"
+            )
 
-        if self.compute_efficiency and len(pre_prompt_length_list) != 0 and hidden_states.shape[1] == 1:
+        if e001_efficiency_active and e001_is_decode:
             total_end_event.record()
-            torch.cuda.synchronize()  
+            torch.cuda.synchronize()
             inference_time_ms = total_start_event.elapsed_time(total_end_event)
             self.inference_time_per_token += inference_time_ms
             self.num_token += 1
-            ## Calculate inference_time
-            print(f"inference_time_per_token:{self.inference_time_per_token}, inference_time_avg:{self.inference_time_per_token / self.num_token}")
+            self.e001_decode_token_index += 1
+            self.max_gpu_mem = max(
+                self.max_gpu_mem,
+                torch.cuda.max_memory_allocated() / 1024 / 1024,
+            )
+            print(
+                f"[E001_EFF] timing_mode={self.e001_timing_mode} "
+                f"method_id={self.e001_method_id} request_id={self.e001_request_index} "
+                f"decode_token_id={self.e001_decode_token_index} "
+                f"metric=decode_token_ms value={inference_time_ms:.6f} "
+                f"peak_gpu_memory_mb={self.max_gpu_mem:.3f}"
+            )
 
         hidden_states = self.norm(hidden_states)
 
@@ -1519,6 +3539,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         image_shape = 576,
         token_length_list = [],
         pre_prompt_length_list = [],
+        e006_question_span = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
         Args:
@@ -1566,6 +3587,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             image_shape = image_shape,        
             token_length_list = token_length_list,  
             pre_prompt_length_list = pre_prompt_length_list,
+            e006_question_span = e006_question_span,
         )
 
         hidden_states = outputs[0]
@@ -1684,6 +3706,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         image_shape=576,
         token_length_list=[],
         pre_prompt_length_list = [],
+        e006_question_span = None,
         **kwargs,
     ) -> Union[GenerateOutput, torch.LongTensor]:
         if synced_gpus is None:
@@ -1905,6 +3928,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
                 image_shape = image_shape,
                 token_length_list = token_length_list,
                 pre_prompt_length_list = pre_prompt_length_list,
+                e006_question_span = e006_question_span,
                 **model_kwargs,
             )
 
@@ -2148,6 +4172,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         image_shape = 576,
         token_length_list = [],
         pre_prompt_length_list = [],
+        e006_question_span = None,
         **model_kwargs,
     ) -> Union[GenerateNonBeamOutput, torch.LongTensor]:
         r"""
@@ -2317,6 +4342,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
                 image_shape = image_shape,
                 token_length_list = token_length_list,
                 pre_prompt_length_list = pre_prompt_length_list,
+                e006_question_span = e006_question_span,
             )
             if synced_gpus and this_peer_finished:
                 continue  # don't waste resources running the code we don't need

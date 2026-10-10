@@ -1,0 +1,16 @@
+pwd=/home/xiangyue/ViTCoP
+git=627f63214ef9c67158beb7744d7dff087d43e6df
+GPU 0: Tesla V100-PCIE-32GB (UUID: GPU-18a68279-2877-381a-68ef-30de98314f23)
+GPU 1: Tesla V100-PCIE-32GB (UUID: GPU-d1ee3c7d-8137-5265-13f5-33cd54181ee7)
+GPU 2: Tesla V100-PCIE-32GB (UUID: GPU-fded14bf-1920-7ddc-58da-c70411e0bb62)
+GPU 3: Tesla V100-PCIE-32GB (UUID: GPU-0b36ade1-4c1f-8cd6-72e4-282769531f1b)
+GPU 4: Tesla V100-PCIE-32GB (UUID: GPU-011a2a1a-2fe7-3d52-73f9-3ff636bd1ed2)
+GPU 5: Tesla V100-PCIE-32GB (UUID: GPU-444947e2-11d4-6982-43dd-55206f4a369f)
+GPU 6: Tesla V100-PCIE-32GB (UUID: GPU-40027d6e-49f8-a925-cbe0-49e426de4a4c)
+GPU 7: Tesla V100-PCIE-32GB (UUID: GPU-5774ecc0-d45c-b8e8-dc39-732bf617a41e)
+torch 2.1.2 True
+EXPECTED_clip=4674dfac5e3fb824f3ecd3151f7864487b83b96c4891501b0e0378b24286608e
+EXPECTED_llama=614b86c9f7ca7564e12669fec0776730c019fa7422c2c06f21ac12e0c869a3b1
+LIVE_clip_before=2722e6afa0c4ae1d0b4184bc876b8c292519ae2831814f528ed3b9ff71e39065  LLaVA/llava/model/multimodal_encoder/clip_encoder.py
+LIVE_llama_before=614b86c9f7ca7564e12669fec0776730c019fa7422c2c06f21ac12e0c869a3b1  LLaVA/llava/model/language_model/vitcop_modeling_llama.py
+NOTE=clip live differs from package baseline (E012 control exception). User authorized E013 replace.
