@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 # name -> (variant, b, s, d, target_k)
-# Stage2 freeze: S=D=8 primary; QED final-K set per arm (96/64/32).
+# Stage2 freeze: S=D primary L8; K32 additionally sweeps L8/L10/L12 full ACC.
 ARMS: dict[str, tuple[str, int, int, int, int]] = {
-    # K96 primary matrix
+    # K96 primary matrix (L8)
     "BASE_K96": ("BASE", 0, 8, 8, 96),
     "FIXED_COVER_B0_K96": ("FIXED_COVER", 0, 8, 8, 96),
     "FIXED_COVER_B8_K96": ("FIXED_COVER", 8, 8, 8, 96),
@@ -14,18 +14,34 @@ ARMS: dict[str, tuple[str, int, int, int, int]] = {
     "FIXED_RISK_B16_K96": ("FIXED_RISK", 16, 8, 8, 96),
     "ADAPTIVE_B_ONLY_K96": ("ADAPTIVE_B_ONLY", 16, 8, 8, 96),
     "AEE_K96": ("AEE", 16, 8, 8, 96),
-    # K64 stress (after K96 proof)
+    # K64 stress (L8)
     "BASE_K64": ("BASE", 0, 8, 8, 64),
     "FIXED_COVER_B16_K64": ("FIXED_COVER", 16, 8, 8, 64),
     "FIXED_RISK_B16_K64": ("FIXED_RISK", 16, 8, 8, 64),
     "ADAPTIVE_B_ONLY_K64": ("ADAPTIVE_B_ONLY", 16, 8, 8, 64),
     "AEE_K64": ("AEE", 16, 8, 8, 64),
-    # K32 stress
+    # K32 L8 (original)
     "BASE_K32": ("BASE", 0, 8, 8, 32),
     "FIXED_COVER_B16_K32": ("FIXED_COVER", 16, 8, 8, 32),
     "FIXED_RISK_B16_K32": ("FIXED_RISK", 16, 8, 8, 32),
     "ADAPTIVE_B_ONLY_K32": ("ADAPTIVE_B_ONLY", 16, 8, 8, 32),
     "AEE_K32": ("AEE", 16, 8, 8, 32),
+    # K32 layer sweep L10 / L12 (and aliases L8 for explicit naming)
+    "BASE_K32_L8": ("BASE", 0, 8, 8, 32),
+    "FIXED_COVER_B16_K32_L8": ("FIXED_COVER", 16, 8, 8, 32),
+    "FIXED_RISK_B16_K32_L8": ("FIXED_RISK", 16, 8, 8, 32),
+    "ADAPTIVE_B_ONLY_K32_L8": ("ADAPTIVE_B_ONLY", 16, 8, 8, 32),
+    "AEE_K32_L8": ("AEE", 16, 8, 8, 32),
+    "BASE_K32_L10": ("BASE", 0, 10, 10, 32),
+    "FIXED_COVER_B16_K32_L10": ("FIXED_COVER", 16, 10, 10, 32),
+    "FIXED_RISK_B16_K32_L10": ("FIXED_RISK", 16, 10, 10, 32),
+    "ADAPTIVE_B_ONLY_K32_L10": ("ADAPTIVE_B_ONLY", 16, 10, 10, 32),
+    "AEE_K32_L10": ("AEE", 16, 10, 10, 32),
+    "BASE_K32_L12": ("BASE", 0, 12, 12, 32),
+    "FIXED_COVER_B16_K32_L12": ("FIXED_COVER", 16, 12, 12, 32),
+    "FIXED_RISK_B16_K32_L12": ("FIXED_RISK", 16, 12, 12, 32),
+    "ADAPTIVE_B_ONLY_K32_L12": ("ADAPTIVE_B_ONLY", 16, 12, 12, 32),
+    "AEE_K32_L12": ("AEE", 16, 12, 12, 32),
 }
 
 SMOKE_K96 = [
@@ -37,6 +53,8 @@ SMOKE_K96 = [
 ]
 SMOKE_K64 = ["BASE_K64", "AEE_K64", "FIXED_COVER_B16_K64"]
 SMOKE_K32 = ["BASE_K32", "AEE_K32", "FIXED_COVER_B16_K32"]
+SMOKE_K32_L10 = ["BASE_K32_L10", "AEE_K32_L10", "FIXED_COVER_B16_K32_L10"]
+SMOKE_K32_L12 = ["BASE_K32_L12", "AEE_K32_L12", "FIXED_COVER_B16_K32_L12"]
 
 FULL_K96 = [
     "BASE_K96",
@@ -56,12 +74,28 @@ FULL_K64 = [
     "ADAPTIVE_B_ONLY_K64",
     "AEE_K64",
 ]
+# Original L8 K32 names (already launched); keep for continuity.
 FULL_K32 = [
     "BASE_K32",
     "FIXED_COVER_B16_K32",
     "FIXED_RISK_B16_K32",
     "ADAPTIVE_B_ONLY_K32",
     "AEE_K32",
+]
+# Extra full-ACC layer sweep requested for QED32: L10 + L12 (L8 covered by FULL_K32).
+FULL_K32_L10 = [
+    "BASE_K32_L10",
+    "FIXED_COVER_B16_K32_L10",
+    "FIXED_RISK_B16_K32_L10",
+    "ADAPTIVE_B_ONLY_K32_L10",
+    "AEE_K32_L10",
+]
+FULL_K32_L12 = [
+    "BASE_K32_L12",
+    "FIXED_COVER_B16_K32_L12",
+    "FIXED_RISK_B16_K32_L12",
+    "ADAPTIVE_B_ONLY_K32_L12",
+    "AEE_K32_L12",
 ]
 
 

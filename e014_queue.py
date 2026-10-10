@@ -12,7 +12,19 @@ from pathlib import Path
 REPO = Path("/home/xiangyue/ViTCoP")
 ROOT = REPO / "logs/e014_aee"
 PY = "/home/xiangyue/envs/vitcopreback/vitcopreback/bin/python"
-from e014_arms import FULL_K32, FULL_K64, FULL_K96, SMOKE_K32, SMOKE_K64, SMOKE_K96
+from e014_arms import (
+    ARMS,
+    FULL_K32,
+    FULL_K32_L10,
+    FULL_K32_L12,
+    FULL_K64,
+    FULL_K96,
+    SMOKE_K32,
+    SMOKE_K32_L10,
+    SMOKE_K32_L12,
+    SMOKE_K64,
+    SMOKE_K96,
+)
 
 TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
 DEFAULT_GPUS = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -21,9 +33,13 @@ PHASE_ARMS = {
     "smoke_k96": SMOKE_K96,
     "smoke_k64": SMOKE_K64,
     "smoke_k32": SMOKE_K32,
+    "smoke_k32_l10": SMOKE_K32_L10,
+    "smoke_k32_l12": SMOKE_K32_L12,
     "full_k96": FULL_K96,
     "full_k64": FULL_K64,
     "full_k32": FULL_K32,
+    "full_k32_l10": FULL_K32_L10,
+    "full_k32_l12": FULL_K32_L12,
 }
 
 
@@ -67,6 +83,7 @@ def tasks(phase: str, arms: list[str], limit: int) -> list[dict]:
     items = []
     bucket = "smoke" if phase.startswith("smoke") else "full"
     for arm in arms:
+        layer = int(ARMS[arm][2])  # S (=D)
         for task in TASKS:
             output = ROOT / bucket / phase / arm / task
             items.append({
@@ -78,7 +95,7 @@ def tasks(phase: str, arms: list[str], limit: int) -> list[dict]:
                     f"HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false "
                     f"E014_ARM={arm}; "
                     f"{PY} {REPO / 'e014_boot.py'} --profile ANCHOR_A --task {task} "
-                    f"--output {output} --gpu-index GPU --layer 8"
+                    f"--output {output} --gpu-index GPU --layer {layer}"
                     + (f" --limit {limit}" if limit else "")
                 ),
             })

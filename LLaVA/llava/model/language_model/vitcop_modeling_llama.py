@@ -1647,8 +1647,9 @@ class LlamaModel(LlamaPreTrainedModel):
                 raise ValueError('[E014] final K must be 96,64,32')
             if self.e012_delete_layer != self.e010_qed_layer:
                 raise ValueError('[E014] S=D must be frozen')
-            if self.e010_qed_layer not in {8, 12}:
-                raise ValueError('[E014] S=D layer must be 8 or 12')
+            # E014-K32 layer sweep (user 2026-10-10): allow S=D in {8,10,12,14,16}.
+            if self.e010_qed_layer not in {8, 10, 12, 14, 16}:
+                raise ValueError('[E014] S=D layer must be one of 8,10,12,14,16')
             if self.e014_variant not in {
                 'BASE', 'FIXED_COVER', 'FIXED_COVER_PROXY',
                 'FIXED_RISK', 'ADAPTIVE_B_ONLY', 'AEE'
