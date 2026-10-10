@@ -25,8 +25,8 @@ def score_of(task: str, metrics: dict):
 
 
 def n_of(metrics: dict):
-    for key in ("n", "num_examples", "count", "samples"):
-        if key in metrics:
+    for key in ("effective", "n", "num_examples", "count", "samples"):
+        if key in metrics and metrics[key] is not None:
             try:
                 return int(metrics[key])
             except (TypeError, ValueError):
