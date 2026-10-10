@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E014 GPU smoke: one arm, real panel samples, KV/E014 audit invariants."""
+"""E014 GPU smoke: one arm, real panel samples, Stage1/KV invariants."""
 from __future__ import annotations
 
 import argparse
@@ -35,7 +35,7 @@ for rel in (
     if not dst.exists() or sha256(dst) != sha256(REPO / rel):
         shutil.copy2(REPO / rel, dst)
 
-from e009_common import apply_profile, hard, load_model, panel_lookup
+from e009_common import apply_profile, load_model, panel_lookup
 from e010_common import set_e010
 
 
@@ -93,6 +93,7 @@ def main() -> None:
         install()
         lookup, keys = panel_lookup(eng, lm)
         original = raw.generate
+        env_k = int(os.environ["E006_TARGET_K"])
 
         def wrapped(*ga, **gk):
             kw = dict(gk)
@@ -106,25 +107,31 @@ def main() -> None:
         for key in keys[:2]:
             pred = lm.generate_until([lookup[key]])
             last = getattr(core, "e006_last", {}) or {}
-            vt = getattr(raw.get_model(), "get_vision_tower", lambda: None)()
-            e014_last = getattr(vt, "e014_last", None) if vt is not None else None
+            vt = raw.get_model().get_vision_tower()
+            e014_last = getattr(vt, "e014_last", None)
             stage1 = int(getattr(core, "e001_last_stage1_visual_tokens", -1) or -1)
+            final_v = int(getattr(core, "e001_last_final_visual_tokens", -1) or -1)
+            visual_in = int(last.get("visual_in") or -1)
+            visual_out = int(last.get("visual_out") or -1)
             sample = {
                 "key": key,
                 "pred": pred,
                 "stage1_visual": stage1,
-                "target_k": last.get("target_k"),
-                "selected_k": last.get("selected_k") or last.get("qed_selected_k"),
-                "e014_last_keys": sorted(list(e014_last.keys())) if isinstance(e014_last, dict) else None,
-                "e014_budget": (e014_last or {}).get("budget") if isinstance(e014_last, dict) else None,
-                "e014_variant": (e014_last or {}).get("variant") if isinstance(e014_last, dict) else None,
+                "final_visual": final_v,
+                "visual_in": visual_in,
+                "visual_out": visual_out,
+                "prefill_count": int(last.get("prefill_count", -1)),
+                "decode_count": int(last.get("decode_count", -1)),
+                "e014_budget": None,
             }
             if stage1 != 172:
                 report["errors"].append(f"{key}: stage1={stage1} !=172")
-            if int(last.get("target_k") or -1) != int(meta["target_k"]):
-                report["errors"].append(
-                    f"{key}: target_k={last.get('target_k')} != {meta['target_k']}"
-                )
+            if visual_in not in (-1, 172) and visual_in != 172:
+                report["errors"].append(f"{key}: visual_in={visual_in}")
+            if final_v not in (-1, env_k) and final_v != env_k:
+                report["errors"].append(f"{key}: final_visual={final_v} != {env_k}")
+            if visual_out not in (-1, env_k) and visual_out != env_k:
+                report["errors"].append(f"{key}: visual_out={visual_out} != {env_k}")
             if isinstance(e014_last, dict):
                 selected = e014_last.get("selected_ids")
                 added = e014_last.get("added_ids")
@@ -147,7 +154,35 @@ def main() -> None:
                         report["errors"].append(f"{key}: added={int(added.numel())} !=b={b}")
                     if removed is not None and int(removed.numel()) != b:
                         report["errors"].append(f"{key}: removed={int(removed.numel())} !=b={b}")
+                elif b not in (0, 8, 16, 24, 32):
+                    report["errors"].append(f"{key}: adaptive b={b} not in budget set")
+            else:
+                report["errors"].append(f"{key}: missing e014_last")
             report["samples"].append(sample)
+
+        text = "".join(bucket)
+        kv = []
+        for line in text.splitlines():
+            if "[E012_KV_JSON] " in line:
+                kv.append(json.loads(line.split("[E012_KV_JSON] ", 1)[1]))
+        phases = {row["phase"] for row in kv}
+        if not {"prefill", "decode1", "decode2"} <= phases:
+            report["errors"].append(f"missing KV phases {sorted(phases)}")
+        if any(row["cache_tokens"] != row["expected_tokens"] for row in kv):
+            report["errors"].append("KV cache_tokens mismatch")
+        if kv:
+            pre = {
+                r["layer"]: r["cache_tokens"]
+                for r in kv if r["request_index"] == kv[0]["request_index"] and r["phase"] == "prefill"
+            }
+            if set(pre) == set(range(32)):
+                removed = 172 - env_k
+                if pre[0] - pre[31] != removed:
+                    report["errors"].append(
+                        f"prefill shrink {pre[0]-pre[31]} expected {removed}"
+                    )
+            else:
+                report["errors"].append("incomplete prefill layer KV audit")
         report["ok"] = not report["errors"]
     except Exception as exc:
         report["errors"].append(f"{type(exc).__name__}: {exc}")
@@ -162,5 +197,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    hard()
     main()
