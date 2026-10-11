@@ -1,33 +1,90 @@
-# E014_RETURN
-Generated: 2026-10-10T16:08:56
+# E014 Full Accuracy Tables
 
-## Provenance
-- git HEAD: `2cb6aa684d033fca6104e97a79cae9b7ec90ad52`
-- clip SHA256: `a32c25b07d9e1d4cca2d54c5794585fad9b1e87a03ed95c8d1380b958b37c4af`
-- llama SHA256: `d1a41b5a1faa6ed89051684a91641e150d7b5a4e2997fde0e719c41b06763827`
-- remote: `fork` → https://github.com/user000-say/ViTCoP
-- protocol: LLaVA-1.5-7B FP16 SDPA, Stage1=172, S=D=L8, QED K∈{96,64,32}
+Generated: 2026-10-11T09:50:29
 
-## P0
-- CPU tests: 12/12 PASS
-- compileall: PASS
-- E013 base SHA matched before patch; E014 sources installed by byte copy
-- GPU smoke arms: 11/11 PASS
+Protocol: LLaVA-1.5-7B FP16 SDPA; Stage1=172; QED S=D; full N verified.
 
-- `ADAPTIVE_B_ONLY_K96`: ok=True budgets=[32, 32] errors=[]
-- `AEE_K32`: ok=True budgets=[32, 32] errors=[]
-- `AEE_K64`: ok=True budgets=[32, 32] errors=[]
-- `AEE_K96`: ok=True budgets=[32, 32] errors=[]
-- `BASE_K32`: ok=True budgets=[0, 0] errors=[]
-- `BASE_K64`: ok=True budgets=[0, 0] errors=[]
-- `BASE_K96`: ok=True budgets=[0, 0] errors=[]
-- `FIXED_COVER_B16_K32`: ok=True budgets=[16, 16] errors=[]
-- `FIXED_COVER_B16_K64`: ok=True budgets=[16, 16] errors=[]
-- `FIXED_COVER_B16_K96`: ok=True budgets=[16, 16] errors=[]
-- `FIXED_RISK_B16_K96`: ok=True budgets=[16, 16] errors=[]
+## Progress
 
-## Full accuracy
+| Phase | Jobs | Status |
+|-------|------|--------|
+| K96 / L8 | 36/36 | DONE |
+| K64 / L8 | 20/20 | DONE |
+| K32 / L8 | 20/20 | DONE |
+| K32 / L10 | 20/20 | DONE |
+| K32 / L12 | 20/20 | DONE |
 
-## Judgment (fill after full N)
-- Pending full_k96/k64/k32 completion for AGREE/MODIFY/REJECT.
-- Note: panel AEE/ADAPTIVE chose b=32 on smoke samples — report histogram on full audit before claiming adaptive success.
+## Results
+
+### K96 / L8
+
+| Method | GQA (%) | POPE F1 (%) | MME | MMBench | ΔGQA | ΔPOPE | ΔMME | ΔMMB |
+|--------|--------:|------------:|----:|--------:|-----:|------:|-----:|-----:|
+| ADAPTIVE_B_ONLY | 59.03 | 84.61 | 1772.3 | 63.40 | +0.25 | -0.23 | -5.1 | +0.00 |
+| AEE | 58.99 | 85.30 | 1785.1 | 63.23 | +0.21 | +0.47 | +7.6 | -0.17 |
+| BASE | 58.79 | 84.83 | 1777.4 | 63.40 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B0 | 58.79 | 84.83 | 1777.4 | 63.40 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B16 | 59.01 | 85.23 | 1798.9 | 63.14 | +0.22 | +0.40 | +21.5 | -0.26 |
+| FIXED_COVER_B24 | 58.99 | 85.27 | 1787.1 | 63.06 | +0.21 | +0.43 | +9.6 | -0.34 |
+| FIXED_COVER_B32 | 59.21 | 85.32 | 1803.0 | 63.06 | +0.43 | +0.48 | +25.5 | -0.34 |
+| FIXED_COVER_B8 | 58.86 | 84.86 | 1788.9 | 63.32 | +0.08 | +0.03 | +11.4 | -0.09 |
+| FIXED_RISK_B16 | 58.77 | 85.02 | 1793.8 | 63.92 | -0.02 | +0.19 | +16.4 | +0.52 |
+
+### K64 / L8
+
+| Method | GQA (%) | POPE F1 (%) | MME | MMBench | ΔGQA | ΔPOPE | ΔMME | ΔMMB |
+|--------|--------:|------------:|----:|--------:|-----:|------:|-----:|-----:|
+| ADAPTIVE_B_ONLY | 58.67 | 84.73 | 1791.1 | 62.89 | +0.27 | +0.06 | +26.5 | +0.17 |
+| AEE | 58.92 | 85.34 | 1785.3 | 62.46 | +0.52 | +0.66 | +20.7 | -0.26 |
+| BASE | 58.40 | 84.67 | 1764.6 | 62.71 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B16 | 58.68 | 85.06 | 1781.7 | 62.20 | +0.29 | +0.39 | +17.1 | -0.52 |
+| FIXED_RISK_B16 | 58.53 | 84.95 | 1781.9 | 62.63 | +0.14 | +0.28 | +17.4 | -0.09 |
+
+### K32 / L8
+
+| Method | GQA (%) | POPE F1 (%) | MME | MMBench | ΔGQA | ΔPOPE | ΔMME | ΔMMB |
+|--------|--------:|------------:|----:|--------:|-----:|------:|-----:|-----:|
+| ADAPTIVE_B_ONLY | 57.23 | 84.03 | 1800.3 | 59.71 | +0.14 | +0.20 | +29.4 | -0.43 |
+| AEE | 57.66 | 84.70 | 1809.8 | 61.08 | +0.58 | +0.88 | +38.9 | +0.95 |
+| BASE | 57.08 | 83.82 | 1770.9 | 60.14 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B16 | 57.28 | 84.54 | 1807.7 | 60.31 | +0.20 | +0.72 | +36.9 | +0.17 |
+| FIXED_RISK_B16 | 57.35 | 84.58 | 1807.9 | 61.94 | +0.27 | +0.76 | +37.0 | +1.80 |
+
+### K32 / L10
+
+| Method | GQA (%) | POPE F1 (%) | MME | MMBench | ΔGQA | ΔPOPE | ΔMME | ΔMMB |
+|--------|--------:|------------:|----:|--------:|-----:|------:|-----:|-----:|
+| ADAPTIVE_B_ONLY | 57.97 | 85.29 | 1761.8 | 63.23 | +0.36 | -0.08 | +0.7 | -0.17 |
+| AEE | 57.89 | 85.81 | 1741.4 | 62.71 | +0.27 | +0.45 | -19.7 | -0.69 |
+| BASE | 57.62 | 85.36 | 1761.1 | 63.40 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B16 | 57.96 | 85.80 | 1756.0 | 63.06 | +0.34 | +0.44 | -5.0 | -0.34 |
+| FIXED_RISK_B16 | 57.61 | 85.47 | 1752.6 | 63.32 | -0.01 | +0.11 | -8.4 | -0.09 |
+
+### K32 / L12
+
+| Method | GQA (%) | POPE F1 (%) | MME | MMBench | ΔGQA | ΔPOPE | ΔMME | ΔMMB |
+|--------|--------:|------------:|----:|--------:|-----:|------:|-----:|-----:|
+| ADAPTIVE_B_ONLY | 58.79 | 84.99 | 1773.4 | 63.14 | +0.44 | -0.26 | +21.3 | -0.17 |
+| AEE | 58.70 | 85.62 | 1766.9 | 62.80 | +0.35 | +0.37 | +14.8 | -0.52 |
+| BASE | 58.35 | 85.25 | 1752.1 | 63.32 | +0.00 | +0.00 | +0.0 | +0.00 |
+| FIXED_COVER_B16 | 58.68 | 85.51 | 1764.4 | 63.14 | +0.33 | +0.26 | +12.3 | -0.17 |
+| FIXED_RISK_B16 | 58.55 | 85.39 | 1766.9 | 63.32 | +0.20 | +0.13 | +14.8 | +0.00 |
+
+## AEE focus
+
+| Setting | AEE GQA | BASE | COVER | AEE POPE | AEE MME | AEE MMB | vs BASE | vs COVER |
+|---------|--------:|-----:|------:|---------:|--------:|--------:|---------|----------|
+| K96/L8 | 58.99 | 58.79 | 59.21 | 85.30 | 1785.1 | 63.23 | +0.21/+0.47/+7.6/-0.17 | -0.22/-0.02/-17.9/+0.17 |
+| K64/L8 | 58.92 | 58.40 | 58.68 | 85.34 | 1785.3 | 62.46 | +0.52/+0.66/+20.7/-0.26 | +0.24/+0.28/+3.6/+0.26 |
+| K32/L8 | 57.66 | 57.08 | 57.28 | 84.70 | 1809.8 | 61.08 | +0.58/+0.88/+38.9/+0.95 | +0.38/+0.16/+2.0/+0.77 |
+| K32/L10 | 57.89 | 57.62 | 57.96 | 85.81 | 1741.4 | 62.71 | +0.27/+0.45/-19.7/-0.69 | -0.07/+0.01/-14.7/-0.34 |
+| K32/L12 | 58.70 | 58.35 | 58.68 | 85.62 | 1766.9 | 62.80 | +0.35/+0.37/+14.8/-0.52 | +0.02/+0.11/+2.5/-0.34 |
+
+K96 COVER = B32; others COVER = B16.
+
+## Not done yet
+
+- Latency TTFT/Fixed32/E2E/GPU peak (audit OFF)
+- E013 REPLACE_COVER16 ↔ E014 FIXED_COVER16 token-ID parity
+- AEE per-image b histogram on representative samples
+- Formal AGREE/MODIFY/REJECT latency-gated judgment
