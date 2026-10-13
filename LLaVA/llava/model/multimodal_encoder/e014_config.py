@@ -32,6 +32,12 @@ E014_VARIANTS = (
     "E015_GLOBAL_AEE_FIXED",
     "E015_GLOBAL_AEE_DYNAMIC",
     "E015_SCORE_RECON",
+    # E016: constant-K, fixed-b Stage1 evidence audit
+    "E016_MARGINAL",
+    "E016_PROTECTED",
+    "E016_SPATIAL",
+    "E016_HIER",
+    "E016_CENTERED",
 )
 
 @dataclass(frozen=True)
@@ -49,6 +55,13 @@ class E014Config:
     dual_weight: float = 0.25
     alpha: float = 0.8
     thresholds: tuple = ()
+    # E016 fixed, train-free studies. Only read for E016 variants.
+    e016_block: int = 8
+    e016_protect: int = 128
+    e016_spatial_weight: float = 0.50
+    e016_sigma: float = 4.0
+    e016_mid_layer: int = 8
+    e016_mid_mix: float = 0.30
 
     @classmethod
     def from_env(cls):
@@ -69,6 +82,12 @@ class E014Config:
                 for v in os.environ.get("E015_THRESHOLDS", "").split(",")
                 if v.strip()
             ),
+            e016_block=int(os.environ.get("E016_BLOCK", "8")),
+            e016_protect=int(os.environ.get("E016_PROTECT", "128")),
+            e016_spatial_weight=float(os.environ.get("E016_SPATIAL_WEIGHT", "0.50")),
+            e016_sigma=float(os.environ.get("E016_SIGMA", "4.0")),
+            e016_mid_layer=int(os.environ.get("E016_MID_LAYER", "8")),
+            e016_mid_mix=float(os.environ.get("E016_MID_MIX", "0.30")),
         )
         if c.variant not in E014_VARIANTS:
             raise ValueError("[E014] invalid E014_VARIANT: " + c.variant)
@@ -96,4 +115,18 @@ class E014Config:
                     "[E015] dynamic swap requires 4 strictly increasing "
                     "E015_THRESHOLDS in (0,1), calibrated on separate images"
                 )
+        if c.variant.startswith("E016_"):
+            if not 1 <= c.e016_block <= 32:
+                raise ValueError("[E016] BLOCK must be within [1,32]")
+            if not 0 <= c.e016_protect <= 172 - c.b:
+                raise ValueError("[E016] PROTECT leaves too few removable tokens")
+            if not (math.isfinite(c.e016_spatial_weight)
+                    and 0 <= c.e016_spatial_weight <= 1):
+                raise ValueError("[E016] SPATIAL_WEIGHT must be within [0,1]")
+            if not (math.isfinite(c.e016_sigma) and c.e016_sigma > 0):
+                raise ValueError("[E016] SIGMA must be positive finite")
+            if c.e016_mid_layer < 0:
+                raise ValueError("[E016] MID_LAYER must be nonnegative")
+            if not (math.isfinite(c.e016_mid_mix) and 0 <= c.e016_mid_mix <= 1):
+                raise ValueError("[E016] MID_MIX must be within [0,1]")
         return c

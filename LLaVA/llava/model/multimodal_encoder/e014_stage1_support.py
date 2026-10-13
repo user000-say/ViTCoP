@@ -82,7 +82,7 @@ def _adaptive_budget(gain, risk, attn, cfg):
     return E014_BUDGETS[idx], utility[idx]
 
 
-def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1):
+def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1, middle_attention=None):
     """Return (selected_ids, original_core_ids, added_ids, removed_ids, stats).
 
     AEE/proxy variants return patch IDs in original spatial order;
@@ -101,6 +101,13 @@ def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1):
     core = torch.topk(attn, k=STAGE1_K, largest=True).indices.sort().values
     z = attn.new_zeros((), dtype=torch.float32)
     empty = core[:0]
+
+    # E016 2026-10-13: gated fixed-b Stage1 study. E014/E015 branches unchanged.
+    if cfg.variant.startswith("E016_"):
+        from .e016_stage1_support import e016_choose
+        return e016_choose(
+            tokens, attn, cfg, core_ids=core, middle_attention=middle_attention
+        )
 
     # E015 dynamic COVER / regional AEE (add-only). Old E014 branches unchanged.
     if cfg.variant.startswith("E015_"):

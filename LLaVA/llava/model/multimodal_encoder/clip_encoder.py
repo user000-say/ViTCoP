@@ -1264,9 +1264,21 @@ class CLIPVisionTower(nn.Module):
             # E014-AEE-BEGIN: 172 eligible patches, exchange in CLIP coordinates
             # E014: no transient tokens. Every selected patch is QED-eligible.
             from .e014_stage1_support import e014_choose
+            # E016_HIER reads a second CLS-attention map from the EXISTING
+            # CLIP forward(output_attentions=True). No second encoder call.
+            e016_mid_attention = None
+            if self.e014_cfg.variant == "E016_HIER":
+                mid_layer = self.e014_cfg.e016_mid_layer
+                if mid_layer >= len(image_forward_outs.attentions):
+                    raise RuntimeError("[E016] MID_LAYER outside CLIP attention layers")
+                mid_map = image_forward_outs.attentions[mid_layer]
+                if mid_map is None:
+                    raise RuntimeError("[E016] CLIP middle-layer attentions unavailable")
+                e016_mid_attention = mid_map[:, :, 0, 1:].sum(dim=1)[0]
             selected, original, added, removed, stats = e014_choose(
                 tokens_0, cls_attention_sum[0], self.e014_cfg,
                 request_index=self.e007_request_index,
+                middle_attention=e016_mid_attention,
             )
             hidden_states_filtered = tokens_0.index_select(0, selected).unsqueeze(0)
             final_idx = selected
@@ -1703,6 +1715,29 @@ class CLIPVisionTower(nn.Module):
                 } if self.e014_cfg.variant.startswith('E015_') else {}),
             }, separators=(',', ':')))
         # E014-AEE-END: OFFLINE-only provenance audit
+
+        # E016 coverage + salience audit: OFFLINE only; never enable in TTFT.
+        if (self.e014_enable and self.e014_cfg.audit and
+                os.environ.get("E016_AUDIT_COVERAGE", "False") == "True"):
+            from .e016_stage1_support import coverage_diagnostics
+            diag = coverage_diagnostics(
+                tokens_0, cls_attention_sum[0],
+                self.e014_last["selected_ids"])
+            diag_base = coverage_diagnostics(
+                tokens_0, cls_attention_sum[0],
+                self.e014_last["original_core_ids"])
+            pairs = {
+                key: {"selected": float(value.item()),
+                      "base_core": float(diag_base[key].item()),
+                      "delta": float((value - diag_base[key]).item())}
+                for key, value in diag.items()
+            }
+            payload = dict(
+                request_index=int(self.e007_request_index),
+                variant=self.e014_cfg.variant,
+                budget=int(self.e014_last["stats"]["budget"]),
+                scores=pairs)
+            print("[E016_COVERAGE_JSON] " + json.dumps(payload, separators=(",", ":")))
 
         # E013-P1: auditing is forbidden inside canonical latency measurements.
         if self.e013_enable and self.e013_audit:

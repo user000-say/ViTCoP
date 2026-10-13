@@ -60,6 +60,12 @@ ARMS: dict[str, tuple[str, int, int, int, int]] = {
     "E015_AEE_DYNAMIC_K96": ("E015_AEE_DYNAMIC", 16, 8, 8, 96),
     "E015_GLOBAL_COVER_DYNAMIC_K96": ("E015_GLOBAL_COVER_DYNAMIC", 16, 8, 8, 96),
     "E015_GLOBAL_AEE_DYNAMIC_K96": ("E015_GLOBAL_AEE_DYNAMIC", 16, 8, 8, 96),
+    # E016 Stage1 fixed-b=32 closure (K96 / S=D=L8)
+    "E016_MARGINAL_B32_K96": ("E016_MARGINAL", 32, 8, 8, 96),
+    "E016_PROTECTED_B32_K96": ("E016_PROTECTED", 32, 8, 8, 96),
+    "E016_SPATIAL_B32_K96": ("E016_SPATIAL", 32, 8, 8, 96),
+    "E016_HIER_B32_K96": ("E016_HIER", 32, 8, 8, 96),
+    "E016_CENTERED_B32_K96": ("E016_CENTERED", 32, 8, 8, 96),
 }
 
 SMOKE_K96 = [
@@ -139,6 +145,13 @@ FULL_E015_DYN_COVER_K96 = [
     "E015_GLOBAL_COVER_DYNAMIC_K96",
     "E015_GLOBAL_AEE_DYNAMIC_K96",
 ]
+FULL_E016_STAGE1_K96 = [
+    "E016_MARGINAL_B32_K96",
+    "E016_PROTECTED_B32_K96",
+    "E016_SPATIAL_B32_K96",
+    "E016_HIER_B32_K96",
+    "E016_CENTERED_B32_K96",
+]
 
 
 def apply_arm_env(arm: str) -> dict:
@@ -198,6 +211,13 @@ def apply_arm_env(arm: str) -> dict:
         E015_REF_MODE="MEAN",
         E015_DUAL_WEIGHT="0.25",
         E015_ALPHA="0.8",
+        E016_BLOCK="8",
+        E016_PROTECT="128",
+        E016_SPATIAL_WEIGHT="0.50",
+        E016_SIGMA="4.0",
+        E016_MID_LAYER="8",
+        E016_MID_MIX="0.30",
+        E016_AUDIT_COVERAGE="False",
     )
     # Dynamic arms require frozen thresholds from unlabeled probe calibration.
     thr_path = os.environ.get(

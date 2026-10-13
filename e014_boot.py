@@ -33,6 +33,7 @@ _SYNC_FILES = (
     "LLaVA/llava/model/multimodal_encoder/e015_regional_config.py",
     "LLaVA/llava/model/multimodal_encoder/e015_regional_support.py",
     "LLaVA/llava/model/multimodal_encoder/e015_stage1_support.py",
+    "LLaVA/llava/model/multimodal_encoder/e016_stage1_support.py",
 )
 
 

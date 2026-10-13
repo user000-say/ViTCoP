@@ -1694,6 +1694,8 @@ class LlamaModel(LlamaPreTrainedModel):
                 'E015_GLOBAL_COVER_FIXED', 'E015_GLOBAL_COVER_DYNAMIC',
                 'E015_GLOBAL_AEE_FIXED', 'E015_GLOBAL_AEE_DYNAMIC',
                 'E015_SCORE_RECON',
+                'E016_MARGINAL', 'E016_PROTECTED', 'E016_SPATIAL',
+                'E016_HIER', 'E016_CENTERED',
             } or self.e014_b not in {0, 8, 16, 24, 32}:
                 raise ValueError('[E014] invalid variant or fixed exchange budget')
             if os.environ.get('E014_AUDIT', 'False') == 'True' and (

@@ -17,6 +17,7 @@ from e014_arms import (
     FULL_E015_DYN_COVER_K96,
     FULL_E015_K64,
     FULL_E016_CASCADE,
+    FULL_E016_STAGE1_K96,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -46,6 +47,7 @@ PHASE_ARMS = {
     "full_e015_k64": FULL_E015_K64,
     "full_e015_dyn_cover_k96": FULL_E015_DYN_COVER_K96,
     "full_e016_cascade": FULL_E016_CASCADE,
+    "full_e016_stage1_k96": FULL_E016_STAGE1_K96,
 }
 
 
