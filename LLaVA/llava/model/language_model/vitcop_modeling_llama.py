@@ -1688,6 +1688,12 @@ class LlamaModel(LlamaPreTrainedModel):
                 'GLOBAL_RETAINED_MEAN', 'REGION_MEAN',
                 'REGION_DUAL_SALIENT', 'REGION_DUAL_NEAREST',
                 'REGION_DUAL_CENTER', 'REGION_JOINT',
+                # E015 dynamic COVER / regional AEE
+                'E015_PROBE', 'E015_COVER_FIXED', 'E015_COVER_DYNAMIC',
+                'E015_AEE_FIXED', 'E015_AEE_DYNAMIC',
+                'E015_GLOBAL_COVER_FIXED', 'E015_GLOBAL_COVER_DYNAMIC',
+                'E015_GLOBAL_AEE_FIXED', 'E015_GLOBAL_AEE_DYNAMIC',
+                'E015_SCORE_RECON',
             } or self.e014_b not in {0, 8, 16, 24, 32}:
                 raise ValueError('[E014] invalid variant or fixed exchange budget')
             if os.environ.get('E014_AUDIT', 'False') == 'True' and (

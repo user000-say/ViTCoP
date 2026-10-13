@@ -49,6 +49,17 @@ ARMS: dict[str, tuple[str, int, int, int, int]] = {
     "REGION_DUAL_SALIENT_B16_K64": ("REGION_DUAL_SALIENT", 16, 8, 8, 64),
     # E016 progressive cascade (QED rank frozen at L8): 96→64→32→16
     "CASCADE_L8_96_L10_64_L16_32_L20_16": ("BASE", 0, 8, 8, 16),
+    # E015 dynamic COVER / regional AEE (K96 / S=D=L8, MEAN)
+    "E015_COVER_FIXED_B16_K96": ("E015_COVER_FIXED", 16, 8, 8, 96),
+    "E015_COVER_FIXED_B32_K96": ("E015_COVER_FIXED", 32, 8, 8, 96),
+    "E015_AEE_FIXED_B16_K96": ("E015_AEE_FIXED", 16, 8, 8, 96),
+    "E015_AEE_FIXED_B32_K96": ("E015_AEE_FIXED", 32, 8, 8, 96),
+    "E015_GLOBAL_COVER_FIXED_B16_K96": ("E015_GLOBAL_COVER_FIXED", 16, 8, 8, 96),
+    "E015_GLOBAL_AEE_FIXED_B16_K96": ("E015_GLOBAL_AEE_FIXED", 16, 8, 8, 96),
+    "E015_COVER_DYNAMIC_K96": ("E015_COVER_DYNAMIC", 16, 8, 8, 96),
+    "E015_AEE_DYNAMIC_K96": ("E015_AEE_DYNAMIC", 16, 8, 8, 96),
+    "E015_GLOBAL_COVER_DYNAMIC_K96": ("E015_GLOBAL_COVER_DYNAMIC", 16, 8, 8, 96),
+    "E015_GLOBAL_AEE_DYNAMIC_K96": ("E015_GLOBAL_AEE_DYNAMIC", 16, 8, 8, 96),
 }
 
 SMOKE_K96 = [
@@ -115,6 +126,19 @@ FULL_E015_K64 = [
 FULL_E016_CASCADE = [
     "CASCADE_L8_96_L10_64_L16_32_L20_16",
 ]
+# Handoff H1/H2 core: FIXED + DYNAMIC regional vs GLOBAL controls (K96).
+FULL_E015_DYN_COVER_K96 = [
+    "E015_COVER_FIXED_B16_K96",
+    "E015_COVER_FIXED_B32_K96",
+    "E015_AEE_FIXED_B16_K96",
+    "E015_AEE_FIXED_B32_K96",
+    "E015_GLOBAL_COVER_FIXED_B16_K96",
+    "E015_GLOBAL_AEE_FIXED_B16_K96",
+    "E015_COVER_DYNAMIC_K96",
+    "E015_AEE_DYNAMIC_K96",
+    "E015_GLOBAL_COVER_DYNAMIC_K96",
+    "E015_GLOBAL_AEE_DYNAMIC_K96",
+]
 
 
 def apply_arm_env(arm: str) -> dict:
@@ -170,7 +194,29 @@ def apply_arm_env(arm: str) -> dict:
         E015_JOINT_PROPOSAL="REGION_DUAL_SALIENT",
         E015_JOINT_MEAN_WEIGHT="0.5",
         E015_JOINT_PENALTY="0.0",
+        E015_CELLS="4",
+        E015_REF_MODE="MEAN",
+        E015_DUAL_WEIGHT="0.25",
+        E015_ALPHA="0.8",
     )
+    # Dynamic arms require frozen thresholds from unlabeled probe calibration.
+    thr_path = os.environ.get(
+        "E015_THRESHOLDS_FILE",
+        "/home/xiangyue/ViTCoP/experiments/e015_dyn_cover/state/e015_thresholds.json",
+    )
+    if variant.startswith("E015_") and variant.endswith("_DYNAMIC"):
+        if "E015_THRESHOLDS" not in os.environ or not os.environ["E015_THRESHOLDS"].strip():
+            import json
+            from pathlib import Path
+            p = Path(thr_path)
+            if not p.is_file():
+                raise RuntimeError(
+                    f"[E015] missing thresholds for {arm}; expected {p}"
+                )
+            os.environ["E015_THRESHOLDS"] = json.loads(p.read_text())["E015_THRESHOLDS"]
+    elif "E015_THRESHOLDS" in os.environ and not variant.endswith("_DYNAMIC"):
+        # Avoid leaking dynamic thresholds into fixed arms in a reused shell.
+        os.environ.pop("E015_THRESHOLDS", None)
     if arm.startswith("CASCADE_"):
         os.environ["E016_CASCADE"] = "8:96,10:64,16:32,20:16"
     else:

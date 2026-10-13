@@ -14,6 +14,9 @@ ROOT = REPO / "logs/e014_aee"
 PY = "/home/xiangyue/envs/vitcopreback/vitcopreback/bin/python"
 from e014_arms import (
     ARMS,
+    FULL_E015_DYN_COVER_K96,
+    FULL_E015_K64,
+    FULL_E016_CASCADE,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -40,6 +43,9 @@ PHASE_ARMS = {
     "full_k32": FULL_K32,
     "full_k32_l10": FULL_K32_L10,
     "full_k32_l12": FULL_K32_L12,
+    "full_e015_k64": FULL_E015_K64,
+    "full_e015_dyn_cover_k96": FULL_E015_DYN_COVER_K96,
+    "full_e016_cascade": FULL_E016_CASCADE,
 }
 
 

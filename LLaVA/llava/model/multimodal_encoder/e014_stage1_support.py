@@ -93,14 +93,19 @@ def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1):
     # E015-REGIONAL-DISPATCH-BEGIN
     if cfg.variant in ("GLOBAL_RETAINED_MEAN", "REGION_MEAN", "REGION_DUAL_SALIENT", "REGION_DUAL_NEAREST", "REGION_DUAL_CENTER", "REGION_JOINT"):
         from .e015_regional_config import RegionalConfig
-        from .e015_regional_support import e015_choose
-        return e015_choose(tokens, attn, RegionalConfig.from_e014(cfg), request_index)
+        from .e015_regional_support import e015_choose as e015_regional_choose
+        return e015_regional_choose(tokens, attn, RegionalConfig.from_e014(cfg), request_index)
     # E015-REGIONAL-DISPATCH-END
     _check_inputs(tokens, attn)
     device = tokens.device
     core = torch.topk(attn, k=STAGE1_K, largest=True).indices.sort().values
     z = attn.new_zeros((), dtype=torch.float32)
     empty = core[:0]
+
+    # E015 dynamic COVER / regional AEE (add-only). Old E014 branches unchanged.
+    if cfg.variant.startswith("E015_"):
+        from .e015_stage1_support import e015_choose
+        return e015_choose(tokens, attn, cfg, core_ids=core)
 
     if cfg.variant == "BASE":
         return core, core, empty, empty, dict(

@@ -1694,6 +1694,13 @@ class CLIPVisionTower(nn.Module):
                 'utility': float(st['utility'].item()),
                 'gain_sum': float(st['gain_sum'].item()),
                 'risk_sum': float(st['risk_sum'].item()),
+                **({
+                    'coverage_gap': float(st['coverage_gap'].item()),
+                    'e015_region_cells': int(self.e014_cfg.cells),
+                    'e015_reference_mode': self.e014_cfg.ref_mode,
+                    'e015_dual_weight': float(self.e014_cfg.dual_weight),
+                    'e015_thresholds': list(self.e014_cfg.thresholds),
+                } if self.e014_cfg.variant.startswith('E015_') else {}),
             }, separators=(',', ':')))
         # E014-AEE-END: OFFLINE-only provenance audit
 
