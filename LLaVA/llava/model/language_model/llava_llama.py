@@ -85,6 +85,7 @@ class LlavaLlamaForCausalLM(FastVLlamaForCausalLM, LlavaMetaForCausalLM):
         image_shape = 576,
         token_length_list = [],
         pre_prompt_length_list = [],
+        e006_question_span = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
         if inputs_embeds is None:
@@ -124,6 +125,7 @@ class LlavaLlamaForCausalLM(FastVLlamaForCausalLM, LlavaMetaForCausalLM):
             image_shape = image_shape,
             token_length_list = token_length_list,
             pre_prompt_length_list = pre_prompt_length_list,
+            e006_question_span = e006_question_span,
         )
 
     @torch.no_grad()

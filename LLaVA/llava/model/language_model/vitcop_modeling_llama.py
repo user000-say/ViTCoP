@@ -1395,12 +1395,20 @@ class LlamaModel(LlamaPreTrainedModel):
         self.e014_enable = os.environ.get("E014_ENABLE", "False") == "True"
         self.e014_variant = os.environ.get("E014_VARIANT", "AEE").upper()
         self.e014_b = int(os.environ.get("E014_B", "16"))
+        # E014-R2-BEGIN: small, explicit experiment-only diagnostic switches
+        # Original QED math, SDPA and E012 deferral code are unchanged.
+        self.e014_allow_deferred = os.environ.get("E014_ALLOW_DEFERRED", "False") == "True"
+        self.e014_allow_qattn = os.environ.get("E014_ALLOW_QATTN", "False") == "True"
+        # E014-R2-END
         # E014-AEE-END: independent experiment settings
         self.e006_enable = os.environ.get("E006_ENABLE", "False") == "True"
         self.e006_selector = os.environ.get("E006_SELECTOR", "GLOBAL_KNORM").upper()
         self.e006_layer = int(os.environ.get("E006_LAYER", "12"))
         self.e006_target_k = int(os.environ.get("E006_TARGET_K", "96"))
         self.e006_allow_fallback_64 = os.environ.get("E006_ALLOW_FALLBACK_64", "False") == "True"
+        # E016 cascade: "8:96,10:64,16:32,20:16" = after those layers keep K tokens.
+        # Ranking is frozen at the first layer via QED scores; later steps take prefixes.
+        self.e016_cascade = self._parse_e016_cascade(os.environ.get("E016_CASCADE", ""))
         self.e006_profile = os.environ.get("E006_PROFILE", "False") == "True"
         self.e006_debug = os.environ.get("E006_DEBUG", "False") == "True"
         self.e006_require_explicit_question_span = os.environ.get(
@@ -1485,10 +1493,17 @@ class LlamaModel(LlamaPreTrainedModel):
                 e014_registered_budget_point = (
                     self.e014_enable and self.e006_target_k in {64, 32}
                 )
+                # E016: final K may be 16 when an explicit decreasing cascade is set.
+                e016_registered_budget_point = (
+                    bool(self.e016_cascade)
+                    and self.e006_target_k == int(self.e016_cascade[-1][1])
+                    and self.e006_target_k in {96, 64, 32, 16}
+                )
                 # E014-AEE-END: E014-only final-K32 registration
                 if not (
                     e006_registered_fallback or e007_registered_budget_point
                     or e014_registered_budget_point
+                    or e016_registered_budget_point
                 ):
                     raise ValueError(
                         f"[E006/E007] E006_TARGET_K must be 96, or 64 as either "
@@ -1520,8 +1535,11 @@ class LlamaModel(LlamaPreTrainedModel):
                 raise ValueError(
                     f"[E007] unsupported E007_STAGE1_MODE={self.e007_stage1_mode}"
                 )
-            # E014-AEE-BEGIN: K32 allowed only with E014_ENABLE
-            if self.e006_target_k not in ({96, 64, 32} if self.e014_enable else {96, 64}):
+            # E014-AEE-BEGIN: K32 allowed only with E014_ENABLE; E016 adds final-16 cascade
+            allowed_k = {96, 64, 32} if self.e014_enable else {96, 64}
+            if self.e016_cascade:
+                allowed_k = allowed_k | {16, 32, 64, 96}
+            if self.e006_target_k not in allowed_k:
                 raise ValueError(
                     f"[E007] target K invalid for this registered experiment: "
                     f"{self.e006_target_k}"
@@ -1641,18 +1659,35 @@ class LlamaModel(LlamaPreTrainedModel):
                 raise ValueError('[E014] E007 ORIGINAL_172 required')
             if os.environ.get('E007_SKIP_UNUSED_VIC', 'False') != 'True':
                 raise ValueError('[E014] E007_SKIP_UNUSED_VIC=True required')
-            if self.e006_selector != 'QED':
-                raise ValueError('[E014] E006_SELECTOR must be QED')
-            if self.e006_target_k not in {96, 64, 32}:
-                raise ValueError('[E014] final K must be 96,64,32')
-            if self.e012_delete_layer != self.e010_qed_layer:
-                raise ValueError('[E014] S=D must be frozen')
-            # E014-K32 layer sweep (user 2026-10-10): allow S=D in {8,10,12,14,16}.
-            if self.e010_qed_layer not in {8, 10, 12, 14, 16}:
-                raise ValueError('[E014] S=D layer must be one of 8,10,12,14,16')
+            # E014-R2: Q_ATTN is a bounded diagnostic, never the default.
+            if self.e006_selector != 'QED' and not (
+                self.e014_allow_qattn and self.e006_selector == 'Q_ATTN'
+            ):
+                raise ValueError('[E014] E006_SELECTOR must be QED; Q_ATTN requires E014_ALLOW_QATTN=True')
+            if self.e006_target_k not in {96, 64, 32} and not (
+                self.e016_cascade and self.e006_target_k == int(self.e016_cascade[-1][1])
+                and self.e006_target_k in {16, 32, 64, 96}
+            ):
+                raise ValueError('[E014] final K must be 96,64,32 (or E016 cascade final)')
+            # Keep live K32 layer sweep {8,10,12,14,16}; do NOT shrink to R2's {8,10,12}.
+            # S=D remains frozen for ordinary accuracy; explicit K32 S8D10 diagnostic only.
+            S, D = self.e010_qed_layer, self.e012_delete_layer
+            if S not in {8, 10, 12, 14, 16} or D not in {8, 10, 12, 14, 16}:
+                raise ValueError('[E014] S/D layer must be one of 8,10,12,14,16')
+            if D != S and not (
+                self.e014_allow_deferred and S == 8 and D == 10
+                and self.e006_target_k == 32
+                and self.e014_variant in {'BASE', 'FIXED_COVER'}
+                and self.e006_selector == 'QED'
+            ):
+                raise ValueError('[E014] S!=D requires explicit K32 S8D10 diagnostic with BASE/FIXED_COVER')
             if self.e014_variant not in {
                 'BASE', 'FIXED_COVER', 'FIXED_COVER_PROXY',
-                'FIXED_RISK', 'ADAPTIVE_B_ONLY', 'AEE'
+                'FIXED_RISK', 'ADAPTIVE_B_ONLY', 'AEE',
+                # E015 regional Stage1 exchange variants
+                'GLOBAL_RETAINED_MEAN', 'REGION_MEAN',
+                'REGION_DUAL_SALIENT', 'REGION_DUAL_NEAREST',
+                'REGION_DUAL_CENTER', 'REGION_JOINT',
             } or self.e014_b not in {0, 8, 16, 24, 32}:
                 raise ValueError('[E014] invalid variant or fixed exchange budget')
             if os.environ.get('E014_AUDIT', 'False') == 'True' and (
@@ -1670,9 +1705,11 @@ class LlamaModel(LlamaPreTrainedModel):
                 errors.append("requires E007_SKIP_UNUSED_VIC=True")
             if self.e008_enable or self.e009_enable:
                 errors.append("E008/E009 context variants are unsupported")
-            # E014-AEE-BEGIN: scoped E012 K64/K32 extension
+            # E014-AEE-BEGIN: scoped E012 K64/K32 extension; E016 adds cascade finals
             if self.e006_target_k != 96 and not (
                 self.e014_enable and self.e006_target_k in {64, 32}
+            ) and not (
+                self.e016_cascade and self.e006_target_k == int(self.e016_cascade[-1][1])
             ):
                 errors.append("E012 frozen K96; only E014 additionally permits K64/K32")
             # E014-AEE-END: scoped E012 K64/K32 extension
@@ -1686,6 +1723,19 @@ class LlamaModel(LlamaPreTrainedModel):
                 errors.append("E010_CONTEXT_EXIT_LAYER must be -1")
             if not self.e010_qed_layer <= self.e012_delete_layer < self.config.num_hidden_layers:
                 errors.append("require 0 <= selection layer <= deletion layer < num_layers")
+            if self.e016_cascade:
+                first_l, first_k = self.e016_cascade[0]
+                last_l, last_k = self.e016_cascade[-1]
+                if int(self.e010_qed_layer) != int(first_l):
+                    errors.append("E016 first cascade layer must equal E010_QED_LAYER")
+                if int(self.e012_delete_layer) != int(first_l):
+                    errors.append("E016 requires S=D at first cascade layer (no E012 defer)")
+                if int(self.e006_target_k) != int(last_k):
+                    errors.append("E016 final cascade K must equal E006_TARGET_K")
+                if int(last_l) >= int(self.config.num_hidden_layers):
+                    errors.append("E016 cascade layer exceeds num_hidden_layers")
+                if self.e012_kv_audit or self.e012_diag:
+                    errors.append("E016 cascade forbids E012_KV_AUDIT/DIAG")
             if (self.e012_diag or self.e012_kv_audit) and os.environ.get("COMPUTE_EFFICIENCY", "False") == "True":
                 errors.append("E012_DIAG/E012_KV_AUDIT may not run with COMPUTE_EFFICIENCY")
             if self.e010.collect_local_influence or self.e010.analysis_full576:
@@ -1830,6 +1880,34 @@ class LlamaModel(LlamaPreTrainedModel):
         )
 
     @staticmethod
+    def _parse_e016_cascade(raw: str):
+        """Parse '8:96,10:64,16:32,20:16' → ((8,96),(10,64),...). Empty → ()."""
+        text = (raw or "").strip()
+        if not text:
+            return ()
+        steps = []
+        for part in text.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if ":" not in part:
+                raise ValueError(f"[E016] bad cascade entry {part!r}; want LAYER:K")
+            layer_s, k_s = part.split(":", 1)
+            layer, k = int(layer_s), int(k_s)
+            if layer < 0 or k < 1:
+                raise ValueError(f"[E016] invalid layer/k in {part!r}")
+            steps.append((layer, k))
+        if not steps:
+            return ()
+        layers = [s[0] for s in steps]
+        ks = [s[1] for s in steps]
+        if layers != sorted(layers) or len(set(layers)) != len(layers):
+            raise ValueError("[E016] cascade layers must be strictly increasing")
+        if ks != sorted(ks, reverse=True) or len(set(ks)) != len(ks):
+            raise ValueError("[E016] cascade Ks must be strictly decreasing")
+        return tuple(steps)
+
+    @staticmethod
     def _e006_prune_sequence(hidden_states, position_ids, attention_mask, visual_start, visual_count, selected_local):
         visual_end = int(visual_start) + int(visual_count)
         selected_local = selected_local.to(device=hidden_states.device, dtype=torch.long).unique(sorted=True)
@@ -1962,6 +2040,10 @@ class LlamaModel(LlamaPreTrainedModel):
                 self.e006_prefill_count = 0
                 self.e006_decode_count = 0
                 self.e006_last = {}
+            if self.e016_cascade:
+                self._e016_rank_orig = None
+                self._e016_alive_orig = None
+                self.e016_last = {}
 
         # decoder layers
         all_hidden_states = () if output_hidden_states else None
@@ -3036,11 +3118,29 @@ class LlamaModel(LlamaPreTrainedModel):
                         )[:self.e006_target_k].to(
                             device=score.device, dtype=torch.long
                         ).sort().values
+                    elif self.e016_cascade:
+                        # Freeze a single best-first ranking; first cut uses schedule K0.
+                        first_k = int(self.e016_cascade[0][1])
+                        if first_k > int(side["visual_count"]):
+                            raise RuntimeError(
+                                f"[E016] first K={first_k} > visual_count={side['visual_count']}"
+                            )
+                        rank = torch.topk(
+                            score, k=int(side["visual_count"]), largest=True, sorted=True
+                        ).indices
+                        self._e016_rank_orig = rank.detach().to(dtype=torch.long)
+                        selected_local = rank[:first_k].sort().values
+                        self._e016_alive_orig = selected_local.detach().clone()
                     else:
                         selected_local = torch.topk(
                             score, k=self.e006_target_k, largest=True, sorted=False
                         ).indices.sort().values
-                    if selected_local.unique().numel() != self.e006_target_k:
+                    want_k = (
+                        int(self.e016_cascade[0][1])
+                        if self.e016_cascade
+                        else int(self.e006_target_k)
+                    )
+                    if selected_local.unique().numel() != want_k:
                         raise RuntimeError("[E006] selected visual indices are not unique")
 
                     e008_would_select_transient = None
@@ -3100,6 +3200,7 @@ class LlamaModel(LlamaPreTrainedModel):
                     e012_defer = (
                         self.e012_enable
                         and self.e012_delete_layer > self.e010_qed_layer
+                        and not self.e016_cascade
                     )
                     if e012_defer:
                         if e012_pending_selected is not None:
@@ -3141,11 +3242,19 @@ class LlamaModel(LlamaPreTrainedModel):
                         }
 
                     if not e012_defer:
-                        self.stage2_visual_token_num = int(self.e006_target_k)
+                        out_k = (
+                            int(self.e016_cascade[0][1])
+                            if self.e016_cascade
+                            else int(self.e006_target_k)
+                        )
+                        self.stage2_visual_token_num = out_k
                         self.stage2_token_sources = None
-                        self.e001_last_stage2_visual_tokens = int(self.e006_target_k)
-                        if self.stage3_policy == "skip":
-                            self.e001_last_final_visual_tokens = int(self.e006_target_k)
+                        self.e001_last_stage2_visual_tokens = out_k
+                        if self.stage3_policy == "skip" and not self.e016_cascade:
+                            self.e001_last_final_visual_tokens = out_k
+                        if self.e016_cascade:
+                            image_shape = out_k
+                            v_token_num = out_k
 
                     # Keep diagnostics on-device in normal runs so canonical
                     # outer wall-clock TTFT is not polluted by .item()/.cpu()
@@ -3445,6 +3554,79 @@ class LlamaModel(LlamaPreTrainedModel):
                     "selector_calls": int(self.e006_prefill_count),
                 }
                 e012_pending_selected = None
+
+            # E016 cascade follow-up cuts (after layers 10/16/20/...): prefix of
+            # the frozen QED ranking among currently alive original locals.
+            if (
+                self.e016_cascade
+                and self.e006_enable
+                and seq_length > 1
+                and decoder_layer.self_attn.layer_idx != self.e010_qed_layer
+            ):
+                layer_idx_now = int(decoder_layer.self_attn.layer_idx)
+                for sched_layer, sched_k in self.e016_cascade[1:]:
+                    if layer_idx_now != int(sched_layer):
+                        continue
+                    rank = getattr(self, "_e016_rank_orig", None)
+                    alive = getattr(self, "_e016_alive_orig", None)
+                    if rank is None or alive is None:
+                        raise RuntimeError("[E016] cascade ranking missing before follow-up cut")
+                    alive_list = alive.detach().tolist()
+                    alive_set = set(alive_list)
+                    keep_orig = []
+                    for idx in rank.detach().tolist():
+                        if idx in alive_set:
+                            keep_orig.append(int(idx))
+                        if len(keep_orig) >= int(sched_k):
+                            break
+                    if len(keep_orig) != int(sched_k):
+                        raise RuntimeError(
+                            f"[E016] could not gather K={sched_k} from alive={len(alive_list)}"
+                        )
+                    # Current visual positions are spatial-sorted alive originals.
+                    alive_sorted = sorted(alive_list)
+                    pos = {orig: i for i, orig in enumerate(alive_sorted)}
+                    selected_curr = torch.tensor(
+                        [pos[o] for o in keep_orig],
+                        device=layer_outputs[0].device,
+                        dtype=torch.long,
+                    )
+                    visual_count_now = int(image_shape)
+                    if visual_count_now != len(alive_sorted):
+                        raise RuntimeError(
+                            f"[E016] image_shape={visual_count_now} != alive={len(alive_sorted)}"
+                        )
+                    pruned_hidden, position_ids, attention_mask, _ = self._e006_prune_sequence(
+                        layer_outputs[0],
+                        position_ids,
+                        attention_mask,
+                        int(v_token_start),
+                        visual_count_now,
+                        selected_curr,
+                    )
+                    if cluster_labels is not None and cluster_labels.dim() == 2:
+                        cluster_labels = cluster_labels.index_select(
+                            1, selected_curr.to(device=cluster_labels.device)
+                        )
+                    image_shape = int(sched_k)
+                    v_token_num = int(sched_k)
+                    self._e010_visual_removed = int(getattr(self, "_e010_visual_removed", 0)) + (
+                        visual_count_now - image_shape
+                    )
+                    self._e016_alive_orig = torch.tensor(
+                        keep_orig, device=rank.device, dtype=torch.long
+                    ).sort().values
+                    self.stage2_visual_token_num = image_shape
+                    self.e001_last_stage2_visual_tokens = image_shape
+                    if int(sched_k) == int(self.e006_target_k) and self.stage3_policy == "skip":
+                        self.e001_last_final_visual_tokens = image_shape
+                    layer_outputs = (pruned_hidden,) + tuple(layer_outputs[1:])
+                    self.e016_last = {
+                        "layer": layer_idx_now,
+                        "keep": int(sched_k),
+                        "alive_before": visual_count_now,
+                    }
+                    break
 
             hidden_states = layer_outputs[0]
 

@@ -90,6 +90,12 @@ def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1):
     All returned token IDs refer to CLIP patch coordinates [0,T).
     stats contain a Python int and 0-D device tensors, not implicit CPU syncs.
     """
+    # E015-REGIONAL-DISPATCH-BEGIN
+    if cfg.variant in ("GLOBAL_RETAINED_MEAN", "REGION_MEAN", "REGION_DUAL_SALIENT", "REGION_DUAL_NEAREST", "REGION_DUAL_CENTER", "REGION_JOINT"):
+        from .e015_regional_config import RegionalConfig
+        from .e015_regional_support import e015_choose
+        return e015_choose(tokens, attn, RegionalConfig.from_e014(cfg), request_index)
+    # E015-REGIONAL-DISPATCH-END
     _check_inputs(tokens, attn)
     device = tokens.device
     core = torch.topk(attn, k=STAGE1_K, largest=True).indices.sort().values

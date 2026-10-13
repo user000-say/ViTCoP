@@ -1882,6 +1882,9 @@ class CLIPVisionTower(nn.Module):
                 image_features.append(image_feature)
         elif self.use_vitcop:
             image_features, cluster_labels = self.visual_tokens_spatial_similarity(images)
+            # Match non-ViTCoP path: projector weights are fp16; Stage1 may
+            # promote features to fp32 under some loaders (device_map=auto).
+            image_features = image_features.to(dtype=images.dtype)
             if image_features.shape[0] > 1:
                 offsets = (torch.arange(image_features.shape[0],
                            device=cluster_labels.device)

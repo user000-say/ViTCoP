@@ -8,8 +8,18 @@ import os
 
 E014_BUDGETS = (0, 8, 16, 24, 32)
 E014_VARIANTS = (
-    "BASE", "FIXED_COVER", "FIXED_COVER_PROXY",
-    "FIXED_RISK", "ADAPTIVE_B_ONLY", "AEE",
+    'BASE',
+    'FIXED_COVER',
+    'FIXED_COVER_PROXY',
+    'FIXED_RISK',
+    'ADAPTIVE_B_ONLY',
+    'AEE',
+    'GLOBAL_RETAINED_MEAN',
+    'REGION_MEAN',
+    'REGION_DUAL_SALIENT',
+    'REGION_DUAL_NEAREST',
+    'REGION_DUAL_CENTER',
+    'REGION_JOINT',
 )
 
 @dataclass(frozen=True)
