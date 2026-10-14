@@ -66,7 +66,24 @@ ARMS: dict[str, tuple[str, int, int, int, int]] = {
     "E016_SPATIAL_B32_K96": ("E016_SPATIAL", 32, 8, 8, 96),
     "E016_HIER_B32_K96": ("E016_HIER", 32, 8, 8, 96),
     "E016_CENTERED_B32_K96": ("E016_CENTERED", 32, 8, 8, 96),
+    # E016_HIER follow-up: K64 × QED/delete layer {8,10,12}
+    "E016_HIER_B32_K64_L8": ("E016_HIER", 32, 8, 8, 64),
+    "E016_HIER_B32_K64_L10": ("E016_HIER", 32, 10, 10, 64),
+    "E016_HIER_B32_K64_L12": ("E016_HIER", 32, 12, 12, 64),
 }
+
+# Layer sweep requested 2026-10-14:
+#   K96 → L{8,10};  K64/K32 → L{8,10,12,14,16}
+# Methods: HIER b32 + COVER32 + AEE (matched Stage1 comparators).
+def _add_layer_sweep_arms() -> None:
+    for k, layers in ((96, (8, 10)), (64, (8, 10, 12, 14, 16)), (32, (8, 10, 12, 14, 16))):
+        for layer in layers:
+            ARMS[f"E016_HIER_B32_K{k}_L{layer}"] = ("E016_HIER", 32, layer, layer, k)
+            ARMS[f"FIXED_COVER_B32_K{k}_L{layer}"] = ("FIXED_COVER", 32, layer, layer, k)
+            ARMS[f"AEE_K{k}_L{layer}"] = ("AEE", 16, layer, layer, k)
+
+
+_add_layer_sweep_arms()
 
 SMOKE_K96 = [
     "BASE_K96",
@@ -151,6 +168,44 @@ FULL_E016_STAGE1_K96 = [
     "E016_SPATIAL_B32_K96",
     "E016_HIER_B32_K96",
     "E016_CENTERED_B32_K96",
+]
+FULL_E016_HIER_K64_LAYER = [
+    "E016_HIER_B32_K64_L8",
+    "E016_HIER_B32_K64_L10",
+    "E016_HIER_B32_K64_L12",
+]
+# K64 matched Stage1 set for extra-benchmark sweep (COVER/AEE + HIER layers).
+FULL_E016_K64_EXTRA = [
+    "BASE_K64",
+    "FIXED_COVER_B16_K64",
+    "FIXED_COVER_B32_K64",
+    "AEE_K64",
+    "E016_HIER_B32_K64_L8",
+    "E016_HIER_B32_K64_L10",
+    "E016_HIER_B32_K64_L12",
+]
+FULL_E016_LAYER_SWEEP = [
+    # K96: L8/L10 only
+    *[f"{m}_K96_L{L}" for L in (8, 10)
+      for m in ("E016_HIER_B32", "FIXED_COVER_B32", "AEE")],
+    # K64 / K32: L8..L16
+    *[f"{m}_K{k}_L{L}" for k in (64, 32) for L in (8, 10, 12, 14, 16)
+      for m in ("E016_HIER_B32", "FIXED_COVER_B32", "AEE")],
+]
+
+# E018 Stage2 continuation: fixed same-W K32 schedules (W=2284).
+# Keep S=D=8 so legacy E014 guards stay green; real prune schedule is E018_EVENTS only.
+ARMS.update({
+    "E018_COVER_ONE32": ("FIXED_COVER", 32, 8, 8, 32),  # E018_EVENTS=8:32
+    "E018_COVER_TWO32": ("FIXED_COVER", 32, 8, 8, 32),  # E018_EVENTS=4:102,12:32
+    "E018_BASE_ONE32": ("BASE", 0, 8, 8, 32),
+    "E018_BASE_TWO32": ("BASE", 0, 8, 8, 32),
+})
+FULL_E018_K32_STATIC = [
+    "E018_COVER_ONE32",
+    "E018_COVER_TWO32",
+    "E018_BASE_ONE32",
+    "E018_BASE_TWO32",
 ]
 
 
@@ -242,6 +297,33 @@ def apply_arm_env(arm: str) -> dict:
     else:
         # Prevent accidental inheritance from a prior cascade job in the same shell.
         os.environ["E016_CASCADE"] = ""
+    if arm.startswith("E018_"):
+        # Isolated Stage2 continuation path; keep Stage1 via E014_* above.
+        if arm.endswith("_ONE32"):
+            events = "8:32"
+        elif arm.endswith("_TWO32"):
+            events = "4:102,12:32"
+        else:
+            raise ValueError(f"Unknown E018 arm schedule: {arm}")
+        os.environ.update(
+            E018_ENABLE="True",
+            E018_MODE="STATIC",
+            E018_EVENTS=events,
+            E018_SELECTOR="Q_ATTN",
+            E018_CACHE_POLICY="layer_local",
+            E018_LAMBDA="0",
+            E018_MAX_WORK="0",
+            E018_TRACE="",
+            E018_CONTROLLER="",
+            E007_TOKEN_AUDIT="False",
+            E014_AUDIT="False",
+            E012_DIAG="False",
+            E012_KV_AUDIT="False",
+            E006_PROFILE="False",
+            COMPUTE_EFFICIENCY="False",
+        )
+    else:
+        os.environ["E018_ENABLE"] = "False"
     return {
         "arm": arm,
         "variant": variant,

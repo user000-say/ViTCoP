@@ -1907,6 +1907,15 @@ class CLIPVisionTower(nn.Module):
                 f'input_visual_tokens={T}'
             )
 
+        # E018-BEGIN: original Stage1 output order and values remain unchanged.
+        if os.environ.get("E018_ENABLE", "False") == "True":
+            if not self.e014_enable or final_idx is None:
+                raise RuntimeError("E018 requires E014 ordered patch provenance")
+            from llava.model.e018_stage2_support import publish_stage1
+            publish_stage1(final_idx, self.e014_last["original_core_ids"],
+                cls_attention_sum[0], self.e014_cfg.variant, self.e014_last["stats"]["budget"])
+        # E018-END
+
         return hidden_states_filtered, clustered_labels
 
     # ═══════════════════════════════════════════════════════════════
@@ -1914,6 +1923,13 @@ class CLIPVisionTower(nn.Module):
     # ═══════════════════════════════════════════════════════════════
     @torch.no_grad()
     def forward(self, images):
+        # E018-BEGIN: provenance transport supports one request/image only.
+        if os.environ.get("E018_ENABLE", "False") == "True":
+            from llava.model.e018_stage2_support import clear_stage1
+            clear_stage1()
+            if not torch.is_tensor(images) or images.shape[0] != 1 or not self.use_vitcop:
+                raise ValueError("E018 CLIP adapter requires one tensor image and USE_VITCOP=True")
+        # E018-END
         if type(images) is list:
             image_features = []
             for image in images:

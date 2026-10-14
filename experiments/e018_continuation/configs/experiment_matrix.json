@@ -1,0 +1,28 @@
+{
+  "status": "planned_experiments_not_results",
+  "layer_semantics": "zero_based_post_complete_block",
+  "phase1_static": [
+    {"name": "ONE32_L8", "events": "8:32", "mode": "STATIC", "visual_work": 2284},
+    {"name": "TWO32_L4_L12", "events": "4:102,12:32", "mode": "STATIC", "visual_work": 2284},
+    {"name": "ONE64_L8", "events": "8:64", "mode": "STATIC", "visual_work": 3020},
+    {"name": "TWO64_L4_L12", "events": "4:118,12:64", "mode": "STATIC", "visual_work": 3020}
+  ],
+  "phase2_continuation": {
+    "events_candidate": "4:80,12:32",
+    "initial_n": 172,
+    "all_retire_work": 2108,
+    "first_target_mean_work": 2284,
+    "selector": "Q_ATTN",
+    "cache_policies": ["layer_local", "scrub_all"],
+    "controls": ["fixed_schedule", "PROXY_mass_threshold", "ONLINE_full", "ONLINE_no_stage1", "ONLINE_no_history", "ONLINE_mass_only"],
+    "lambda_rule": "choose using calibration mean observed work and measured latency; freeze before test",
+    "controller": null
+  },
+  "do_not_claim": [
+    "visual_work_is_exact_FLOPs_or_TTFT",
+    "online_4_102_12_32_delays_are_still_work_2284",
+    "NLL_or_first_token_correct_is_official_task_accuracy",
+    "layer_local_retirement_proves_absorption",
+    "FIXED_RISK16_equals_unprovided_latest_GLOBAL_AEE_FIXED16"
+  ]
+}

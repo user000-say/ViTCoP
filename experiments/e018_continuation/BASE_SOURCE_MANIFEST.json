@@ -1,0 +1,18 @@
+{
+  "llava/model/language_model/vitcop_modeling_llama.py": {
+    "before": "d1a41b5a1faa6ed89051684a91641e150d7b5a4e2997fde0e719c41b06763827",
+    "after": "aa58c2d62dcb475e32d32e6c35aeccbdcd4e8c8426ed19cf05c50f5d2ce34598"
+  },
+  "llava/model/multimodal_encoder/clip_encoder.py": {
+    "before": "a32c25b07d9e1d4cca2d54c5794585fad9b1e87a03ed95c8d1380b958b37c4af",
+    "after": "73f2533c5ccfd4e7af22543db31e6805a0424288e19887febf39adc6225ffd34"
+  },
+  "llava/model/multimodal_encoder/e014_config.py": {
+    "before": "e959074106b6185b332ddc60404bc3eb9af1d589fdd360f6aea71eee2880cdfb",
+    "after": "e959074106b6185b332ddc60404bc3eb9af1d589fdd360f6aea71eee2880cdfb"
+  },
+  "llava/model/multimodal_encoder/e014_stage1_support.py": {
+    "before": "25e1bfcc5eea96a5a3104c4c83b72e8fd843891ae5419c06872b7b92b8d4c052",
+    "after": "25e1bfcc5eea96a5a3104c4c83b72e8fd843891ae5419c06872b7b92b8d4c052"
+  }
+}

@@ -1,0 +1,1549 @@
+diff --git a/E014_CURSOR_HANDOFF.md b/E014_CURSOR_HANDOFF.md
+new file mode 100644
+--- /dev/null
++++ b/E014_CURSOR_HANDOFF.md
+@@ -0,0 +1,287 @@
++# E014-AEE — Cursor / Experiment Agent Final Handoff
++**Issued:** 2026-10-10
++**Owner:** ViTCoP QED Code Agent
++**State:** code integrated against the two fully uploaded E013 sources; CPU static/unit tested; server/GPU/four-full-N pending.
++
++## 0. Scientific decision
++
++Implement **image-adaptive evidence exchange under a fixed Stage1 visual budget of 172**, NOT
++an E013 EXTRA transient-context mechanism. Historical E013 suggested COVER16 replacement improves
++performance against Top172, but does not prove the optimal exchange count varies per image.
++E014 is explicitly a falsifiable hypothesis about *how many and which original Core tokens to
++exchange*. Preserve these propositions separately.
++
++Prior draft bug **corrected**: returning 172-b permanent tokens + b transient tokens violates the
++intended experiment: only the first 172-b would be eligible final evidence. E014 returns **172
++eligible selected patches**, always. Nothing is appended as context and cluster labels remain
++all nonnegative in the normal QED branch.
++
++The gain/risk equation is a **proxy**, not a derived exact marginal set utility. Keep its limitations
++in the paper notes. Do not claim it measures causal information loss or is automatically calibrated.
++
++## 1. Immutable reference / installation
++
++The uploaded E013 snapshots are complete, and modifications were made against their exact text.
++
++| E013 file (uploaded) | Expected server tree path | SHA256 |
++|---|---|---|
++| clip_encoder_e013.py | `llava/model/multimodal_encoder/clip_encoder.py` | `b89208803528019460a47100fb5984e178c85cf12ca5f8ddb2981fda420ea73c` |
++| vitcop_modeling_llama_e013.py | `llava/model/language_model/vitcop_modeling_llama.py` | `6a4f4c31334fa73f9e99395c93a6bff64e60c8b7b93f951f8e54c8c804651896` |
++
++**STOP if current files are not those revisions**; produce a mapping/reconciliation diff rather than
++force-applying. Do not overwrite a diverged server working tree. Before changing anything:
++- `git status --short`, `git rev-parse HEAD`, `sha256sum` the actual two code paths.
++- Back up or make a named commit for E013.
++- `git apply --check E013_to_E014.patch`, then `git apply E013_to_E014.patch`.
++- `git diff --check` and inspect the complete patch.
++- Verify the working server really imports these exact modules; inspect sys.modules path and VLM
++  initialization, not only file names. Wrong import path invalidates all results.
++
++**External runtime dependencies not uploaded in the current message:**
++`e013_stage1_support.py` (exact E013 COVER baseline), `e010_runtime_support.py`,
++other original ViTCoP/LLaVA support modules, weights, and benchmark eval scripts.
++They remain the server repository's responsibility. Do not reconstruct them from memory.
++This bundle is not a self-contained LLaVA repository.
++
++## 2. Source changes in this deliverable
++
++A. **`llava/model/multimodal_encoder/e014_config.py`** (new)
++- Parse/validate OFF-by-default `E014_ENABLE`.
++- E014_VARIANT = BASE / FIXED_COVER / FIXED_COVER_PROXY / FIXED_RISK /
++  ADAPTIVE_B_ONLY / AEE.
++- Fixed E014_B in {0,8,16,24,32}, E014_LAMBDA >= 0, E014_PENALTY >= 0,
++  E014_AUDIT, E014_SEED. No trainable controller.
++
++B. **`llava/model/multimodal_encoder/e014_stage1_support.py`** (new)
++- Top172 raw CLIP CLS-attention Core, complement residual.
++- COVER candidate proxy `G_i=a_i(1-max(0,cos(x_i,mu_all)))`.
++- Eviction proxy `R_j=a_j(1-max(0,max_{k!=j}cos(x_j,x_k)))`. Self diagonal
++  strictly masked, not simply subtracted.
++- Choose b from {0,8,16,24,32} via prefix-sum utility.
++- Exchange exactly b IDs; sorted spatial order; no duplicated final tokens.
++- `FIXED_COVER` calls **the original e013_choose(...,REPLACE,COVER,...)**
++  and is therefore the benchmark fidelity anchor. This original helper must exist on server.
++- `FIXED_COVER_PROXY` is a provisional approximation, never silently substituted for E013.
++- AEE b selection uses `.item()` once (GPU->CPU sync) to materialize the dynamic length;
++  report that overhead instead of claiming free dynamic selection.
++
++C. **`llava/model/multimodal_encoder/clip_encoder.py`** (patched complete 1,989 lines)
++- E014 branch before E013 in the budget, selection, and Stage1 output construction.
++- Exactly 172 Stage1 visual embeddings. `final_idx` represents newly exchanged patch IDs.
++- E014 provenance in `self.e014_last`: original, selected, added, removed, stats.
++- `last_dynamic_info` includes E014 budget/variant/visual count.
++- `E014_AUDIT=True` emits `[E014_STAGE1_JSON]` with actual IDs and score sums.
++  OFF in latency tests. Existing E013 audit/branches left untouched.
++- Requires E007 ORIGINAL_172 and VIC bypass, E010/E012, QED, no legacy Stage1 mods,
++  excludes E008/E009/E013 simultaneous use.
++
++D. **`llava/model/language_model/vitcop_modeling_llama.py`** (patched complete 4,614 lines)
++- E014-scoped relaxation: K96/K64/K32 permitted only when E014_ENABLE=True.
++  Original E007/E012 experiment acceptance rules otherwise unchanged.
++- E014 guard freezes QED, S=D=L8 or L12, no E013/E009/E008 context.
++- E014 static provenance appears in `e006_last`; **dynamic b / original patch IDs
++  reside in the vision tower and `[E014_STAGE1_JSON]`**, not in LlamaModel.
++  Do not invent cross-module fields that the current cluster-label transport cannot carry.
++- Main SDPA, QED score path, physical pruning, decode attention masks, DynamicCache
++  and S/D topology **not deliberately modified**.
++
++E. `scripts/run_e014_k96.sh`, `run_e014_k64.sh`, `run_e014_k32.sh`,
++   `e014_env.sh`, `run_e014_suite.py`, `analyze_e014.py`, `tests/test_e014_selector.py`.
++- Wrappers set frozen flags but invoke YOUR REAL evaluator. No fabricated benchmark paths.
++- Suite supports 8 GPUs, JSON command templates, per-run JSONL manifest and strict full-N counts.
++- Analyzer reports B distribution and normalized same-K macro metrics.
++
++## 3. Required P0 tests — execute before any full accuracy
++
++**P0a: local/static (already PASS with uploaded source)**
++- `python -m compileall llava/model/multimodal_encoder/clip_encoder.py llava/model/multimodal_encoder/e014_config.py llava/model/multimodal_encoder/e014_stage1_support.py llava/model/language_model/vitcop_modeling_llama.py`
++- `python -m unittest discover -s tests -p 'test_e014_selector.py' -v`
++- Twelve synthetic CPU tests currently PASS: cardinality, exchange sets, controls,
++  adaptive choice, self-diagonal redundancy, config validation.
++
++**P0b: legacy-off identity (server must verify)**
++- E014_ENABLE=False: run one E007/E010/E012 K96 S=D=L8 image with frozen baseline env.
++- Compare Stage1 IDs, QED selected IDs, final logits (within expected backend tolerance),
++  decode1/decode2 KV and output against E013 source without this patch.
++- Confirm E013 REPLACE_COVER16 can still run when E013_ENABLE=True, E014_ENABLE=False.
++- This is stronger than a compile check: confirm project import path really uses patched code.
++
++**P0c: exact E013 comparator (critical)**
++- Run old E013:
++  `E013_ENABLE=True,E013_VARIANT=REPLACE,E013_PICK=COVER,E013_B=16`.
++- Run new E014:
++  `E014_ENABLE=True,E014_VARIANT=FIXED_COVER,E014_B=16`
++  and identical model, image, question, CLIP geometry and S=D settings.
++- Compare all original/selected/added/removed IDs, Stage1 feature tensor, final QED
++  survivor IDs, logits and 4 metrics on same sample. If nonidentical, STOP and investigate.
++- Do not substitute `FIXED_COVER_PROXY`: it may follow a related formula but the exact
++  uploaded E013 helper is absent from this package.
++
++**P0d: GPU smoke on real model**
++- K96, L8: run BASE / FIXED_COVER16 / FIXED_RISK16 / ADAPTIVE_B_ONLY / AEE.
++- E014_AUDIT=True and E012_KV_AUDIT=True ONLY here; COMPUTE_EFFICIENCY=False.
++- Check Stage1 in 576, out 172, 172 eligibility, IDs within 0..575, unique,
++  exactly b added and b removed, no overlaps/duplicates.
++- Check QED selector calls =1 on prefill, 0 on decode; physical length K96
++  post-layer L8; post-prune attention mask/cache consistent for decode1/decode2.
++- K64 and K32: separate GPU smoke (newly relaxed gates, not previously validated)
++  with the SAME invariants, no silent fallback to K96.
++- Audit: `E014_AUDIT=True` prints JSON **only for offline inference**.
++  AEE b histogram should be measured, not presumed non-degenerate.
++- Run with variable image aspect/content cases and benchmark real samples.
++
++If a smoke gate fails, diagnose and patch only the isolated E014 branch, rerun OFF identity,
++and log the failure. Do not change historical E013/E012 reference semantics.
++Small prototype failures should trigger diagnosis, not terminate the half-day/day experiment
++plan without investigating actionable alternatives.
++
++## 4. P1 experiment matrix — four FULL benchmarks, not a small panel
++
++Model/protocol MUST match E013:
++- LLaVA-1.5-7B, FP16, SDPA,
++- frozen image preprocessing, generation options, question span,
++- Stage1=172, QED final-K=96 initially, S=D=L8 primary (L12 bridge if useful),
++- E013/E008/E009 off during E014 comparisons,
++- no training, no added decoder layers, no altered QED formula.
++
++**K96 primary:** four full tasks *every arm*:
++- BASE
++- FIXED_COVER B=0/8/16/24/32 (original E013 helper, exact identity gate)
++- FIXED_RISK B=16
++- ADAPTIVE_B_ONLY
++- AEE
++
++This is 9 method-budget points × 4 full benchmarks = 36 evaluation jobs,
++parallelizable across 8 GPUs. Budget/variant consistency and full N are part of
++acceptance, not optional later paperwork. Do not cut to tiny panel after smoke.
++
++**K64/K32 stress-tests (only after K96 GPU proof):**
++- BASE
++- FIXED_COVER B=16 or K96 best-fixed-b pre-registered ahead of time
++- FIXED_RISK same B
++- ADAPTIVE_B_ONLY
++- AEE
++= 5 × 4 × 2 = 40 full jobs. The provided scheduler implements these job plans.
++
++**Offline diagnosis (separate from timed/accuracy matrix):**
++- Collect Stage1 JSON audit on representative samples across all four benchmarks.
++- Histogram b; compare b across image/task characteristics and correctness changes.
++- Paired per-example comparison AEE vs best fixed; confidence intervals/bootstrap.
++- Evaluate `lambda` / `penalty` sensitivity on DEV/PILOT only; freeze before FULL test.
++- Optional oracle-best-b is **offline diagnostic** requiring the same example under
++  all fixed-b arms; never present in-sample oracle as a deployable method.
++- Preserve negative runs. Do not optimize only headline macro and discard MME drops.
++
++Use previously reported E013 full-split counts only if your benchmark commands
++are the same: GQA=12578, POPE=9000, MME=2374, MMBench=4329.
++See `configs/expected_n_e013_protocol.json`; reject silently filtered evaluations.
++
++Benchmark metrics:
++- GQA full accuracy
++- POPE full F1 (check split/aggregation protocol)
++- MME official score
++- MMBench full official score
++
++Also measure:
++- Stage1 selector overhead, CLIP & prefill, TTFT, Fixed32/E2E,
++- GPU peak memory, token trajectory, b distribution, and compute config.
++- Compare *paired, identical protocol*, no audit hooks in timing.
++- E014 changes Stage1 composition, **not** the Stage1 token count;
++  therefore improved speed is NOT guaranteed.
++
++## 5. 8-GPU full-launch contract
++
++Prepare `commands.json` with one **actual verified full-eval command** for each
++GQA/POPE/MME/MMBench and `expected_n.json` recording the true test N for those
++specific split/filter settings. Never guess exact N. Each command receives environment
++from the per-K wrapper and writes to `{out_dir}`. The existing evaluator/postprocessor
++must write `{out_dir}/eval_summary.json` with `n` and `score`.
++
++```bash
++python scripts/run_e014_suite.py --plan k96 --dry-run
++python scripts/run_e014_suite.py --plan k96 \
++  --cwd /real/vitcop/repo --gpus 0,1,2,3,4,5,6,7 \
++  --commands-json /abs/commands.json \
++  --expected-n-json /abs/expected_n.json \
++  --out /abs/logs/e014/k96
++```
++
++Manifest statuses:
++- `VERIFIED_FULL_N`: command success and N exact
++- `FAILED_RUN`: nonzero process
++- `FAILED_FULL_N`: missing/mismatched n
++- `FAILED_DRIVER`: scheduler/command parse exception
++- `UNVERIFIED_SMOKE`: --allow-unverified; NOT a full result
++
++After K96 gates, launch K64 and K32 in separate plans. Max parallel jobs=number
++of unique GPU IDs; tasks/log paths never share destination folders. Preserve full
++stdout/stderr (in `run.log`) and evaluator raw outputs.
++
++Any `n` mismatch INVALIDATES that arm's accuracy row; do not silently rescale
++or truncate to fake completeness.
++
++## 6. Must-return artifacts / analysis
++
++Return a single structured handoff `E014_RETURN.md` or JSON with:
++- git SHA, source file SHA, actual import path, model SHA/dtype/backend, GPU type,
++  benchmark versions, exact eval entrypoints/configs/seeds.
++- CPU tests result and OFF identity.
++- E013 REPLACE_COVER16 ↔ E014 FIXED_COVER16 token-ID + output parity.
++- Per-method/per-b/full-benchmark N and primary metric.
++- Per-method/per-b wall time, Stage1 latency, TTFT, Fixed32, E2E, GPU peak.
++- K96 then K64/K32 KV/cache/selector smoke traces.
++- AEE per-image b hist + utility summaries, lambda fixed values.
++- Pairwise comparison vs **best fixed** (not only Top172), uncertainty and failure modes.
++- Complete failed jobs/logs, not only the winners.
++- A judgment: AGREE / MODIFY / REJECT E014 adoption with measured Pareto evidence.
++
++Acceptance:
++1. Correct 172 eligible Stage1 and K96/64/32 physical final counts.
++2. E013 baselines fully reproducible; no history regression.
++3. Four full N for every named metric row.
++4. AEE > strongest same-K fixed COVER comparator in reproducible, meaningful ACC
++   **without violating the agreed latency/TTFT gate**. Treat <15% slowdown as an
++   exploratory engineering tolerance from historical discussions, NOT automatic
++   evidence of speedup; prioritize a Pareto improvement if possible.
++5. Dynamic b has credible non-degenerate per-image behavior; otherwise label it
++   a tuned fixed heuristic, not a successful adaptive controller.
++
++## 7. Known limitations and failure watchlist
++
++1. **Exact E013 COVER scoring unavailable here.** FIXED_COVER executes the server's
++   original helper; the proxy score used by AEE must be audited for ID/ranking differences.
++2. `G` and `R` may live on different distributions. Default lambda=1 is not
++   academically validated. b can collapse to 0 or 32; report it.
++3. Approximate independent gain/risk is NOT the exact swap utility
++   `F(S-j+i)-F(S)`. Avoid falsely presenting it as such in paper.
++4. Computing 172×172 cosine matrix and extracting adaptive integer b may
++   add measurable latency. Add timer instrumentation; do not hide extra operations
++   under the Stage1 call.
++5. The two given sources reference other runtime files; GPU execution and module
++   import cannot be verified offline in this environment.
++6. K32/K64 paths relax **only** E014 experiment guards. E012 topology and masks
++   require real server smoke: compile success does not prove correct prefill/decode.
++7. E014 AEE and exact E013 COVER might differ for reasons OTHER than eviction:
++   candidate score approximation must be explicitly contrasted by FIXED_COVER_PROXY.
++8. No new adaptation algorithm is publishable solely from the code; only validated
++   results/ablation/mechanism comparisons justify a CVPR claim.
++
++## 8. Rollback
++
++Use a clean git commit of E013 for rollback. `git diff` and `git status` after each
++operation; revert only the E014 commit or run `git apply -R` on the original patch,
++not a destructive reset in a dirty repository. Verify OFF baseline identity again.
++
++## 9. Regeneration 2026-10-10 addendum
++
++- The two uploaded E013 files were read in full and verified by SHA256.
++- Every CLIP/Llama edit is marked `# E014-AEE-BEGIN/END`.
++- Six additional synthetic CPU tests check zero-b fast path, exact helper order,
++  helper signature, incorrect comparator cardinality, geometry and utility extremes.
++- `E014_VARIANT=FIXED_COVER` still requires the server-original `e013_stage1_support.py`: do NOT substitute a proxy without renaming the arm.
++- AEE's `b` dynamic decision has a `.item()` sync; measure it honestly.
++- Hold full GQA/POPE/MME/MMBench accuracy to historical N or verified equivalent.
++- Give Cursor enough autonomy to spend a meaningful half-day to one-day phase on
++  smoke, paired ablations, four-full-N evaluations and timing without arbitrarily
++  aborting exploration after the first nonpositive pilot result; report all runs.
++- K64/K32 are newly allowed by E014-scoped config gates, not validated GPU runs.
+diff --git a/QUICK_START_CN.md b/QUICK_START_CN.md
+new file mode 100644
+--- /dev/null
++++ b/QUICK_START_CN.md
+@@ -0,0 +1,142 @@
++# E014-AEE 中文交付说明 / Cursor 快速执行
++
++日期：2026-10-10
++工程状态：**基于两份完整 E013 源码重新生成；静态检查和 CPU 测试已通过；真实 GPU 实验尚未执行。**
++
++## 0. 这轮到底实现了什么？
++
++E014 的核心是固定 Stage1 `172` 个**可被 QED 选择的视觉 token**，
++执行图像自适应证据交换，而不是再增加 `transient` token。
++
++- `Core`: 原始 CLS attention Top172
++- `Residual`: 未进入 Core 的其余 404 个 CLIP patch
++- `Add`: 在 Residual 中根据 COVER proxy 选择 `b` 个
++- `Remove`: 在 Core 中依据 redundancy-aware eviction risk 删除 `b` 个
++- `Final`: (Core - Remove) + Add，总数 **恰好 172**，全部 QED-eligible
++- `b` 候选：`0,8,16,24,32`，通过轻量 gain-risk proxy 决策
++- 主路径：仍为 `E007 ORIGINAL_172 → E010 QED → E012 S=D`，不修改 QED/SDPA 数学实现
++- 首要：`K96 / L8`；之后检验 `K64/K32`，以及可选 `L12` 桥接
++- 8 卡任务：K96 36 个四数据集全量任务，K64 20 个，K32 20 个，共 76
++
++这个实现是 **AEE-v0 的可测原型**。图像自适应收益需要用完整数据验证，
++不能因为写了控制器或选出了不同的 `b` 就宣称准确率或真实延迟提升。
++
++## 1. 与你们 E013 结果的关系
++
++历史 E013 完整评测为：
++GQA 12578 / POPE 9000 / MME 2374 / MMBench 4329 条（对应当时的 split/filter）。
++已有信号：`REPLACE_COVER16` 对 Top172 的 GQA / MME 有正向收益，
++但没有证明它显著超过所有固定替换预算，也没有证明 adaptive 一定更强。
++
++**特别注意 COVER 的严格可比性：** 两份新上传的主源码没有附带
++`e013_stage1_support.py` 的实际实现。
++因此 E014 中 `FIXED_COVER` **直接调用你服务器原有的 E013 helper**。
++`FIXED_COVER_PROXY` 是单独标注的近似策略，不能混称“精确 E013 COVER”。
++需要做一次相同图片、相同请求、相同 S=D 的 token-ID identity 验证。
++
++## 2. 全部源码与文件位置
++
++交付包的 `llava/...` 两条主文件是基于你提供的 **完整 E013** 直接修改，
++不是从片段重写；每一处 E014 接入带有 `E014-AEE-BEGIN/END` 注释。
++
++核心文件：
++- `llava/model/multimodal_encoder/clip_encoder.py`
++- `llava/model/language_model/vitcop_modeling_llama.py`
++- `llava/model/multimodal_encoder/e014_config.py`
++- `llava/model/multimodal_encoder/e014_stage1_support.py`
++- `E013_to_E014.patch`
++- `E014_CURSOR_HANDOFF.md`
++- `scripts/run_e014_suite.py` 和各 K 启动器
++- `tests/test_e014_selector.py`, `tests/test_e014_contract.py`
++- `configs/expected_n_e013_protocol.json`
++
++**原版 SHA256 必须在服务器核对：**
++- `clip_encoder_e013.py`: `b89208803528019460a47100fb5984e178c85cf12ca5f8ddb2981fda420ea73c`
++- `vitcop_modeling_llama_e013.py`: `6a4f4c31334fa73f9e99395c93a6bff64e60c8b7b93f951f8e54c8c804651896`
++
++## 3. 上服务器：先应用补丁再测试
++
++在项目根目录：
++
++```bash
++git status --short
++sha256sum llava/model/multimodal_encoder/clip_encoder.py \
++  llava/model/language_model/vitcop_modeling_llama.py
++git apply --check /PATH/TO/E014_AEE/E013_to_E014.patch
++git apply /PATH/TO/E014_AEE/E013_to_E014.patch
++git diff --check
++python -m unittest discover -s tests -p 'test_e014_*.py' -v
++```
++
++如果 `git apply --check` 失败，说明服务器实际源码与本次上传的 E013
++版本不完全一致。**不要强行覆盖**，先逐段 reconcile。
++不要同时“复制整份新文件”和“应用 Patch”：二选一即可。
++服务器原有仓库 README、模型权重、benchmark 数据/启动脚本均不在此包中。
++
++## 4. 用原来的模型/评估入口启动
++
++```bash
++# K96 / L8，单图真实模型 smoke，允许审计同步
++E014_VARIANT=AEE E014_AUDIT=True E012_KV_AUDIT=True \
++  scripts/run_e014_k96.sh python YOUR_EXISTING_SMOKE.py
++
++# 固定 B16 精确 E013 COVER 对照，要求旧 e013_stage1_support.py 仍在
++E014_VARIANT=FIXED_COVER E014_B=16 \
++  scripts/run_e014_k96.sh python YOUR_EXISTING_EVAL.py
++
++# GPU 延时测量禁止 audit / KV audit
++E014_VARIANT=AEE E014_AUDIT=False E012_KV_AUDIT=False \
++  scripts/run_e014_k96.sh python YOUR_EXISTING_LATENCY.py
++```
++
++这里的 `YOUR_EXISTING_...py` 必须替换为你服务器上 E013 已验证的真实脚本，
++并保持模型版本、FP16/SDPA、prompt/question-span、batch=1、seed、
++warmup/repeats 完全一致。包里没有编造这些入口。
++
++## 5. 四全量 + 八卡调度
++
++先配置 `configs/commands.example.json` 中四个真实命令（不要直接执行占位文件）。
++确认 FULL N 无过滤或截断后，再用历史协议的 expected-N：
++
++```bash
++python scripts/run_e014_suite.py --plan all --dry-run
++
++python scripts/run_e014_suite.py \
++  --plan k96 --gpus 0,1,2,3,4,5,6,7 \
++  --cwd /YOUR/REAL/REPO \
++  --commands-json /YOUR/commands.json \
++  --expected-n-json configs/expected_n_e013_protocol.json \
++  --out logs/e014/k96
++```
++
++K96 GPU/KV/cache/identity smoke 通过后，再运行 `--plan k64`、`--plan k32`。
++每个 evaluator 必须在 `{out_dir}/eval_summary.json` 写入真实 `n` 和主指标 `score`。
++如 split 变化，应修改 expected-N 文件为经过核对的真实数量，**不能为了验收改写统计 n**。
++
++对照：
++BASE、FIXED_COVER(B0/B8/B16/B24/B32)、FIXED_RISK、ADAPTIVE_B_ONLY、AEE。
++重点不是仅比较 AEE vs BASE，而是**同 K 的最强固定 COVER**。
++
++## 6. 验收与诚实边界
++
++已在交付环境完成：
++- 12 项 CPU 单测；
++- 两个完整主文件及新增模块的 Python 编译；
++- Shell `bash -n`；
++- Patch 应用后文件字节一致性；
++- ZIP 完整性及 SHA256 校验。
++
++**尚未**完成：
++- 模型权重加载、真实 GPU prefill / decode1 / decode2；
++- E013 exact COVER 对照跨版本 token-ID identity；
++- K96/K64/K32 的真实 cache/KV topology；
++- GQA/POPE/MME/MMBench 四全量 ACC；
++- TTFT / Fixed32 / E2E / GPU peak memory。
++
++推荐按半天至一天为一个实验推进周期持续回传：
++先 smoke，后四全量，再 paired ACC/latency 分析。
++出现失败优先定位差异，不应为了进度把小样本结果冒充正式结论，
++也不宜一遇负向 pilot 就完全停止探索。
++
++最终需判断：AEE 是否在相同 token 预算下击败最强固定方案，
++且未造成无法接受的真实推理开销。详细指令见 `E014_CURSOR_HANDOFF.md`。
+diff --git a/configs/commands.example.json b/configs/commands.example.json
+new file mode 100644
+--- /dev/null
++++ b/configs/commands.example.json
+@@ -0,0 +1,6 @@
++{
++  "GQA": "python REPLACE_WITH_YOUR_GQA_FULL_EVAL.py --output-dir {out_dir}",
++  "POPE": "python REPLACE_WITH_YOUR_POPE_FULL_EVAL.py --output-dir {out_dir}",
++  "MME": "python REPLACE_WITH_YOUR_MME_FULL_EVAL.py --output-dir {out_dir}",
++  "MMBench": "python REPLACE_WITH_YOUR_MMBENCH_FULL_EVAL.py --output-dir {out_dir}"
++}
+diff --git a/configs/expected_n_e013_protocol.json b/configs/expected_n_e013_protocol.json
+new file mode 100644
+--- /dev/null
++++ b/configs/expected_n_e013_protocol.json
+@@ -0,0 +1 @@
++{"GQA":12578,"POPE":9000,"MME":2374,"MMBench":4329}
+diff --git a/llava/model/language_model/vitcop_modeling_llama.py b/llava/model/language_model/vitcop_modeling_llama.py
+--- a/llava/model/language_model/vitcop_modeling_llama.py
++++ b/llava/model/language_model/vitcop_modeling_llama.py
+@@ -1389,6 +1389,13 @@
+         #   QED          : response-space redundancy weighted by D_Q (G3)
+         #   QED_VISUAL   : visual-hidden cosine redundancy weighted by D_Q (G4)
+         # ==================================================================
++        # E014-AEE-BEGIN: read isolated experiment settings before K guards
++        # E014: read early because E006/E007/E012 budget gates follow.
++        # OFF-by-default, frozen historical runs preserve their own restrictions.
++        self.e014_enable = os.environ.get("E014_ENABLE", "False") == "True"
++        self.e014_variant = os.environ.get("E014_VARIANT", "AEE").upper()
++        self.e014_b = int(os.environ.get("E014_B", "16"))
++        # E014-AEE-END: independent experiment settings
+         self.e006_enable = os.environ.get("E006_ENABLE", "False") == "True"
+         self.e006_selector = os.environ.get("E006_SELECTOR", "GLOBAL_KNORM").upper()
+         self.e006_layer = int(os.environ.get("E006_LAYER", "12"))
+@@ -1473,7 +1480,16 @@
+                 e007_registered_budget_point = (
+                     self.e007_enable and self.e006_target_k == 64
+                 )
+-                if not (e006_registered_fallback or e007_registered_budget_point):
++                # E014-AEE-BEGIN: E014-only final-K32 registration
++                # Only E014 may extend the registered budget to K32.
++                e014_registered_budget_point = (
++                    self.e014_enable and self.e006_target_k in {64, 32}
++                )
++                # E014-AEE-END: E014-only final-K32 registration
++                if not (
++                    e006_registered_fallback or e007_registered_budget_point
++                    or e014_registered_budget_point
++                ):
+                     raise ValueError(
+                         f"[E006/E007] E006_TARGET_K must be 96, or 64 as either "
+                         f"the registered E006 fallback or the E007 matched-budget point. "
+@@ -1504,10 +1520,13 @@
+                 raise ValueError(
+                     f"[E007] unsupported E007_STAGE1_MODE={self.e007_stage1_mode}"
+                 )
+-            if self.e006_target_k not in {96, 64}:
++            # E014-AEE-BEGIN: K32 allowed only with E014_ENABLE
++            if self.e006_target_k not in ({96, 64, 32} if self.e014_enable else {96, 64}):
+                 raise ValueError(
+-                    f"[E007] target K must be 96 or 64, got {self.e006_target_k}"
++                    f"[E007] target K invalid for this registered experiment: "
++                    f"{self.e006_target_k}"
+                 )
++            # E014-AEE-END: preserve legacy E007 K96/K64 gate
+ 
+         if self.e008_enable:
+             if not self.e007_enable:
+@@ -1610,6 +1629,36 @@
+                 raise ValueError('[E013] freeze S=D; do not confound Stage1 and S/D')
+             if self.e010_qed_layer not in {8, 12}:
+                 raise ValueError('[E013] S=D must be layer8 (primary) or 12 (E008 bridge)')
++        # E014-AEE-BEGIN: fixed Stage1/Stage2 invariants
++        # E014 E013-independent contract: 172 *eligible* visual positions,
++        # same QED and S=D as the E013 primary/bridge experiments.
++        if self.e014_enable:
++            if self.e013_enable or self.e008_enable or self.e009_enable:
++                raise ValueError('[E014] cannot combine with E013/E008/E009')
++            if not self.e012_enable or not self.e010.enabled:
++                raise ValueError('[E014] requires E010 and E012')
++            if not self.e007_enable or self.e007_stage1_mode != 'ORIGINAL_172':
++                raise ValueError('[E014] E007 ORIGINAL_172 required')
++            if os.environ.get('E007_SKIP_UNUSED_VIC', 'False') != 'True':
++                raise ValueError('[E014] E007_SKIP_UNUSED_VIC=True required')
++            if self.e006_selector != 'QED':
++                raise ValueError('[E014] E006_SELECTOR must be QED')
++            if self.e006_target_k not in {96, 64, 32}:
++                raise ValueError('[E014] final K must be 96,64,32')
++            if self.e012_delete_layer != self.e010_qed_layer:
++                raise ValueError('[E014] S=D must be frozen')
++            if self.e010_qed_layer not in {8, 12}:
++                raise ValueError('[E014] S=D layer must be 8 or 12')
++            if self.e014_variant not in {
++                'BASE', 'FIXED_COVER', 'FIXED_COVER_PROXY',
++                'FIXED_RISK', 'ADAPTIVE_B_ONLY', 'AEE'
++            } or self.e014_b not in {0, 8, 16, 24, 32}:
++                raise ValueError('[E014] invalid variant or fixed exchange budget')
++            if os.environ.get('E014_AUDIT', 'False') == 'True' and (
++                os.environ.get('COMPUTE_EFFICIENCY', 'False') == 'True'
++            ):
++                raise ValueError('[E014] audit must be OFF in timing')
++        # E014-AEE-END: fixed Stage1/Stage2 invariants
+         if self.e012_enable:
+             errors = []
+             if not self.use_vitcop or not self.e006_enable or not self.e010.enabled:
+@@ -1620,8 +1669,12 @@
+                 errors.append("requires E007_SKIP_UNUSED_VIC=True")
+             if self.e008_enable or self.e009_enable:
+                 errors.append("E008/E009 context variants are unsupported")
+-            if self.e006_target_k != 96:
+-                errors.append("first frozen experiment requires K96")
++            # E014-AEE-BEGIN: scoped E012 K64/K32 extension
++            if self.e006_target_k != 96 and not (
++                self.e014_enable and self.e006_target_k in {64, 32}
++            ):
++                errors.append("E012 frozen K96; only E014 additionally permits K64/K32")
++            # E014-AEE-END: scoped E012 K64/K32 extension
+             if self.e006_selector not in {"QED", "Q_ATTN", "RANDOM_FINAL"}:
+                 errors.append("requires QED/Q_ATTN/RANDOM_FINAL selector")
+             if bool(self.e010.qed_side_only):
+@@ -3098,6 +3151,18 @@
+                     # synchronization.  Debug/profile mode may materialize them.
+                     self.e006_last = {
+                         "selector": self.e006_selector,
++                        # E014-AEE-BEGIN: static identity only, no fabricated dynamic budget
++                        # Dynamic exchange budget/IDs live at the CLIP
++                        # vision tower, not inside LlamaModel.  Do not
++                        # fabricate them from E014_B in adaptive runs.
++                        "e014_enable": bool(self.e014_enable),
++                        "e014_variant": (
++                            self.e014_variant if self.e014_enable else None
++                        ),
++                        "e014_stage1_visual_out": (
++                            172 if self.e014_enable else None
++                        ),
++                        # E014-AEE-END: static provenance
+                         "e010_qed_layer": int(self.e010_qed_layer),
+                         "e010_enabled": bool(self.e010.enabled),
+                         "span_source": side["span_source"],
+diff --git a/llava/model/multimodal_encoder/clip_encoder.py b/llava/model/multimodal_encoder/clip_encoder.py
+--- a/llava/model/multimodal_encoder/clip_encoder.py
++++ b/llava/model/multimodal_encoder/clip_encoder.py
+@@ -334,6 +334,37 @@
+                 )
+             if os.environ.get('E006_SELECTOR', 'QED').upper() != 'QED':
+                 raise RuntimeError('[E009] QED selector must remain frozen')
++
++        # E014-AEE-BEGIN: isolated configuration and invariants
++        # E014 2026-10-10: independent and OFF by default.
++        # Keep all E013/E007/E012 historical paths inert when E014 is off.
++        self.e014_enable = os.environ.get('E014_ENABLE', 'False') == 'True'
++        self.e014_cfg = None
++        self.e014_last = None
++        if self.e014_enable:
++            from .e014_config import E014Config
++            self.e014_cfg = E014Config.from_env()
++            if self.e013_enable or self.e008_enable or self.e009_enable:
++                raise RuntimeError('[E014] E013/E008/E009 must all be disabled')
++            if not self.e007_enable or not self.e007_skip_unused_vic:
++                raise RuntimeError('[E014] E007_ENABLE/E007_SKIP_UNUSED_VIC required')
++            if self.e007_stage1_mode != 'ORIGINAL_172':
++                raise RuntimeError('[E014] freeze E007_STAGE1_MODE=ORIGINAL_172')
++            if not self.e010.enabled or os.environ.get('E012_ENABLE') != 'True':
++                raise RuntimeError('[E014] requires E010_ENABLE and E012_ENABLE')
++            if os.environ.get('E006_SELECTOR', 'QED').upper() != 'QED':
++                raise RuntimeError('[E014] freeze E006_SELECTOR=QED')
++            if any((
++                self.use_dynamic_ratio, self.use_adaptive_select,
++                self.use_debias, self.use_zone_routing, self.use_coord_tokens,
++                self.use_spatial_aware,
++            )):
++                raise RuntimeError('[E014] disable legacy Stage1 selectors/routers')
++            if self.e010.analysis_full576:
++                raise RuntimeError('[E014] E010_ANALYSIS_FULL576 must be False')
++            if self.e014_cfg.audit and os.environ.get('COMPUTE_EFFICIENCY') == 'True':
++                raise RuntimeError('[E014] audit not allowed in timing runs')
++        # E014-AEE-END: isolated configuration and invariants
+ 
+         # E013-P1 2026-10-09: protect old E007/E009 paths and true CLIP geometry.
+         if self.e013_enable:
+@@ -1024,7 +1055,15 @@
+         # E001-S1-A 2026-09-18: budget and selection are orthogonal factors.
+         # E007 deliberately bypasses global ratio coupling and fixes the
+         # pre-registered Stage1 budgets directly.
+-        if self.e013_enable:
++        # E014-AEE-BEGIN: constant-length Stage1 budget
++        if self.e014_enable:
++            # AEE exchanges evidence within exactly 172 eligible token slots.
++            total_budget = 172
++            keep_tokens_each = torch.full((B,), total_budget, dtype=torch.long, device=device)
++            rho = torch.full((B,), float('nan'), device=device)
++            phi = torch.full((B,), float('nan'), device=device)
++        # E014-AEE-END: constant-length Stage1 budget
++        elif self.e013_enable:
+             total_budget = 172 + (self.e013_b if self.e013_variant == 'EXTRA' else 0)
+             keep_tokens_each = torch.full((B,), total_budget, dtype=torch.long, device=device)
+             rho = torch.full((B,), float('nan'), device=device)
+@@ -1069,7 +1108,14 @@
+ 
+         e007_coverage_anchors = None
+ 
+-        if self.e013_enable:
++        # E014-AEE-BEGIN: defer original Top172 to isolated selector
++        if self.e014_enable:
++            # e014_choose computes Top172 ONCE while doing the exchange.
++            # Do not duplicate a TopK kernel before the Stage1 output branch.
++            attn_0 = cls_attention_sum[0]
++            final_idx = None
++        # E014-AEE-END: defer original Top172
++        elif self.e013_enable:
+             # E013-P1: Stage1 output is constructed below via a frozen helper.
+             attn_0 = cls_attention_sum[0]
+             final_idx = attn_0.topk(172, largest=True).indices.sort().values
+@@ -1214,6 +1260,27 @@
+         if self.e010.enabled and self.e010.analysis_full576:
+             hidden_states_filtered = tokens_0.unsqueeze(0)
+             K = int(tokens_0.shape[0])
++        elif self.e014_enable:
++            # E014-AEE-BEGIN: 172 eligible patches, exchange in CLIP coordinates
++            # E014: no transient tokens. Every selected patch is QED-eligible.
++            from .e014_stage1_support import e014_choose
++            selected, original, added, removed, stats = e014_choose(
++                tokens_0, cls_attention_sum[0], self.e014_cfg,
++                request_index=self.e007_request_index,
++            )
++            hidden_states_filtered = tokens_0.index_select(0, selected).unsqueeze(0)
++            final_idx = selected
++            K = int(hidden_states_filtered.shape[1])
++            if K != 172:
++                raise RuntimeError('[E014] Stage1 must output exactly 172 visual tokens')
++            self.e014_last = {
++                'selected_ids': selected.detach(),
++                'original_core_ids': original.detach(),
++                'added_ids': added.detach(),
++                'removed_ids': removed.detach(),
++                'stats': stats,
++            }
++            # E014-AEE-END: 172 eligible patches
+         elif self.e013_enable:
+             # E013-P1 2026-10-09: compute IDs using only existing CLIP output.
+             # Same original residual candidate pool for ATTN/RANDOM/COVER.
+@@ -1580,6 +1647,15 @@
+             'e013_pick': self.e013_pick if self.e013_enable else None,
+             'e013_b': self.e013_b if self.e013_enable else None,
+             'e013_visual_count': K if self.e013_enable else None,
++            # E014-AEE-BEGIN: no decoder-context/transient metadata
++            # E014: budget is the *exchange* count, never extra visual tokens.
++            'e014_enable': bool(self.e014_enable),
++            'e014_variant': self.e014_cfg.variant if self.e014_enable else None,
++            'e014_exchange_budget': (
++                int(self.e014_last['stats']['budget']) if self.e014_enable else None
++            ),
++            'e014_visual_count': K if self.e014_enable else None,
++            # E014-AEE-END: Stage1 metadata
+             'e009_enable': bool(self.e009_enable),
+             'e009_mode': self.e009_mode if self.e009_enable else None,
+             'e009_core_count': self.e009_core_k if self.e009_enable else None,
+@@ -1588,6 +1664,38 @@
+             ),
+             'e009_total_count': self.e009_total_k if self.e009_enable else None,
+         }
++
++        # E014-AEE-BEGIN: OFFLINE-only provenance audit
++        # E014 offline audit: patch IDs are CLIP 0..575 spatial indices.
++        # GPU->CPU copies below are allowed ONLY with E014_AUDIT=True.
++        if self.e014_enable and self.e014_cfg.audit:
++            audit_ids = self.e014_last
++            st = audit_ids['stats']
++            selected_ids = audit_ids['selected_ids']
++            if selected_ids.unique().numel() != 172:
++                raise RuntimeError('[E014] duplicate visual token in Stage1')
++            if not bool(torch.isfinite(tokens_0).all().item()):
++                raise RuntimeError('[E014] nonfinite CLIP features')
++            if not bool(torch.isfinite(attn_0).all().item()):
++                raise RuntimeError('[E014] nonfinite CLS attention')
++            print('[E014_STAGE1_JSON] ' + json.dumps({
++                'request_index': int(self.e007_request_index),
++                'variant': self.e014_cfg.variant,
++                'budget': int(st['budget']),
++                'stage1_in': int(T), 'stage1_out': int(K),
++                'eligible_count': int((clustered_labels[0] >= 0).sum().item()),
++                'original_core_ids': audit_ids['original_core_ids'].cpu().tolist(),
++                'selected_ids': selected_ids.cpu().tolist(),
++                'added_ids': audit_ids['added_ids'].cpu().tolist(),
++                'removed_ids': audit_ids['removed_ids'].cpu().tolist(),
++                'score_type': st.get('score_type'),
++                'lambda': float(self.e014_cfg.lam),
++                'penalty': float(self.e014_cfg.penalty),
++                'utility': float(st['utility'].item()),
++                'gain_sum': float(st['gain_sum'].item()),
++                'risk_sum': float(st['risk_sum'].item()),
++            }, separators=(',', ':')))
++        # E014-AEE-END: OFFLINE-only provenance audit
+ 
+         # E013-P1: auditing is forbidden inside canonical latency measurements.
+         if self.e013_enable and self.e013_audit:
+diff --git a/llava/model/multimodal_encoder/e014_config.py b/llava/model/multimodal_encoder/e014_config.py
+new file mode 100644
+--- /dev/null
++++ b/llava/model/multimodal_encoder/e014_config.py
+@@ -0,0 +1,44 @@
++"""E014: controls for fixed-budget adaptive visual evidence exchange.
++
++Only imported when E014_ENABLE=True.  No learned parameters or global state.
++"""
++from dataclasses import dataclass
++import math
++import os
++
++E014_BUDGETS = (0, 8, 16, 24, 32)
++E014_VARIANTS = (
++    "BASE", "FIXED_COVER", "FIXED_COVER_PROXY",
++    "FIXED_RISK", "ADAPTIVE_B_ONLY", "AEE",
++)
++
++@dataclass(frozen=True)
++class E014Config:
++    enabled: bool = False
++    variant: str = "AEE"
++    b: int = 16
++    lam: float = 1.0
++    penalty: float = 0.0
++    audit: bool = False
++    seed: int = 20261009
++
++    @classmethod
++    def from_env(cls):
++        c = cls(
++            enabled=os.environ.get("E014_ENABLE", "False") == "True",
++            variant=os.environ.get("E014_VARIANT", "AEE").upper(),
++            b=int(os.environ.get("E014_B", "16")),
++            lam=float(os.environ.get("E014_LAMBDA", "1.0")),
++            penalty=float(os.environ.get("E014_PENALTY", "0.0")),
++            audit=os.environ.get("E014_AUDIT", "False") == "True",
++            seed=int(os.environ.get("E014_SEED", "20261009")),
++        )
++        if c.variant not in E014_VARIANTS:
++            raise ValueError("[E014] invalid E014_VARIANT: " + c.variant)
++        if c.b not in E014_BUDGETS:
++            raise ValueError("[E014] E014_B must be one of 0,8,16,24,32")
++        if not math.isfinite(c.lam) or c.lam < 0:
++            raise ValueError("[E014] E014_LAMBDA must be finite and >=0")
++        if not math.isfinite(c.penalty) or c.penalty < 0:
++            raise ValueError("[E014] E014_PENALTY must be finite and >=0")
++        return c
+diff --git a/llava/model/multimodal_encoder/e014_stage1_support.py b/llava/model/multimodal_encoder/e014_stage1_support.py
+new file mode 100644
+--- /dev/null
++++ b/llava/model/multimodal_encoder/e014_stage1_support.py
+@@ -0,0 +1,190 @@
++"""E014 Adaptive Evidence Exchange at a fixed Stage1 budget.
++
++No model weights or decoder modifications.  The output contains exactly 172
++*eligible* CLIP patches and no transient/context-only tokens.
++
++Research caution: COVER proxy is the formula stated in E013 research notes,
++NOT a claim that it is bit-for-bit identical to the unprovided E013 helper.
++FIXED_COVER delegates to that helper and is the faithful legacy comparator.
++"""
++import torch
++import torch.nn.functional as F
++
++from .e014_config import E014_BUDGETS, E014Config
++
++STAGE1_K = 172
++
++
++def _check_inputs(tokens, attn):
++    if tokens.ndim != 2 or attn.ndim != 1:
++        raise ValueError("[E014] tokens [T,D] and attention [T] required")
++    if tokens.shape[0] != attn.shape[0] or tokens.shape[0] != 576:
++        raise ValueError("[E014] frozen LLaVA CLIP geometry requires 576 patches")
++    if tokens.device != attn.device:
++        raise ValueError("[E014] token/attention device mismatch")
++
++
++def _ids_added_removed(selected, core):
++    # Called only in the exact E013 comparator; torch.isin is not used
++    # in the fast AEE path.
++    is_in_core = torch.isin(selected, core)
++    is_in_selected = torch.isin(core, selected)
++    return selected[~is_in_core], core[~is_in_selected]
++
++
++def _cover_gain(tokens, attn, residual_ids):
++    """E013-notes COVER proxy: a_i * [1-max(0, cos(x_i, global_mean))].
++
++    Both score terms use the same raw CLS-attention scale.  This does NOT
++    establish that addition gain and eviction risk are calibrated quantities.
++    """
++    x = tokens.float()
++    r = x.index_select(0, residual_ids)
++    mu = x.mean(dim=0, keepdim=True)
++    cos = F.cosine_similarity(r, mu, dim=-1, eps=1e-8).clamp(min=0., max=1.)
++    return attn.float().index_select(0, residual_ids) * (1. - cos)
++
++
++def _eviction_risk(tokens, attn, core_ids):
++    """L_j = a_j [1-max_{k in Core, k!=j} clamp(cos(j,k),0,1)].
++
++    Important: mask diagonal to -inf BEFORE row maximum.  Simply subtracting
++    an identity matrix is incorrect when off-diagonal similarities are < 0.
++    """
++    core = F.normalize(
++        tokens.float().index_select(0, core_ids), p=2, dim=-1, eps=1e-8
++    )
++    sim = core @ core.transpose(0, 1)
++    sim.fill_diagonal_(float("-inf"))
++    nearest = sim.max(dim=-1).values.clamp(min=0., max=1.)
++    return attn.float().index_select(0, core_ids) * (1. - nearest)
++
++
++def _adaptive_budget(gain, risk, attn, cfg):
++    """Choose one of {0,8,16,24,32} from GPU prefix sums.
++
++    A SINGLE .item() synchronizes GPU->CPU to obtain dynamic tensor lengths.
++    Do not ignore this cost in Stage1/TTFT latency measurements.
++    """
++    max_b = E014_BUDGETS[-1]
++    top_gain = torch.topk(gain, k=max_b, largest=True).values
++    low_risk = torch.topk(risk, k=max_b, largest=False).values
++    zero = top_gain.new_zeros((1,))
++    prefix_g = torch.cat((zero, top_gain.cumsum(0)), dim=0)
++    prefix_l = torch.cat((zero, low_risk.cumsum(0)), dim=0)
++    budgets = torch.tensor(E014_BUDGETS, device=gain.device, dtype=torch.long)
++    utility = (
++        prefix_g.index_select(0, budgets)
++        - cfg.lam * prefix_l.index_select(0, budgets)
++        - cfg.penalty * budgets * attn.float().mean()
++    )
++    idx = int(utility.argmax().item())
++    return E014_BUDGETS[idx], utility[idx]
++
++
++def e014_choose(tokens, attn, cfg: E014Config, request_index: int = -1):
++    """Return (selected_ids, original_core_ids, added_ids, removed_ids, stats).
++
++    AEE/proxy variants return patch IDs in original spatial order;
++    FIXED_COVER preserves the legacy E013 helper's output ordering byte-for-byte.
++    All returned token IDs refer to CLIP patch coordinates [0,T).
++    stats contain a Python int and 0-D device tensors, not implicit CPU syncs.
++    """
++    _check_inputs(tokens, attn)
++    device = tokens.device
++    core = torch.topk(attn, k=STAGE1_K, largest=True).indices.sort().values
++    z = attn.new_zeros((), dtype=torch.float32)
++    empty = core[:0]
++
++    if cfg.variant == "BASE":
++        return core, core, empty, empty, dict(
++            budget=0, utility=z, gain_sum=z, risk_sum=z, score_type="BASE"
++        )
++
++    if cfg.variant == "FIXED_COVER":
++        # Preserve E013 selection/ordering exactly rather than silently
++        # substituting a similar-looking COVER formula.
++        try:
++            from .e013_stage1_support import e013_choose
++        except ImportError as e:
++            raise RuntimeError(
++                "[E014] FIXED_COVER needs existing "
++                "llava/model/multimodal_encoder/e013_stage1_support.py; "
++                "it was not included in the two uploaded sources"
++            ) from e
++        selected, _transient, original = e013_choose(
++            tokens, attn, "REPLACE", "COVER", cfg.b, cfg.seed, request_index
++        )
++        if selected.numel() != STAGE1_K:
++            raise RuntimeError("[E014] E013 comparator returned !=172 tokens")
++        # Do NOT reorder what the original helper returned: changing token
++        # order would alter Llama position IDs and spoil the E013 identity gate.
++        added, removed = _ids_added_removed(selected, original)
++        if (original.numel() != STAGE1_K or
++                added.numel() != cfg.b or removed.numel() != cfg.b or
++                selected.unique().numel() != STAGE1_K):
++            raise RuntimeError(
++                "[E014] legacy FIXED_COVER exchange cardinality mismatch; "
++                "do not treat this as a valid exact E013 control"
++            )
++        return selected, original, added, removed, dict(
++            budget=cfg.b, utility=z, gain_sum=z, risk_sum=z,
++            score_type="E013_EXACT", comparator=True
++        )
++
++    # A zero-swap fixed control must do no coverage/cosine work.
++    # Keeping its overhead at the BASE level makes the b=0 comparison fair.
++    if cfg.variant in ("FIXED_COVER_PROXY", "FIXED_RISK") and cfg.b == 0:
++        return core, core, empty, empty, dict(
++            budget=0, utility=z, gain_sum=z, risk_sum=z,
++            score_type="COVER_PROXY"
++        )
++
++    # Construct the original 404 residual patches, rather than using the
++    # residual relative to Top(172-b).  This freezes the candidate pool.
++    idx = torch.arange(tokens.shape[0], device=device, dtype=torch.long)
++    mask = torch.ones(tokens.shape[0], device=device, dtype=torch.bool)
++    mask[core] = False
++    residual = idx[mask]
++    gain = _cover_gain(tokens, attn, residual)
++
++    need_risk = cfg.variant in ("AEE", "ADAPTIVE_B_ONLY", "FIXED_RISK")
++    risk = _eviction_risk(tokens, attn, core) if need_risk else None
++
++    if cfg.variant in ("AEE", "ADAPTIVE_B_ONLY"):
++        b, utility = _adaptive_budget(gain, risk, attn, cfg)
++    else:
++        b, utility = cfg.b, z
++
++    if b == 0:
++        return core, core, empty, empty, dict(
++            budget=0, utility=utility, gain_sum=z, risk_sum=z,
++            score_type="COVER_PROXY"
++        )
++
++    # Fixed original-Core eviction (E013's Top(172-b) counterpart) versus
++    # risk-based eviction: keep those with higher eviction scores.
++    if cfg.variant in ("AEE", "FIXED_RISK"):
++        removal_score = risk
++    else:
++        removal_score = attn.float().index_select(0, core)
++
++    removal_order = torch.argsort(removal_score, descending=False, stable=True)
++    removed = core.index_select(0, removal_order[:b])
++    retained = core.index_select(0, removal_order[b:])
++    add_order = torch.argsort(gain, descending=True, stable=True)
++    added = residual.index_select(0, add_order[:b])
++
++    selected = torch.cat((retained, added), dim=0).sort().values
++    if selected.numel() != STAGE1_K:
++        raise RuntimeError("[E014] output token-count !=172")
++    gain_sum = gain.index_select(0, add_order[:b]).sum()
++    risk_sum = (
++        risk.index_select(0, removal_order[:b]).sum()
++        if risk is not None else z
++    )
++
++    return selected, core, added, removed, dict(
++        budget=b, utility=utility, gain_sum=gain_sum, risk_sum=risk_sum,
++        score_type="COVER_PROXY"
++    )
+diff --git a/scripts/analyze_e014.py b/scripts/analyze_e014.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/analyze_e014.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python3
++"""E014 diagnostics: analyze offline Stage1 audits and full-N evaluation manifest.
++
++Use separate E014_AUDIT=True runs; publication latency runs keep auditing OFF.
++Scores are incomparable across benchmarks without normalization; the macro
++column is the mean of relative changes against same-K BASE, NOT raw accuracy.
++"""
++import argparse
++from collections import Counter, defaultdict
++import csv
++import json
++from pathlib import Path
++
++def audit_records(paths):
++    for name in paths:
++        with Path(name).open(encoding="utf-8",errors="replace") as fp:
++            for line in fp:
++                prefix = "[E014_STAGE1_JSON] "
++                if prefix in line:
++                    yield json.loads(line.split(prefix,1)[1])
++
++def audit_summary(paths):
++    grouped = defaultdict(list)
++    for rec in audit_records(paths):
++        grouped[rec["variant"]].append(rec)
++    for method, rows in grouped.items():
++        counts=Counter(int(x["budget"]) for x in rows)
++        print(f"Audit: {method}, n={len(rows)}, b_hist={dict(sorted(counts.items()))}, "
++              f"n_distinct_b={len(counts)}")
++        if len(counts)==1:
++            print(" WARNING: budget is degenerate on this sample")
++        for row in rows:
++            if (len(row["selected_ids"]) != 172 or
++                len(set(row["selected_ids"])) != 172 or
++                len(row["added_ids"]) != row["budget"] or
++                len(row["removed_ids"]) != row["budget"]):
++                raise RuntimeError("Malformed E014 Stage1 audit")
++
++def full_report(path):
++    records=[json.loads(s) for s in Path(path).read_text(
++        encoding="utf-8").splitlines() if s.strip()]
++    verified=[x for x in records if x.get("status")=="VERIFIED_FULL_N"]
++    print("Full-N verified:",len(verified),"/",len(records))
++    if len(verified)!=len(records):
++        print(" WARNING: NOT ALL full runs have valid counts; exclude failed jobs")
++    grouped=defaultdict(dict)
++    for r in verified:
++        s=r.get("summary",{})
++        if "score" in s:
++            grouped[(r["k"],r["method"],r["b"])][r["benchmark"]]=float(s["score"])
++    by_k=defaultdict(list)
++    for (k,method,b), metric in grouped.items():
++        if len(metric)!=4:
++            continue
++        baseline=grouped.get((k,"BASE",0),{})
++        if len(baseline)!=4:
++            continue
++        # Mean of four within-task relative (%) changes vs same-K BASE.
++        # It is NOT an accuracy percentage-point difference.
++        relative_pct=sum((metric[d]/baseline[d]-1)*100 for d in baseline)/4
++        by_k[k].append((relative_pct,method,b,metric))
++    for k,points in sorted(by_k.items()):
++        print(f"Final K={k}, four-dataset normalized macro vs same-K BASE:")
++        for rel,method,b,metrics in sorted(points,reverse=True):
++            print(f"  {method:20s} B={b:2d}  macro_rel_change_pct={rel:+.4f}"
++                  f"  GQA={metrics['GQA']:.4f} POPE={metrics['POPE']:.4f}"
++                  f" MME={metrics['MME']:.4f} MMBench={metrics['MMBench']:.4f}")
++    if not by_k:
++        print(" No complete 4-benchmark scored rows to compare yet. "
++              "Every eval_summary.json needs {n:<int>,score:<float>}.")
++
++def main():
++    p=argparse.ArgumentParser()
++    p.add_argument("--audit-log",nargs="*",default=[])
++    p.add_argument("--manifest")
++    args=p.parse_args()
++    if args.audit_log:
++        audit_summary(args.audit_log)
++    if args.manifest:
++        full_report(args.manifest)
++    if not args.audit_log and not args.manifest:
++        p.error("Provide --audit-log and/or --manifest")
++
++if __name__=="__main__":
++    main()
+diff --git a/scripts/e014_env.sh b/scripts/e014_env.sh
+new file mode 100644
+--- /dev/null
++++ b/scripts/e014_env.sh
+@@ -0,0 +1,36 @@
++#!/usr/bin/env bash
++# Source from run_e014_k{96,64,32}.sh; args: final K.
++# E014-only controls: frozen E007 Core172, E010/E012 S=D, QED unchanged.
++set -euo pipefail
++E014_FINAL_K="${1:?final K required}"
++case "${E014_FINAL_K}" in 96|64|32) ;; *) echo "Unsupported E014 final K" >&2; return 2 ;; esac
++
++export USE_VITCOP=True
++export E006_ENABLE=True E006_SELECTOR=QED E006_LAYER=12
++export E006_TARGET_K="${E014_FINAL_K}"
++export E007_ENABLE=True E007_STAGE1_MODE=ORIGINAL_172
++export E007_SKIP_UNUSED_VIC=True
++export E007_TOKEN_AUDIT="${E007_TOKEN_AUDIT:-False}"
++export E010_ENABLE=True
++export E014_LAYER="${E014_LAYER:-8}"
++case "${E014_LAYER}" in 8|12) ;; *) echo "E014_LAYER must be 8 or 12" >&2; return 2 ;; esac
++export E010_QED_LAYER="${E014_LAYER}" E010_QED_SIDE_ONLY=False
++export E010_CONTEXT_EXIT_LAYER=-1 E010_KEEP_CONTEXT_AFTER_QED=False
++export E010_ANALYSIS_FULL576=False E010_COLLECT_LOCAL_INFLUENCE=False
++export E012_ENABLE=True E012_DELETE_LAYER="${E014_LAYER}"
++export E012_DIAG="${E012_DIAG:-False}"
++export E012_KV_AUDIT="${E012_KV_AUDIT:-False}"
++export E013_ENABLE=False E008_ENABLE=False E009_ENABLE=False
++export E014_ENABLE=True
++export E014_VARIANT="${E014_VARIANT:-AEE}"
++export E014_B="${E014_B:-16}"
++export E014_LAMBDA="${E014_LAMBDA:-1.0}"
++export E014_PENALTY="${E014_PENALTY:-0.0}"
++export E014_SEED="${E014_SEED:-20261009}"
++export E014_AUDIT="${E014_AUDIT:-False}"
++export STAGE3_POLICY=skip
++export USE_STAGE2_SRE=False USE_STAGE2_LITE_ROUTER=False
++export USE_STAGE2_WEIGHTED_MERGE=False USE_T3GUIDE=False
++export USE_DYNAMIC_RATIO=False USE_ADAPTIVE_SELECT=False
++export USE_DEBIAS=False USE_ZONE_ROUTING=False USE_COORD_TOKENS=False
++export USE_SPATIAL_AWARE=False
+diff --git a/scripts/run_e014_k32.sh b/scripts/run_e014_k32.sh
+new file mode 100644
+--- /dev/null
++++ b/scripts/run_e014_k32.sh
+@@ -0,0 +1,9 @@
++#!/usr/bin/env bash
++set -euo pipefail
++if (( $# == 0 )); then
++  echo "Usage: $(basename "$0") <EXISTING-EVAL-COMMAND> [args ...]" >&2
++  echo "Example: E014_VARIANT=AEE E014_AUDIT=True $(basename "$0") python YOUR_SMOKE_RUNNER.py" >&2
++  exit 64
++fi
++source "$(dirname "${BASH_SOURCE[0]}")/e014_env.sh" 32
++exec "$@"
+diff --git a/scripts/run_e014_k64.sh b/scripts/run_e014_k64.sh
+new file mode 100644
+--- /dev/null
++++ b/scripts/run_e014_k64.sh
+@@ -0,0 +1,9 @@
++#!/usr/bin/env bash
++set -euo pipefail
++if (( $# == 0 )); then
++  echo "Usage: $(basename "$0") <EXISTING-EVAL-COMMAND> [args ...]" >&2
++  echo "Example: E014_VARIANT=AEE E014_AUDIT=True $(basename "$0") python YOUR_SMOKE_RUNNER.py" >&2
++  exit 64
++fi
++source "$(dirname "${BASH_SOURCE[0]}")/e014_env.sh" 64
++exec "$@"
+diff --git a/scripts/run_e014_k96.sh b/scripts/run_e014_k96.sh
+new file mode 100644
+--- /dev/null
++++ b/scripts/run_e014_k96.sh
+@@ -0,0 +1,9 @@
++#!/usr/bin/env bash
++set -euo pipefail
++if (( $# == 0 )); then
++  echo "Usage: $(basename "$0") <EXISTING-EVAL-COMMAND> [args ...]" >&2
++  echo "Example: E014_VARIANT=AEE E014_AUDIT=True $(basename "$0") python YOUR_SMOKE_RUNNER.py" >&2
++  exit 64
++fi
++source "$(dirname "${BASH_SOURCE[0]}")/e014_env.sh" 96
++exec "$@"
+diff --git a/scripts/run_e014_suite.py b/scripts/run_e014_suite.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/run_e014_suite.py
+@@ -0,0 +1,200 @@
++#!/usr/bin/env python3
++"""E014 full-accuracy scheduler using the PROJECT'S EXISTING eval commands.
++
++This utility does not invent any GQA/POPE/MME/MMBench evaluator arguments.
++Provide a JSON map of command templates with {out_dir}, {gpu}, {k}, ...
++For publication, require per-run eval_summary.json with exact sample N.
++"""
++import argparse
++from concurrent.futures import ThreadPoolExecutor, as_completed
++from dataclasses import dataclass
++from datetime import datetime, timezone
++import json
++import os
++from pathlib import Path
++from queue import Queue
++import shlex
++import subprocess
++import sys
++
++BENCHMARKS = ("GQA", "POPE", "MME", "MMBench")
++
++@dataclass(frozen=True)
++class Job:
++    benchmark: str
++    k: int
++    method: str
++    b: int
++    layer: int
++
++    @property
++    def tag(self):
++        return f"L{self.layer}_K{self.k}_{self.method}_B{self.b}_{self.benchmark}"
++
++def parse():
++    p = argparse.ArgumentParser(description=__doc__)
++    p.add_argument("--plan", choices=("k96","k64","k32","all"), default="k96")
++    p.add_argument("--fixed-b", type=int, choices=(0,8,16,24,32), default=16)
++    p.add_argument("--layer", type=int, choices=(8,12), default=8)
++    p.add_argument("--gpus", default="0,1,2,3,4,5,6,7")
++    p.add_argument("--commands-json", help='{"GQA":"python ... {out_dir} ...",...}')
++    p.add_argument("--expected-n-json", help='{"GQA":N,...} from YOUR full dataset splits')
++    p.add_argument("--out", default="logs/e014_suite")
++    p.add_argument("--cwd", default=".")
++    p.add_argument("--seed", type=int, default=20261009)
++    p.add_argument("--lambda-value", type=float, default=1.0)
++    p.add_argument("--penalty", type=float, default=0.0)
++    p.add_argument("--dry-run", action="store_true")
++    p.add_argument("--allow-unverified", action="store_true",
++                   help="smoke/prototyping ONLY; results NOT publication-grade")
++    p.add_argument("--allow-subset", action="store_true",
++                   help="smoke ONLY; full-accuracy comparisons require all four")
++    return p.parse_args()
++
++def create_jobs(plan, layer, fixed_b, benchmarks):
++    ks = ([96,64,32] if plan == "all" else [int(plan[1:])])
++    for k in ks:
++        configs = (
++            [("BASE",0)] +
++            [("FIXED_COVER",b) for b in (0,8,16,24,32)] +
++            [("FIXED_RISK",16),("ADAPTIVE_B_ONLY",16),("AEE",16)]
++            if k == 96 else
++            [("BASE",0),("FIXED_COVER",fixed_b),
++             ("FIXED_RISK",fixed_b),("ADAPTIVE_B_ONLY",fixed_b),("AEE",fixed_b)]
++        )
++        for method,b in configs:
++            for benchmark in benchmarks:
++                yield Job(benchmark,k,method,b,layer)
++
++def main():
++    args = parse()
++    gpus = [x.strip() for x in args.gpus.split(",") if x.strip()]
++    if not gpus or len(gpus) != len(set(gpus)):
++        raise SystemExit("GPU list must be nonempty and unique")
++    cmds = json.loads(Path(args.commands_json).read_text(encoding="utf-8")) if args.commands_json else {}
++    benches = BENCHMARKS if not args.allow_subset else tuple(x for x in BENCHMARKS if x in cmds)
++    if not args.dry_run and not cmds:
++        raise SystemExit("--commands-json is required for execution")
++    if not args.dry_run and not args.allow_subset and set(cmds) != set(BENCHMARKS):
++        raise SystemExit("Require exactly four full benchmark commands; use --allow-subset for smoke")
++    if not benches:
++        raise SystemExit("No benchmarks selected")
++    jobs = list(create_jobs(args.plan,args.layer,args.fixed_b,benches))
++
++    if args.dry_run:
++        print("Planned jobs:", len(jobs), "benchmarks:", ",".join(benches))
++        for j in jobs:
++            print(j.tag)
++        return 0
++
++    expected = (
++        json.loads(Path(args.expected_n_json).read_text(encoding="utf-8"))
++        if args.expected_n_json else {}
++    )
++    if not args.allow_unverified:
++        if set(expected) != set(benches) or any(
++            not isinstance(expected.get(b),int) or expected[b] <= 0 for b in benches
++        ):
++            raise SystemExit(
++                "Full runs require --expected-n-json with exact positive N "
++                "for ALL benches and per-job eval_summary.json; "
++                "--allow-unverified is for smoke ONLY"
++            )
++
++    # Fail early if the exact original E013 COVER dependency is unavailable.
++    cwd = Path(args.cwd).resolve()
++    legacy_helper = cwd / "llava/model/multimodal_encoder/e013_stage1_support.py"
++    if any(j.method == "FIXED_COVER" for j in jobs) and not legacy_helper.exists():
++        raise SystemExit(
++            f"Missing {legacy_helper}. E014 FIXED_COVER deliberately uses the "
++            "original E013 helper. Restore it from your repository, or modify "
++            "the matrix to use FIXED_COVER_PROXY with an explicit method rename."
++        )
++
++    out = Path(args.out).resolve()
++    out.mkdir(parents=True, exist_ok=True)
++    gpu_q = Queue()
++    for gpu in gpus:
++        gpu_q.put(gpu)
++    scripts = Path(__file__).resolve().parent
++
++    def execute(job):
++        gpu = gpu_q.get()
++        destination = out / job.tag
++        destination.mkdir(exist_ok=True, parents=True)
++        log = destination / "run.log"
++        summary_file = destination / "eval_summary.json"
++        values = {
++            "out_dir": str(destination),
++            "gpu": gpu, "k": job.k,
++            "b": job.b, "variant": job.method, "method": job.method,
++            "benchmark": job.benchmark, "bench": job.benchmark,
++            "layer": job.layer, "seed": args.seed,
++        }
++        started = datetime.now(timezone.utc).isoformat()
++        record = {**values,"tag":job.tag,"started_utc":started,"log":str(log)}
++        try:
++            rendered = cmds[job.benchmark].format_map(values)
++            cmd = ["bash", str(scripts/f"run_e014_k{job.k}.sh")] + shlex.split(rendered)
++            env = os.environ.copy()
++            env.update({
++                "CUDA_VISIBLE_DEVICES":str(gpu),
++                "E014_VARIANT":job.method,
++                "E014_B":str(job.b),
++                "E014_LAYER":str(job.layer),
++                "E014_SEED":str(args.seed),
++                "E014_LAMBDA":str(args.lambda_value),
++                "E014_PENALTY":str(args.penalty),
++                "E014_AUDIT":"False", "E012_KV_AUDIT":"False",
++                "E012_DIAG":"False", "E007_TOKEN_AUDIT":"False",
++            })
++            record["argv"] = cmd
++            with log.open("w",encoding="utf-8") as out_log:
++                ret = subprocess.run(
++                    cmd, env=env, cwd=cwd, stdout=out_log,
++                    stderr=subprocess.STDOUT, check=False
++                )
++            record["returncode"] = int(ret.returncode)
++            record["counts_verified"] = False
++            if ret.returncode == 0 and summary_file.exists():
++                summary = json.loads(summary_file.read_text(encoding="utf-8"))
++                n = summary.get("n")
++                record["n"] = n
++                record["summary"] = summary
++                if job.benchmark in expected:
++                    record["counts_verified"] = n == expected[job.benchmark]
++            if ret.returncode != 0:
++                record["status"] = "FAILED_RUN"
++            elif not args.allow_unverified and not record["counts_verified"]:
++                record["status"] = "FAILED_FULL_N"
++            elif args.allow_unverified:
++                record["status"] = "UNVERIFIED_SMOKE"
++            else:
++                record["status"] = "VERIFIED_FULL_N"
++        except Exception as e:
++            record["status"] = "FAILED_DRIVER"
++            record["error"] = repr(e)
++        finally:
++            record["finished_utc"] = datetime.now(timezone.utc).isoformat()
++            gpu_q.put(gpu)
++        return record
++
++    records = []
++    with ThreadPoolExecutor(max_workers=len(gpus)) as pool:
++        futures = [pool.submit(execute,j) for j in jobs]
++        for future in as_completed(futures):
++            rec = future.result()
++            records.append(rec)
++            print(rec["status"], rec["tag"], flush=True)
++
++    manifest = out / "manifest.jsonl"
++    manifest.write_text(
++        "".join(json.dumps(rec,ensure_ascii=False)+"\n" for rec in records),
++        encoding="utf-8"
++    )
++    failed = [r for r in records if r["status"].startswith("FAILED")]
++    print("Tasks:",len(records),"failed:",len(failed),"manifest:",manifest)
++    return 1 if failed else 0
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tests/test_e014_contract.py b/tests/test_e014_contract.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_e014_contract.py
+@@ -0,0 +1,84 @@
++"""E014 extra CPU invariants, particularly E013 exact-comparator fidelity."""
++import sys
++import types
++import unittest
++from pathlib import Path
++from unittest.mock import patch
++
++import torch
++
++HERE = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(HERE))
++
++import llava.model.multimodal_encoder.e014_stage1_support as aee
++from llava.model.multimodal_encoder.e014_config import E014Config
++
++
++class E014ContractTest(unittest.TestCase):
++    def setUp(self):
++        g = torch.Generator().manual_seed(14015)
++        self.x = torch.randn(576, 64, generator=g)
++        self.attn = torch.rand(576, generator=g).add(0.01)
++
++    def test_zero_swap_fixed_arms_do_not_compute_gain_or_risk(self):
++        with patch.object(aee, "_cover_gain", side_effect=AssertionError("gain called")):
++            with patch.object(aee, "_eviction_risk", side_effect=AssertionError("risk called")):
++                for arm in ("FIXED_COVER_PROXY", "FIXED_RISK"):
++                    cfg = E014Config(enabled=True, variant=arm, b=0)
++                    selected, core, added, removed, stat = aee.e014_choose(self.x, self.attn, cfg)
++                    self.assertTrue(torch.equal(selected, core))
++                    self.assertEqual((added.numel(), removed.numel(), stat["budget"]), (0, 0, 0))
++
++    def test_original_helper_exact_output_order_is_unchanged(self):
++        expected_call = []
++        core = self.attn.topk(172).indices.sort().values
++        residual = torch.arange(576)[~torch.isin(torch.arange(576), core)]
++        legacy_selected = torch.cat((core[16:], residual[:16])).flip(0)
++        def fake_legacy(tokens, attention, variant, pick, b, seed, index):
++            expected_call.append((variant, pick, b, seed, index))
++            return legacy_selected.clone(), core[:0], core.clone()
++
++        fake_module = types.ModuleType("llava.model.multimodal_encoder.e013_stage1_support")
++        fake_module.e013_choose = fake_legacy
++
++        with patch.dict(sys.modules, {fake_module.__name__: fake_module}):
++            cfg = E014Config(True, "FIXED_COVER", 16, seed=123)
++            selected, original, added, removed, stats = aee.e014_choose(
++                self.x, self.attn, cfg, request_index=77
++            )
++        self.assertTrue(torch.equal(selected, legacy_selected))
++        self.assertTrue(torch.equal(original, core))
++        self.assertEqual((added.numel(), removed.numel()), (16, 16))
++        self.assertEqual(expected_call, [("REPLACE", "COVER", 16, 123, 77)])
++        self.assertEqual(stats["score_type"], "E013_EXACT")
++
++    def test_legacy_helper_cannot_silently_return_wrong_exchange_budget(self):
++        core = self.attn.topk(172).indices.sort().values
++        fake_module = types.ModuleType("llava.model.multimodal_encoder.e013_stage1_support")
++        fake_module.e013_choose = lambda *args: (core.clone(), core[:0], core.clone())
++        with patch.dict(sys.modules, {fake_module.__name__: fake_module}):
++            with self.assertRaisesRegex(RuntimeError, "cardinality"):
++                aee.e014_choose(
++                    self.x, self.attn, E014Config(True, "FIXED_COVER", 16)
++                )
++
++    def test_reject_non_576_clip_geometry(self):
++        with self.assertRaisesRegex(ValueError, "576"):
++            aee.e014_choose(self.x[:575], self.attn[:575], E014Config(True, "BASE", 0))
++
++    def test_adaptive_zero_utility_prefers_no_exchange(self):
++        gain = torch.zeros(404)
++        risk = torch.zeros(172)
++        b, _ = aee._adaptive_budget(gain, risk, torch.ones(576), E014Config(True, "AEE", 16))
++        self.assertEqual(b, 0)
++
++    def test_strong_budget_penalty_forces_zero_exchange(self):
++        gain = torch.ones(404)
++        risk = torch.zeros(172)
++        cfg = E014Config(True, "AEE", 16, lam=1., penalty=2.0)
++        b, _ = aee._adaptive_budget(gain, risk, torch.ones(576), cfg)
++        self.assertEqual(b, 0)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_e014_selector.py b/tests/test_e014_selector.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_e014_selector.py
+@@ -0,0 +1,98 @@
++"""CPU-only E014 selector smoke tests; no model files or GPU required."""
++import os
++import sys
++import unittest
++from pathlib import Path
++
++import torch
++
++HERE = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(HERE))
++
++from llava.model.multimodal_encoder.e014_config import E014Config, E014_BUDGETS
++from llava.model.multimodal_encoder.e014_stage1_support import (
++    _adaptive_budget, _cover_gain, _eviction_risk, e014_choose,
++)
++
++
++class E014SelectorTest(unittest.TestCase):
++    def setUp(self):
++        g = torch.Generator().manual_seed(14014)
++        self.tokens = torch.randn(576, 128, generator=g)
++        self.attn = torch.rand(576, generator=g).add_(0.01)
++
++    def select(self, variant, b=16, lam=1.0):
++        cfg = E014Config(True, variant, b, lam, 0.0, False, 1)
++        return e014_choose(self.tokens, self.attn, cfg, 0)
++
++    def verify(self, x, selected_b):
++        selected, original, added, removed, st = x
++        self.assertEqual(int(selected.numel()), 172)
++        self.assertEqual(int(selected.unique().numel()), 172)
++        self.assertTrue(bool(torch.equal(selected, selected.sort().values)))
++        self.assertEqual(int(added.numel()), selected_b)
++        self.assertEqual(int(removed.numel()), selected_b)
++        self.assertEqual(st["budget"], selected_b)
++        self.assertTrue(bool(torch.isin(added, original).logical_not().all()))
++        self.assertTrue(bool(torch.isin(removed, original).all()))
++        expect = torch.cat((original[~torch.isin(original, removed)], added)).sort().values
++        self.assertTrue(bool(torch.equal(selected, expect)))
++
++    def test_base_and_fixed_controls(self):
++        self.verify(self.select("BASE"), 0)
++        for b in E014_BUDGETS:
++            for variant in ("FIXED_COVER_PROXY", "FIXED_RISK"):
++                self.verify(self.select(variant, b), b)
++
++    def test_adaptive_valid_and_deterministic(self):
++        for variant in ("AEE", "ADAPTIVE_B_ONLY"):
++            s1 = self.select(variant)
++            s2 = self.select(variant)
++            self.assertIn(s1[-1]["budget"], E014_BUDGETS)
++            self.verify(s1, s1[-1]["budget"])
++            self.assertTrue(bool(torch.equal(s1[0], s2[0])))
++
++    def test_exchange_objective_interior_optimum(self):
++        # First 16 candidates have high utility, later candidates low utility.
++        gain = torch.cat((torch.ones(16), torch.full((388,), .01)))
++        risk = torch.full((172,), 0.05)
++        b, _ = _adaptive_budget(
++            gain, risk, torch.ones(576),
++            E014Config(True, "AEE", 16, 1.0, 0.0, False, 1),
++        )
++        self.assertEqual(b, 16)
++
++    def test_eviction_ignores_diagonal_self_similarity(self):
++        t = torch.zeros(576, 4)
++        # Construct orthogonal core patches; cosine with self =1 must NOT count.
++        t[:172, 0] = 1
++        t[0] = torch.tensor((0., 1., 0., 0.))
++        t[1] = torch.tensor((0., 0., 1., 0.))
++        t[2] = torch.tensor((0., 0., 0., 1.))
++        a = torch.ones(576)
++        risk = _eviction_risk(t, a, torch.arange(172))
++        self.assertAlmostEqual(float(risk[0]), 1.0, places=4)
++        self.assertAlmostEqual(float(risk[1]), 1.0, places=4)
++
++    def test_cover_formula_positive_clamp(self):
++        tok = torch.eye(4)
++        attn = torch.tensor((1., 2., 3., 4.))
++        score = _cover_gain(tok, attn, torch.arange(4))
++        self.assertEqual(score.shape, (4,))
++        self.assertTrue(bool((score >= 0).all()))
++
++    def test_config_validation(self):
++        old = os.environ.get("E014_VARIANT")
++        try:
++            os.environ["E014_VARIANT"] = "NO_SUCH_VARIANT"
++            with self.assertRaises(ValueError):
++                E014Config.from_env()
++        finally:
++            if old is None:
++                os.environ.pop("E014_VARIANT", None)
++            else:
++                os.environ["E014_VARIANT"] = old
++
++
++if __name__ == "__main__":
++    unittest.main()

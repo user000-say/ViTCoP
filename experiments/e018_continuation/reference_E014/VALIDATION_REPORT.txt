@@ -1,0 +1,21 @@
+E014 AEE regenerated release validation - 2026-10-10
+===================================================
+E013 uploaded CLIP SHA256: b89208803528019460a47100fb5984e178c85cf12ca5f8ddb2981fda420ea73c
+E013 uploaded Llama SHA256: 6a4f4c31334fa73f9e99395c93a6bff64e60c8b7b93f951f8e54c8c804651896
+E014 generated CLIP SHA256: a32c25b07d9e1d4cca2d54c5794585fad9b1e87a03ed95c8d1380b958b37c4af
+E014 generated Llama SHA256: d1a41b5a1faa6ed89051684a91641e150d7b5a4e2997fde0e719c41b06763827
+Patch SHA256: 25687a33b4b98e3f06ac96f6498f3c49d5afa609c05bf92dd3ee1a109fdfff9a
+Patch whitespace check: PASS
+Patch git apply --check: PASS
+Patch real apply: PASS
+Patch all output-file byte parity: PASS
+Patch reverse-check: PASS
+CPU unit tests: 12/12 PASS
+Python compileall: PASS
+Shell wrapper bash -n: PASS
+Full-N plan dry-run counts: K96=36; K64=20; K32=20; all=76
+GPU model import/prefill/decode/KV: NOT EXECUTED
+Exact E013 COVER helper parity on server: NOT EXECUTED (helper not uploaded)
+GQA/POPE/MME/MMBench full accuracy: NOT EXECUTED
+TTFT/Fixed32/E2E/GPU memory: NOT MEASURED
+E014 is therefore a validated local code prototype, not a verified accuracy gain.

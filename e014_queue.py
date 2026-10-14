@@ -17,7 +17,11 @@ from e014_arms import (
     FULL_E015_DYN_COVER_K96,
     FULL_E015_K64,
     FULL_E016_CASCADE,
+    FULL_E016_HIER_K64_LAYER,
+    FULL_E016_K64_EXTRA,
+    FULL_E016_LAYER_SWEEP,
     FULL_E016_STAGE1_K96,
+    FULL_E018_K32_STATIC,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -32,6 +36,13 @@ from e014_arms import (
 
 TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
 DEFAULT_GPUS = [0, 1, 2, 3, 4, 5, 6, 7]
+# Full vqav2_val (~214k) is queued separately after download finishes.
+EXTRA_TASKS = (
+    "scienceqa_img",
+    "textvqa_val_ocr",  # LLaVA-official OCR protocol; not plain textvqa_val
+    "mmbench_cn_dev",
+    "mmbench_en_dev",
+)
 
 PHASE_ARMS = {
     "smoke_k96": SMOKE_K96,
@@ -48,6 +59,10 @@ PHASE_ARMS = {
     "full_e015_dyn_cover_k96": FULL_E015_DYN_COVER_K96,
     "full_e016_cascade": FULL_E016_CASCADE,
     "full_e016_stage1_k96": FULL_E016_STAGE1_K96,
+    "full_e016_hier_k64_layer": FULL_E016_HIER_K64_LAYER,
+    "full_e016_k64_extra": FULL_E016_K64_EXTRA,
+    "full_e016_layer_sweep": FULL_E016_LAYER_SWEEP,
+    "full_e018_k32_static": FULL_E018_K32_STATIC,
 }
 
 
@@ -87,12 +102,13 @@ def attempts(name: str) -> int:
         return 0
 
 
-def tasks(phase: str, arms: list[str], limit: int) -> list[dict]:
+def tasks(phase: str, arms: list[str], limit: int, task_names: tuple[str, ...] | None = None) -> list[dict]:
     items = []
     bucket = "smoke" if phase.startswith("smoke") else "full"
+    selected = task_names or TASKS
     for arm in arms:
         layer = int(ARMS[arm][2])  # S (=D)
-        for task in TASKS:
+        for task in selected:
             output = ROOT / bucket / phase / arm / task
             items.append({
                 "name": f"{phase}_{arm}_{task}",
@@ -160,6 +176,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--phase", required=True, choices=tuple(PHASE_ARMS))
     ap.add_argument("--arms", nargs="*", default=[])
+    ap.add_argument("--tasks", nargs="*", default=[],
+                    help="override default TASKS for this phase")
     ap.add_argument("--limit", type=int, default=0,
                     help="0 = full split; >0 for smoke/panel only")
     ap.add_argument("--gpus", default=",".join(str(g) for g in DEFAULT_GPUS))
@@ -168,9 +186,16 @@ def main() -> None:
     args = ap.parse_args()
     gpus = [int(x) for x in args.gpus.split(",") if x.strip() != ""]
     arms = args.arms or PHASE_ARMS[args.phase]
-    items = tasks(args.phase, arms, args.limit)
+    if args.phase == "full_e016_k64_extra" and not args.tasks:
+        task_names = EXTRA_TASKS
+    else:
+        task_names = tuple(args.tasks) if args.tasks else None
+    items = tasks(args.phase, arms, args.limit, task_names=task_names)
     ROOT.mkdir(parents=True, exist_ok=True)
-    log(f"phase={args.phase} arms={len(arms)} jobs={len(items)} limit={args.limit}")
+    log(
+        f"phase={args.phase} arms={len(arms)} jobs={len(items)} "
+        f"limit={args.limit} tasks={list(task_names or TASKS)}"
+    )
 
     while True:
         mem = memory()

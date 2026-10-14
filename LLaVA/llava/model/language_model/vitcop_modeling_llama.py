@@ -787,6 +787,12 @@ class LlamaSdpaAttention(LlamaAttention):
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
+        # E018-BEGIN: independent SDPA reader; never enabled on the legacy path.
+        e018_callback = getattr(self, "_e018_callback", None)
+        if e018_callback is not None and q_len > 1:
+            e018_callback(query_states, key_states, value_states, attention_mask)
+        # E018-END
+
         # E010 analysis-only local fusion influence. The SDPA call below is unchanged.
         if (
             getattr(self, "_e010_collect_local_influence", False)
@@ -1751,6 +1757,17 @@ class LlamaModel(LlamaPreTrainedModel):
             if errors:
                 raise ValueError("[E012-SD-P1] " + "; ".join(errors))
 
+        # E018-BEGIN: isolated decoder execution; existing E014 guards remain intact.
+        self.e018_enabled = os.environ.get("E018_ENABLE", "False") == "True"
+        if self.e018_enabled:
+            if not self.e014_enable:
+                raise ValueError("E018 requires the audited E014 Stage1 path")
+            if self.e012_diag or self.e012_kv_audit or self.e006_profile:
+                raise ValueError("Disable legacy diagnostics/profile; use E018_TRACE for new topology")
+            if os.environ.get("COMPUTE_EFFICIENCY", "False") == "True":
+                raise ValueError("Legacy FLOPs timer omits E018. Use measure_e018.py.")
+        # E018-END
+
         self.compute_efficiency = os.environ.get("COMPUTE_EFFICIENCY", "False") == "True"   # Whether to compute FLOPs, Prefill Latency, Inference Latency (per token)
         self.prefill_time = 0
         self.all_FLOPs = 0
@@ -1954,6 +1971,17 @@ class LlamaModel(LlamaPreTrainedModel):
         pre_prompt_length_list = [],
         e006_question_span = None,
     ) -> Union[Tuple, BaseModelOutputWithPast]:
+        # E018-BEGIN: skip all legacy selection, deletion and timing branches.
+        if getattr(self, "e018_enabled", False):
+            from llava.model.e018_stage2_support import e018_forward
+            return e018_forward(self, input_ids=input_ids, attention_mask=attention_mask,
+                position_ids=position_ids, past_key_values=past_key_values,
+                inputs_embeds=inputs_embeds, use_cache=use_cache,
+                output_attentions=output_attentions, output_hidden_states=output_hidden_states,
+                return_dict=return_dict, cluster_labels=cluster_labels, image_shape=image_shape,
+                token_length_list=token_length_list, pre_prompt_length_list=pre_prompt_length_list,
+                e006_question_span=e006_question_span)
+        # E018-END
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
             
         output_hidden_states = (
@@ -3846,6 +3874,11 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             e006_question_span = e006_question_span,
         )
 
+        # E018-BEGIN: evaluate answer NLL by prefix + one-token teacher forcing.
+        if labels is not None and getattr(self.model, "e018_enabled", False):
+            raise ValueError("E018 forbids full-prompt labels; use collect_e018.py teacher forcing")
+        # E018-END
+
         hidden_states = outputs[0]
         if self.config.pretraining_tp > 1:
             lm_head_slices = self.lm_head.weight.split(self.vocab_size // self.config.pretraining_tp, dim=0)
@@ -3883,6 +3916,12 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
     def prepare_inputs_for_generation(
         self, input_ids, past_key_values=None, attention_mask=None, inputs_embeds=None, **kwargs
     ):
+        # E018-BEGIN: compacted cache length is not the original RoPE position.
+        if getattr(self.model, "e018_enabled", False):
+            from llava.model.e018_stage2_support import e018_generation_inputs
+            return e018_generation_inputs(self, input_ids, past_key_values,
+                attention_mask, inputs_embeds, kwargs)
+        # E018-END
         if past_key_values is not None:
             if isinstance(past_key_values, Cache):
                 cache_length = past_key_values.get_seq_length()
