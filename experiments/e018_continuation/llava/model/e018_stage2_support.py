@@ -8,6 +8,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 import json
 import math
+import os
 from pathlib import Path
 
 import torch
@@ -448,6 +449,23 @@ class Runtime:
                                int(pos[-1].item()) + 1,
                                self.cfg.fingerprint(n, len(m.layers), metadata["stage1"]))
             hidden, cache, history = self._tail(hidden, cache, output_hidden_states=output_hidden_states)
+            # Compatibility counters for the existing lmms-eval audit path.
+            m.e001_last_stage1_visual_tokens = int(n)
+            m.e001_last_stage2_visual_tokens = int(self.state.visual_ids.numel())
+            m.e001_last_final_visual_tokens = int(self.state.visual_ids.numel())
+            first_layer = int(self.cfg.events[0][0]) if self.cfg.events else -1
+            m.e006_last = {
+                "visual_in": int(n),
+                "prefill_count": 1,
+                "decode_count": 0,
+                "e010_qed_layer": first_layer if first_layer >= 0 else int(os.environ.get("E010_QED_LAYER", "8")),
+                "span_source": "explicit",
+                "sdpa_preserved": True,
+                "e018_mode": self.cfg.mode,
+                "e018_events": list(self.cfg.events),
+                "e018_final_k": int(self.state.visual_ids.numel()),
+                "e018_token_work": int(sum(self.state.per_layer_n)),
+            }
         else:
             s = self.state
             if s is None or hidden.shape[1] != 1:
