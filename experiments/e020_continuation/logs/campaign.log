@@ -1,0 +1,3 @@
+[2026-10-16T02:21:27+08:00] wait E019 remaining pid=1031998
+[2026-10-16T02:23:19+08:00] LAUNCH full_e020_priority NOW (E019 BC paused)
+[2026-10-16T02:23:42+08:00] user paused E019 BC; started full_e020_priority 26arms/104 jobs
