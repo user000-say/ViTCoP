@@ -227,16 +227,62 @@ FULL_E018_LATE_ONLY = [
     "E018_BASE_LATE32",
 ]
 
-# E019 progressive-evidence Block A: near-work schedule references (selector=reference).
-# Events from schedules.variants under e018 token_work (EARLY W=2284).
-ARMS.update({
-    "E019_COVER_LATE_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 4:78,16:32
-    "E019_COVER_FIRST_SHIFT_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 2:116,12:32
-    "E019_COVER_THREE_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 4:103,8:101,12:32
-    "E019_BASE_LATE_WMATCH32": ("BASE", 0, 8, 8, 32),
-    "E019_BASE_FIRST_SHIFT_WMATCH32": ("BASE", 0, 8, 8, 32),
-    "E019_BASE_THREE_WMATCH32": ("BASE", 0, 8, 8, 32),
-})
+# E019 progressive-evidence: up to 48 configs = A schedules + B selectors + C joint.
+# Arm name: E019_{COVER|BASE}_{SCHEDULE}_{SELECTOR}32
+_E019_EVENTS = {
+    "ONE": "8:32",
+    "EARLY": "4:102,12:32",
+    "LATE": "4:102,16:32",
+    "LATE_WMATCH": "4:78,16:32",  # near-W; integer mid cannot hit 2284 exactly
+    "FIRST_SHIFT_WMATCH": "2:116,12:32",
+    "THREE_WMATCH": "4:103,8:101,12:32",
+}
+_E019_SELECTORS = {
+    "REF": {"mode": "reference", "alpha": 0.0, "lambda": 0.0, "swaps": 0},
+    "CURREX": {"mode": "exchange", "alpha": 0.0, "lambda": 0.15, "swaps": 4},
+    "TEMPA25": {"mode": "exchange", "alpha": 0.25, "lambda": 0.15, "swaps": 4},
+    "TEMPA50": {"mode": "exchange", "alpha": 0.5, "lambda": 0.15, "swaps": 4},
+    "TEMPA75": {"mode": "exchange", "alpha": 0.75, "lambda": 0.15, "swaps": 4},
+    "PREV": {"mode": "exchange", "alpha": 1.0, "lambda": 0.15, "swaps": 4},
+    "TEMPL05": {"mode": "exchange", "alpha": 0.5, "lambda": 0.05, "swaps": 4},
+    "TEMPL30": {"mode": "exchange", "alpha": 0.5, "lambda": 0.30, "swaps": 4},
+    "TEMPB2": {"mode": "exchange", "alpha": 0.5, "lambda": 0.15, "swaps": 2},
+    "SCEMA": {"mode": "mean", "alpha": 0.5, "lambda": 0.0, "swaps": 0},
+    "CMEAN": {"mode": "mean", "alpha": 0.0, "lambda": 0.0, "swaps": 0},
+    "STOPK": {"mode": "score", "alpha": 0.0, "lambda": 0.0, "swaps": 0},
+    "RSWAP": {"mode": "random", "alpha": 0.0, "lambda": 0.0, "swaps": 4},
+}
+
+
+def _e019_register():
+    arms = {}
+    # A: 2×6 schedule references
+    for stage, variant, b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
+        for sched in _E019_EVENTS:
+            name = f"E019_{stage}_{sched}_REF32"
+            arms[name] = (variant, b, 8, 8, 32)
+    # B: 2×12 selectors on EARLY (exclude REF already in A)
+    for stage, variant, b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
+        for sel in _E019_SELECTORS:
+            if sel == "REF":
+                continue
+            name = f"E019_{stage}_EARLY_{sel}32"
+            arms[name] = (variant, b, 8, 8, 32)
+    # C: 2×3 near-work × {CURREX,TEMPA50}
+    for stage, variant, b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
+        for sched in ("LATE_WMATCH", "FIRST_SHIFT_WMATCH", "THREE_WMATCH"):
+            for sel in ("CURREX", "TEMPA50"):
+                name = f"E019_{stage}_{sched}_{sel}32"
+                arms[name] = (variant, b, 8, 8, 32)
+    return arms
+
+
+ARMS.update(_e019_register())
+# Back-compat short names used by the first schedule-ref campaign.
+for _stage, _var, _b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
+    for _sched in ("LATE_WMATCH", "FIRST_SHIFT_WMATCH", "THREE_WMATCH"):
+        ARMS[f"E019_{_stage}_{_sched}32"] = ARMS[f"E019_{_stage}_{_sched}_REF32"]
+
 FULL_E019_SCHEDULE_REF = [
     "E019_COVER_LATE_WMATCH32",
     "E019_COVER_FIRST_SHIFT_WMATCH32",
@@ -245,12 +291,32 @@ FULL_E019_SCHEDULE_REF = [
     "E019_BASE_FIRST_SHIFT_WMATCH32",
     "E019_BASE_THREE_WMATCH32",
 ]
-
-_E019_EVENTS = {
-    "LATE_WMATCH": "4:78,16:32",
-    "FIRST_SHIFT_WMATCH": "2:116,12:32",
-    "THREE_WMATCH": "4:103,8:101,12:32",
-}
+FULL_E019_SELECTOR_B = sorted(
+    a for a in ARMS if a.startswith("E019_") and "_EARLY_" in a and not a.endswith("_REF32")
+    and a.split("_")[2] == "EARLY"
+)
+FULL_E019_JOINT_C = sorted(
+    a for a in ARMS
+    if a.startswith("E019_") and any(s in a for s in ("LATE_WMATCH_", "FIRST_SHIFT_WMATCH_", "THREE_WMATCH_"))
+    and any(a.endswith(f"_{s}32") for s in ("CURREX", "TEMPA50"))
+)
+FULL_E019_REMAINING = FULL_E019_SELECTOR_B + FULL_E019_JOINT_C
+FULL_E019_ALL48 = sorted(
+    a for a in ARMS
+    if a.startswith("E019_") and a.endswith("32") and "_REF32" in a or (
+        a.startswith("E019_") and a.endswith("32") and any(
+            a.endswith(f"_{s}32") for s in _E019_SELECTORS if s != "REF"
+        )
+    )
+)
+# Cleaner ALL48: every registered canonical name ending _REF32 or selector tags.
+FULL_E019_ALL48 = sorted({
+    a for a in ARMS
+    if a.startswith("E019_") and (
+        a.endswith("_REF32")
+        or any(a.endswith(f"_{s}32") for s in _E019_SELECTORS if s != "REF")
+    )
+})
 
 
 def apply_arm_env(arm: str) -> dict:
@@ -343,18 +409,37 @@ def apply_arm_env(arm: str) -> dict:
         os.environ["E016_CASCADE"] = ""
     if arm.startswith("E018_") or arm.startswith("E019_"):
         # Isolated Stage2/E019 path; keep Stage1 via E014_* above.
-        if arm.endswith("_ONE32"):
+        events = None
+        e019_sel = {"mode": "reference", "alpha": 0.0, "lambda": 0.0, "swaps": 0}
+        if arm.startswith("E019_"):
+            # Parse E019_{COVER|BASE}_{SCHEDULE}_{SELECTOR}32 or legacy ..._{SCHEDULE}32
+            body = arm[len("E019_"):]
+            if body.endswith("32"):
+                body = body[:-2]
+            parts = body.split("_")
+            stage = parts[0]
+            # schedule may be multi-token; selector is last known tag or REF
+            sel_key = "REF"
+            if parts[-1] in _E019_SELECTORS:
+                sel_key = parts[-1]
+                sched_parts = parts[1:-1]
+            else:
+                sched_parts = parts[1:]
+            sched = "_".join(sched_parts)
+            # legacy short arms omit REF
+            if sched not in _E019_EVENTS and sel_key == "REF":
+                # e.g. COVER_LATE_WMATCH
+                sched = "_".join(parts[1:])
+            if sched not in _E019_EVENTS:
+                raise ValueError(f"Unknown E019 schedule in arm {arm}: {sched}")
+            events = _E019_EVENTS[sched]
+            e019_sel = dict(_E019_SELECTORS[sel_key])
+        elif arm.endswith("_ONE32"):
             events = "8:32"
         elif arm.endswith(("_TWO32", "_EARLY32")):
             events = "4:102,12:32"
         elif arm.endswith("_LATE32") and "WMATCH" not in arm:
             events = "4:102,16:32"
-        elif "LATE_WMATCH" in arm:
-            events = _E019_EVENTS["LATE_WMATCH"]
-        elif "FIRST_SHIFT_WMATCH" in arm:
-            events = _E019_EVENTS["FIRST_SHIFT_WMATCH"]
-        elif "THREE_WMATCH" in arm:
-            events = _E019_EVENTS["THREE_WMATCH"]
         else:
             raise ValueError(f"Unknown E018/E019 arm schedule: {arm}")
         os.environ.update(
@@ -374,8 +459,23 @@ def apply_arm_env(arm: str) -> dict:
             E006_PROFILE="False",
             COMPUTE_EFFICIENCY="False",
         )
+        if arm.startswith("E019_"):
+            enable = e019_sel["mode"] != "reference"
+            os.environ.update(
+                E019_ENABLE="True" if enable else "False",
+                E019_MODE=str(e019_sel["mode"]),
+                E019_ALPHA=str(e019_sel["alpha"]),
+                E019_LAMBDA=str(e019_sel["lambda"]),
+                E019_SWAPS=str(e019_sel["swaps"]),
+                E019_QUERY_GROUPS="4",
+                # ACC: keep identity checks; TTFT scripts may set E019_DEBUG=False
+                E019_DEBUG=os.environ.get("E019_DEBUG", "True"),
+            )
+        else:
+            os.environ["E019_ENABLE"] = "False"
     else:
         os.environ["E018_ENABLE"] = "False"
+        os.environ["E019_ENABLE"] = "False"
     return {
         "arm": arm,
         "variant": variant,

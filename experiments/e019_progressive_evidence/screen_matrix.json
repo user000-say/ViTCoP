@@ -2,7 +2,7 @@
   "schema": "e019_matrix_v1",
   "phase": "screen",
   "kind": "real",
-  "runtime_hash": "7e1561571f28aefab35400a442c2fe6c626730421ab4b7ccd50f64ab29a2eb50",
+  "runtime_hash": "20a68dfc0bb5e7d3768f70e15f9fd9afc4cfc39bc0eb6618db0059e72107a68c",
   "configurations": [
     {
       "config_id": "BASE__ONE__reference",
@@ -317,6 +317,70 @@
       }
     },
     {
+      "config_id": "BASE__LATE_WMATCH__reference",
+      "block": "A_schedule",
+      "config_hash": "7c2b23d0b8bcc70bbbdcb987da7faf1f106503a3ca3bdbc18748439f3bf2138d",
+      "stage1": "BASE",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "reference",
+      "selector": {
+        "mode": "reference",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
+        "near_work_matched": true
+      }
+    },
+    {
+      "config_id": "COVER__LATE_WMATCH__reference",
+      "block": "A_schedule",
+      "config_hash": "eaa8ba8dbecbc0e0ea498934bd22837b254d32c05e5e4d0a3a3459dc018c80c0",
+      "stage1": "COVER",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "reference",
+      "selector": {
+        "mode": "reference",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
+        "near_work_matched": true
+      }
+    },
+    {
       "config_id": "BASE__FIRST_SHIFT_WMATCH__reference",
       "block": "A_schedule",
       "config_hash": "ea878bb1a9554a8586468130d6b37dfec060a06208acc365173c5b4bd73801db",
@@ -449,6 +513,134 @@
         "visual_token_layers": 2284,
         "difference_from_EARLY": 0,
         "relative_difference": 0.0,
+        "near_work_matched": true
+      }
+    },
+    {
+      "config_id": "BASE__LATE_WMATCH__current_exchange",
+      "block": "C_joint",
+      "config_hash": "3af7fffe814c186e8ebc8c90a89bcd13b471d8982be5933d9af7a14175de89b7",
+      "stage1": "BASE",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "current_exchange",
+      "selector": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
+        "near_work_matched": true
+      }
+    },
+    {
+      "config_id": "COVER__LATE_WMATCH__current_exchange",
+      "block": "C_joint",
+      "config_hash": "9bcf8b77ba1659c7c59479ef72f20dff5ad7920b3fff1091f9166fa0a039260b",
+      "stage1": "COVER",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "current_exchange",
+      "selector": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
+        "near_work_matched": true
+      }
+    },
+    {
+      "config_id": "BASE__LATE_WMATCH__temporal_a50",
+      "block": "C_joint",
+      "config_hash": "40518f970c6fda3dea9250d28b026887911cb5c333aa5aab371addb303d95563",
+      "stage1": "BASE",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "temporal_a50",
+      "selector": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
+        "near_work_matched": true
+      }
+    },
+    {
+      "config_id": "COVER__LATE_WMATCH__temporal_a50",
+      "block": "C_joint",
+      "config_hash": "97e3bd615dd489ef0652522c0f320d57788646238aad75c2d32a2c5a9b34868d",
+      "stage1": "COVER",
+      "schedule_name": "LATE_WMATCH",
+      "events": [
+        {
+          "after": 4,
+          "keep": 79
+        },
+        {
+          "after": 16,
+          "keep": 32
+        }
+      ],
+      "selector_name": "temporal_a50",
+      "selector": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      },
+      "application": "final_event_only",
+      "query_groups": 4,
+      "budget": {
+        "visual_token_layers": 2288,
+        "difference_from_EARLY": 4,
+        "relative_difference": 0.0017513134851138354,
         "near_work_matched": true
       }
     },
@@ -3459,6 +3651,430 @@
       "kind": "real",
       "task": "GQA",
       "config": {
+        "config_id": "BASE__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "7c2b23d0b8bcc70bbbdcb987da7faf1f106503a3ca3bdbc18748439f3bf2138d",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "8c16d1494133af2e50b5429f34ca119f71392cebc223a80144102d652ada969a",
+      "job_id": "BASE__LATE_WMATCH__reference__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "7c2b23d0b8bcc70bbbdcb987da7faf1f106503a3ca3bdbc18748439f3bf2138d",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "7e8a9fd5021dc8f553027f338d9a5fe1b79ae490b06b87ad4d62115759535da3",
+      "job_id": "BASE__LATE_WMATCH__reference__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "7c2b23d0b8bcc70bbbdcb987da7faf1f106503a3ca3bdbc18748439f3bf2138d",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "b1debd69aae990bb1a120810dd4701b9f6dad0ce062502d0eef5956a6f104f99",
+      "job_id": "BASE__LATE_WMATCH__reference__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "7c2b23d0b8bcc70bbbdcb987da7faf1f106503a3ca3bdbc18748439f3bf2138d",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "e5ff8428d9e9299984c15b41eb46830e262dce619290631d6ecb1c5001a2051c",
+      "job_id": "BASE__LATE_WMATCH__reference__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "eaa8ba8dbecbc0e0ea498934bd22837b254d32c05e5e4d0a3a3459dc018c80c0",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "27a8a900f4c78836042d4fbd873229ec1f491526863f9111758fc7d32ce870b4",
+      "job_id": "COVER__LATE_WMATCH__reference__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "eaa8ba8dbecbc0e0ea498934bd22837b254d32c05e5e4d0a3a3459dc018c80c0",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "30feaac46e12d8f6e240c4da94feaf2e0da9e914294bb53620e9007955e0dda7",
+      "job_id": "COVER__LATE_WMATCH__reference__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "eaa8ba8dbecbc0e0ea498934bd22837b254d32c05e5e4d0a3a3459dc018c80c0",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "8c3e4b3fcac8e379fe7512ae91ab1dcc3614a853938e5ff25c64a8911ef93953",
+      "job_id": "COVER__LATE_WMATCH__reference__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__reference",
+        "block": "A_schedule",
+        "config_hash": "eaa8ba8dbecbc0e0ea498934bd22837b254d32c05e5e4d0a3a3459dc018c80c0",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "reference",
+        "selector": {
+          "mode": "reference",
+          "alpha": 0.0,
+          "lambda": 0.0,
+          "swaps": 0
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "9d6ce5a517701efba2e36651dc78d27dfb286603fea6ce07d010dbd6acdb2e45",
+      "job_id": "COVER__LATE_WMATCH__reference__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
         "config_id": "BASE__FIRST_SHIFT_WMATCH__reference",
         "block": "A_schedule",
         "config_hash": "ea878bb1a9554a8586468130d6b37dfec060a06208acc365173c5b4bd73801db",
@@ -4333,6 +4949,854 @@
       "estimated_seconds": 1200,
       "job_hash": "c09328719046a02f01a0e40336f2100fc11b72f2e1f8eabf70c27815f5652291",
       "job_id": "COVER__THREE_WMATCH__reference__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "3af7fffe814c186e8ebc8c90a89bcd13b471d8982be5933d9af7a14175de89b7",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "cfa675d1947bf1c65e8b34789c33a169dea45ca61f41f895e3d0e0e512e570d9",
+      "job_id": "BASE__LATE_WMATCH__current_exchange__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "3af7fffe814c186e8ebc8c90a89bcd13b471d8982be5933d9af7a14175de89b7",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "2ced56695570c20fd5950e654aaab92192808fcff24945f49bb5229d5afa92b7",
+      "job_id": "BASE__LATE_WMATCH__current_exchange__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "3af7fffe814c186e8ebc8c90a89bcd13b471d8982be5933d9af7a14175de89b7",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "dcbfba07d01cafec664c44edc24ee535e7d7c56c19f7c49024c1ff70dc1d5503",
+      "job_id": "BASE__LATE_WMATCH__current_exchange__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "3af7fffe814c186e8ebc8c90a89bcd13b471d8982be5933d9af7a14175de89b7",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "97acee355089d8246b8e807bd9393689d0f4472c9f3c45fef08cdd3f9b5cb950",
+      "job_id": "BASE__LATE_WMATCH__current_exchange__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "9bcf8b77ba1659c7c59479ef72f20dff5ad7920b3fff1091f9166fa0a039260b",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "7aaec7aace27d8eff2441e3eb41f3a79c7b3f88251943ea130affc3881686444",
+      "job_id": "COVER__LATE_WMATCH__current_exchange__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "9bcf8b77ba1659c7c59479ef72f20dff5ad7920b3fff1091f9166fa0a039260b",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "f00cb2a058877ec48c8eec7d8480f8586c976a4aab7e351d6c6dc3336da7678d",
+      "job_id": "COVER__LATE_WMATCH__current_exchange__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "9bcf8b77ba1659c7c59479ef72f20dff5ad7920b3fff1091f9166fa0a039260b",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "64f7f999f16ffc98f18bdbe7c3e95179d443a94e4e40db1b0ade674aba9c5977",
+      "job_id": "COVER__LATE_WMATCH__current_exchange__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__current_exchange",
+        "block": "C_joint",
+        "config_hash": "9bcf8b77ba1659c7c59479ef72f20dff5ad7920b3fff1091f9166fa0a039260b",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "current_exchange",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.0,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "ada276c5a6b9e4a0d416860bfeab54eda2a7be781f5b5fb06c955287e452f0b8",
+      "job_id": "COVER__LATE_WMATCH__current_exchange__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "40518f970c6fda3dea9250d28b026887911cb5c333aa5aab371addb303d95563",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "2fe1a461441f72192a6d1f9ec71abdff6d16a2e7355a739ab2f106ed2cde0986",
+      "job_id": "BASE__LATE_WMATCH__temporal_a50__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "40518f970c6fda3dea9250d28b026887911cb5c333aa5aab371addb303d95563",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "3d7b1619f26223a70746289f8fdefb3f95b2e657f6e0fcde3f30a19c4e8138cb",
+      "job_id": "BASE__LATE_WMATCH__temporal_a50__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "40518f970c6fda3dea9250d28b026887911cb5c333aa5aab371addb303d95563",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "a7f760b2d2870e193881e49085237531da1c1f23f9038deadd6c19de622dc62c",
+      "job_id": "BASE__LATE_WMATCH__temporal_a50__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "BASE__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "40518f970c6fda3dea9250d28b026887911cb5c333aa5aab371addb303d95563",
+        "stage1": "BASE",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "e4b0d60fa8ac699b0485679b517641073774acffb3b802f9a65d4af32835345e",
+      "job_id": "BASE__LATE_WMATCH__temporal_a50__MMBench"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "GQA",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "97e3bd615dd489ef0652522c0f320d57788646238aad75c2d32a2c5a9b34868d",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "exact_match",
+      "estimated_seconds": 2400,
+      "job_hash": "74ccd161474559ffb39d5ecf084345a0a18839980553b26b5359a42f5c0ac50b",
+      "job_id": "COVER__LATE_WMATCH__temporal_a50__GQA"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "POPE",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "97e3bd615dd489ef0652522c0f320d57788646238aad75c2d32a2c5a9b34868d",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "pope_accuracy",
+      "estimated_seconds": 900,
+      "job_hash": "d5efce0a6d880e880272130f2d757f4aa4a672adc11b09c434d36892aacd34ec",
+      "job_id": "COVER__LATE_WMATCH__temporal_a50__POPE"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MME",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "97e3bd615dd489ef0652522c0f320d57788646238aad75c2d32a2c5a9b34868d",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "mme_perception_score+mme_cognition_score",
+      "estimated_seconds": 900,
+      "job_hash": "87d7309061a29a323346a19e1759f1539c040bce8ba449cfa096f08b8f59d499",
+      "job_id": "COVER__LATE_WMATCH__temporal_a50__MME"
+    },
+    {
+      "phase": "screen",
+      "kind": "real",
+      "task": "MMBench",
+      "config": {
+        "config_id": "COVER__LATE_WMATCH__temporal_a50",
+        "block": "C_joint",
+        "config_hash": "97e3bd615dd489ef0652522c0f320d57788646238aad75c2d32a2c5a9b34868d",
+        "stage1": "COVER",
+        "schedule_name": "LATE_WMATCH",
+        "events": [
+          {
+            "after": 4,
+            "keep": 79
+          },
+          {
+            "after": 16,
+            "keep": 32
+          }
+        ],
+        "selector_name": "temporal_a50",
+        "selector": {
+          "mode": "exchange",
+          "alpha": 0.5,
+          "lambda": 0.15,
+          "swaps": 4
+        },
+        "application": "final_event_only",
+        "query_groups": 4,
+        "budget": {
+          "visual_token_layers": 2288,
+          "difference_from_EARLY": 4,
+          "relative_difference": 0.0017513134851138354,
+          "near_work_matched": true
+        }
+      },
+      "panel": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "source": {
+        "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+        "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+        "prompt_hash": "llava_v1_conv",
+        "input_pipeline_hash": "e014_lmms_eval_full",
+        "cache_policy": "layer_local",
+        "query_rule": "Q_ATTN"
+      },
+      "metric_key": "gpt_eval_score",
+      "estimated_seconds": 1200,
+      "job_hash": "e559310c8684ebcb1e1fc1d8d393f8e9062596e64adb0d4850b829e0f1c42c7a",
+      "job_id": "COVER__LATE_WMATCH__temporal_a50__MMBench"
     },
     {
       "phase": "screen",
@@ -10335,11 +11799,9 @@
       "job_id": "COVER__EARLY__random_swap__MMBench"
     }
   ],
-  "skipped_schedules": [
-    "LATE_WMATCH infeasible with same first boundary"
-  ],
+  "skipped_schedules": [],
   "counts": {
-    "configurations": 42,
-    "task_jobs": 168
+    "configurations": 48,
+    "task_jobs": 192
   }
 }

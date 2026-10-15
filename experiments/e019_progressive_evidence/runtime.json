@@ -32,9 +32,9 @@
     ]
   },
   "expected_visual_work": {
+    "ONE": 2284,
     "EARLY": 2284,
-    "LATE": 2564,
-    "ONE": 2284
+    "LATE": 2564
   },
   "source": {
     "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
@@ -95,5 +95,106 @@
     "MMBench": 1200
   },
   "timing_panel": "/home/xiangyue/ViTCoP/experiments/e014_latency_fair_256/panel/speed_256.jsonl",
-  "NOTE": "User skip-smoke; full official ACC via e014_queue. schedules.work aligned to e018_contract.token_work."
+  "NOTE": "User skip-smoke; full official ACC via e014_queue. schedules.work aligned to e018_contract.token_work.",
+  "derived_schedules": {
+    "ONE": [
+      {
+        "after": 8,
+        "keep": 32
+      }
+    ],
+    "EARLY": [
+      {
+        "after": 4,
+        "keep": 102
+      },
+      {
+        "after": 12,
+        "keep": 32
+      }
+    ],
+    "LATE": [
+      {
+        "after": 4,
+        "keep": 102
+      },
+      {
+        "after": 16,
+        "keep": 32
+      }
+    ],
+    "LATE_WMATCH": [
+      {
+        "after": 4,
+        "keep": 79
+      },
+      {
+        "after": 16,
+        "keep": 32
+      }
+    ],
+    "FIRST_SHIFT_WMATCH": [
+      {
+        "after": 2,
+        "keep": 116
+      },
+      {
+        "after": 12,
+        "keep": 32
+      }
+    ],
+    "THREE_WMATCH": [
+      {
+        "after": 4,
+        "keep": 103
+      },
+      {
+        "after": 8,
+        "keep": 101
+      },
+      {
+        "after": 12,
+        "keep": 32
+      }
+    ]
+  },
+  "schedule_annotations": {
+    "ONE": {
+      "visual_token_layers": 2284,
+      "difference_from_EARLY": 0,
+      "relative_difference": 0.0,
+      "near_work_matched": true
+    },
+    "EARLY": {
+      "visual_token_layers": 2284,
+      "difference_from_EARLY": 0,
+      "relative_difference": 0.0,
+      "near_work_matched": true
+    },
+    "LATE": {
+      "visual_token_layers": 2564,
+      "difference_from_EARLY": 280,
+      "relative_difference": 0.12259194395796848,
+      "near_work_matched": false
+    },
+    "LATE_WMATCH": {
+      "visual_token_layers": 2288,
+      "difference_from_EARLY": 4,
+      "relative_difference": 0.0017513134851138354,
+      "near_work_matched": true
+    },
+    "FIRST_SHIFT_WMATCH": {
+      "visual_token_layers": 2284,
+      "difference_from_EARLY": 0,
+      "relative_difference": 0.0,
+      "near_work_matched": true
+    },
+    "THREE_WMATCH": {
+      "visual_token_layers": 2284,
+      "difference_from_EARLY": 0,
+      "relative_difference": 0.0,
+      "near_work_matched": true
+    }
+  },
+  "skipped_schedules": []
 }

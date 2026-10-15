@@ -25,6 +25,9 @@ from e014_arms import (
     FULL_E018_EARLY_LATE,
     FULL_E018_LATE_ONLY,
     FULL_E019_SCHEDULE_REF,
+    FULL_E019_SELECTOR_B,
+    FULL_E019_JOINT_C,
+    FULL_E019_REMAINING,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -69,6 +72,9 @@ PHASE_ARMS = {
     "full_e018_early_late": FULL_E018_EARLY_LATE,
     "full_e018_late_only": FULL_E018_LATE_ONLY,
     "full_e019_schedule_ref": FULL_E019_SCHEDULE_REF,
+    "full_e019_selector_b": FULL_E019_SELECTOR_B,
+    "full_e019_joint_c": FULL_E019_JOINT_C,
+    "full_e019_remaining": FULL_E019_REMAINING,
 }
 
 

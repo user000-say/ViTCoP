@@ -141,7 +141,40 @@ def question_response(q, k, mask, q_idx, v0, vn, need_redundancy=True):
         rho = torch.zeros_like(r)
     entropy = -(r * r.clamp_min(1e-8).log()).sum() / math.log(max(vn, 2))
     return dict(g=g, p=p, r=r, rho=rho, entropy=entropy, signatures=z, need_redundancy=need_redundancy,
-                q_attn=visual.mean(0), qed=r * (1 - entropy * rho))
+                q_attn=visual.mean(0), qed=r * (1 - entropy * rho),
+                visual=visual)
+
+
+def _e019_from_env():
+    """Optional final-event EvidenceHook; reference / disabled leaves STATIC path unchanged."""
+    if os.environ.get("E019_ENABLE", "False") != "True":
+        return None
+    mode = os.environ.get("E019_MODE", "reference").strip().lower()
+    if mode in {"", "reference", "off", "none"}:
+        return None
+    from .e019_selector_hook import EvidenceHook
+    cfg = {
+        "mode": mode,
+        "alpha": float(os.environ.get("E019_ALPHA", "0")),
+        "lambda": float(os.environ.get("E019_LAMBDA", "0")),
+        "swaps": int(os.environ.get("E019_SWAPS", "0")),
+    }
+    debug = os.environ.get("E019_DEBUG", "True") == "True"
+    return EvidenceHook(cfg, debug_validate=debug)
+
+
+def _group_query_response(visual, groups=4):
+    """Average question→vision rows into ≤groups fixed contiguous buckets."""
+    q = int(visual.shape[0])
+    g = max(1, min(int(groups), q))
+    # Contiguous map over original question-token order; short prompts use fewer groups.
+    ids = torch.arange(q, device=visual.device)
+    ids = (ids * g) // max(q, 1)
+    ids = ids.clamp_max(g - 1)
+    out = visual.new_zeros((g, visual.shape[1]))
+    out.index_add_(0, ids, visual.float())
+    counts = torch.bincount(ids, minlength=g).clamp_min(1).to(out.dtype)[:, None]
+    return out / counts
 
 
 class Runtime:
@@ -157,6 +190,9 @@ class Runtime:
         self._side = None
         self.last_trace = None
         self._sketch = {}
+        self.e019_hook = _e019_from_env()
+        self.e019_groups = int(os.environ.get("E019_QUERY_GROUPS", "4"))
+        self._e019_sample_seed = int(os.environ.get("E019_SAMPLE_SEED", "0"))
 
     def _read(self, q, k, value, mask):
         s = self.state
@@ -177,7 +213,23 @@ class Runtime:
             score = ((s.visual_ids * 1103515245 + 12345 + layer * 2654435761) % 2147483647).float()
         else:
             score = side["q_attn" if self.cfg.selector == "Q_ATTN" else "qed"]
-        return torch.argsort(score, descending=True, stable=True)[:count].sort().values
+        baseline = torch.argsort(score, descending=True, stable=True)[:count].sort().values
+        # E019: refine ONLY the final progressive prune; penultimate only captures.
+        if self.e019_hook is not None and self.cfg.events and layer == self.cfg.events[-1][0]:
+            visual = side.get("visual")
+            if visual is None:
+                raise RuntimeError("E019 requires question→vision response matrix")
+            current = _group_query_response(visual, self.e019_groups)
+            seed = int(self._e019_sample_seed)
+            if seed == 0 and s.visual_ids.numel():
+                # Stable per-request seed from original patch IDs (not launch order).
+                seed = int((s.visual_ids.long().sum() % 2147483647).item())
+            refined = self.e019_hook.refine(
+                score, current, s.visual_ids, baseline, sample_seed=seed)
+            if refined.numel() != count:
+                raise RuntimeError("E019 refine must preserve final K")
+            return refined.sort().values
+        return baseline
 
     def _features(self, hidden, side, keep, layer, endpoint):
         s, n = self.state, self.state.visual_ids.numel()
@@ -351,10 +403,14 @@ class Runtime:
                     for k in ("r", "rho", "q_attn", "qed", "signatures"):
                         side[k] = side[k].index_select(0, keep_side)
                     side["p"] = side["p"].index_select(1, keep_side)
+                    if "visual" in side:
+                        side["visual"] = side["visual"].index_select(1, keep_side)
                     # Recompute conditional statistics on the surviving set; retain full-prefix mass.
                     visual = side["p"] * side["g"][:, None]
                     side["g"] = visual.sum(-1)
                     side["p"] = visual / side["g"][:, None].clamp_min(1e-8)
+                    side["visual"] = visual
+                    side["q_attn"] = visual.mean(0)
                     w = side["g"] / side["g"].sum().clamp_min(1e-8)
                     side["r"] = (w[:, None] * side["p"]).sum(0)
                     side["entropy"] = -(side["r"] * side["r"].clamp_min(1e-8).log()).sum() / math.log(max(s.visual_ids.numel(), 2))
@@ -366,6 +422,14 @@ class Runtime:
                     else:
                         side["rho"] = torch.zeros_like(side["r"])
                     side["qed"] = side["r"] * (1 - side["entropy"] * side["rho"])
+                # E019: capture query-group response at penultimate prune only.
+                if (self.e019_hook is not None and len(self.cfg.events) >= 2
+                        and layer_idx == self.cfg.events[-2][0]):
+                    vis = side.get("visual")
+                    if vis is None:
+                        raise RuntimeError("E019 penultimate capture missing visual response")
+                    grouped = _group_query_response(vis, self.e019_groups)
+                    self.e019_hook.capture(grouped, s.visual_ids)
                 hidden = self._event(hidden, cache, side, layer_idx, schedule[layer_idx], endpoint_map[layer_idx])
             if s.visual_ids.numel() != n_before:
                 self._record_physical(layer_idx)
