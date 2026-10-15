@@ -134,9 +134,11 @@ class Checks(unittest.TestCase):
         self.assertEqual(matrix['runtime_hash'],adjusted['runtime_hash'])
         self.assertEqual([j['job_hash'] for j in matrix['jobs']],[j['job_hash'] for j in adjusted['jobs']])
         plans,annotation,skipped=variants(32,200,runtime['schedules'])
-        self.assertEqual(work(32,200,plans['EARLY']),2560)
+        early_w=work(32,200,plans['EARLY'])
+        self.assertEqual(early_w,2720)
         for key in ['LATE_WMATCH','FIRST_SHIFT_WMATCH','THREE_WMATCH']:
-            self.assertLessEqual(annotation[key]['visual_token_layers'],2560)
+            self.assertLessEqual(annotation[key]['visual_token_layers'],early_w)
+            self.assertTrue(annotation[key]['near_work_matched'])
         wrong=copy.deepcopy(runtime);wrong['expected_visual_work']['EARLY']=0
         with self.assertRaises(ValueError):build(wrong)
 
