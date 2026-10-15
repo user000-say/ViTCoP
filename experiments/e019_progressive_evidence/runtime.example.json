@@ -1,0 +1,76 @@
+{
+  "schema": "e019_runtime_v1",
+  "kind": "real",
+  "model_depth": null,
+  "initial_visual_tokens": null,
+  "schedules": {
+    "ONE": null,
+    "EARLY": null,
+    "LATE": null
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "LATE": 2564
+  },
+  "source": {
+    "checkpoint_hash": null,
+    "code_commit": null,
+    "prompt_hash": null,
+    "input_pipeline_hash": null,
+    "cache_policy": null,
+    "query_rule": null
+  },
+  "metric_keys": {
+    "GQA": null,
+    "POPE": null,
+    "MME": null,
+    "MMBench": null
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    }
+  },
+  "estimated_job_seconds": {
+    "GQA": 180,
+    "POPE": 180,
+    "MME": 180,
+    "MMBench": 180
+  },
+  "TEMPLATE_NOTE": "Export real events as [{after: completed_blocks, keep: actual_visual_count}, ...]. Do not use this template as a guessed schedule.",
+  "stress_panels": [],
+  "timing_panel": null
+}

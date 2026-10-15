@@ -374,10 +374,10 @@ class Runtime:
             history += (hidden,)
         if s.pending:
             raise RuntimeError("Unexecuted continuation endpoint")
-        if s.physical_events > 2:
-            raise RuntimeError("Unexpected third physical pruning event")
-        if s.gather_operations > 2:
-            raise RuntimeError("Unexpected third hidden-state gather")
+        if s.physical_events > 3:
+            raise RuntimeError("Unexpected fourth physical pruning event")
+        if s.gather_operations > 3:
+            raise RuntimeError("Unexpected fourth hidden-state gather")
         # trace() synchronizes tensors with CPU. Never execute it in timing mode.
         self.last_trace = self.trace(cache) if self.cfg.trace or self.cfg.mode == "COLLECT" else None
         if self.cfg.trace:

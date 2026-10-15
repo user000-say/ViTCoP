@@ -54,8 +54,9 @@ class E018Config:
             raise ValueError("E018_SELECTOR must be Q_ATTN/QED/RANDOM")
         if self.cache_policy not in {"layer_local", "scrub_all"}:
             raise ValueError("Unknown cache policy")
-        if len(self.events) > 2 or (not self.events and self.mode != "STATIC"):
-            raise ValueError("E018 supports up to two checkpoints; empty STATIC is the dense identity control")
+        # E019 THREE_WMATCH needs three checkpoints; keep empty STATIC as dense identity.
+        if len(self.events) > 3 or (not self.events and self.mode != "STATIC"):
+            raise ValueError("E018/E019 supports up to three checkpoints; empty STATIC is the dense identity control")
         prev_layer, prev_k = -1, initial
         for layer, k in self.events:
             if not 0 <= layer < layers - 1 or layer <= prev_layer or not 0 < k < prev_k:

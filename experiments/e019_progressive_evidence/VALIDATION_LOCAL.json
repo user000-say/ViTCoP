@@ -1,0 +1,28 @@
+{
+  "date_utc": "2026-10-15",
+  "command": "OPENBLAS_NUM_THREADS=1 python checks.py",
+  "tests_total": 14,
+  "passed": 13,
+  "skipped": 1,
+  "skipped_reason": "PyTorch unavailable locally; actual-server parity and CUDA/model validation required",
+  "verified": [
+    "single-exchange objective matches exhaustive enumeration",
+    "positive objective improvement and fixed distinct patch count",
+    "original patch identity alignment",
+    "query grouping and scalar/group distinction",
+    "zero-coverage finite behavior",
+    "48 distinct configurations and 192 jobs on a synthetic schedule fixture",
+    "scientific job identity stable under ETA changes",
+    "real subprocess failure isolation, retry and resume",
+    "owned subprocess cleanup at deadline",
+    "four-task aggregation without filling missing results",
+    "automatic complementary-candidate promotion and timing job construction"
+  ],
+  "not_verified": [
+    "actual project integration",
+    "PyTorch/CUDA numeric parity",
+    "new VLM accuracy or latency",
+    "novelty sufficiency or conference acceptance"
+  ],
+  "synthetic_notice": "All local scheduler/algorithm fixtures are synthetic and are not benchmark results."
+}

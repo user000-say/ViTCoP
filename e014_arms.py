@@ -227,6 +227,31 @@ FULL_E018_LATE_ONLY = [
     "E018_BASE_LATE32",
 ]
 
+# E019 progressive-evidence Block A: near-work schedule references (selector=reference).
+# Events from schedules.variants under e018 token_work (EARLY W=2284).
+ARMS.update({
+    "E019_COVER_LATE_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 4:78,16:32
+    "E019_COVER_FIRST_SHIFT_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 2:116,12:32
+    "E019_COVER_THREE_WMATCH32": ("FIXED_COVER", 32, 8, 8, 32),  # 4:103,8:101,12:32
+    "E019_BASE_LATE_WMATCH32": ("BASE", 0, 8, 8, 32),
+    "E019_BASE_FIRST_SHIFT_WMATCH32": ("BASE", 0, 8, 8, 32),
+    "E019_BASE_THREE_WMATCH32": ("BASE", 0, 8, 8, 32),
+})
+FULL_E019_SCHEDULE_REF = [
+    "E019_COVER_LATE_WMATCH32",
+    "E019_COVER_FIRST_SHIFT_WMATCH32",
+    "E019_COVER_THREE_WMATCH32",
+    "E019_BASE_LATE_WMATCH32",
+    "E019_BASE_FIRST_SHIFT_WMATCH32",
+    "E019_BASE_THREE_WMATCH32",
+]
+
+_E019_EVENTS = {
+    "LATE_WMATCH": "4:78,16:32",
+    "FIRST_SHIFT_WMATCH": "2:116,12:32",
+    "THREE_WMATCH": "4:103,8:101,12:32",
+}
+
 
 def apply_arm_env(arm: str) -> dict:
     import os
@@ -316,16 +341,22 @@ def apply_arm_env(arm: str) -> dict:
     else:
         # Prevent accidental inheritance from a prior cascade job in the same shell.
         os.environ["E016_CASCADE"] = ""
-    if arm.startswith("E018_"):
-        # Isolated Stage2 continuation path; keep Stage1 via E014_* above.
+    if arm.startswith("E018_") or arm.startswith("E019_"):
+        # Isolated Stage2/E019 path; keep Stage1 via E014_* above.
         if arm.endswith("_ONE32"):
             events = "8:32"
         elif arm.endswith(("_TWO32", "_EARLY32")):
             events = "4:102,12:32"
-        elif arm.endswith("_LATE32"):
+        elif arm.endswith("_LATE32") and "WMATCH" not in arm:
             events = "4:102,16:32"
+        elif "LATE_WMATCH" in arm:
+            events = _E019_EVENTS["LATE_WMATCH"]
+        elif "FIRST_SHIFT_WMATCH" in arm:
+            events = _E019_EVENTS["FIRST_SHIFT_WMATCH"]
+        elif "THREE_WMATCH" in arm:
+            events = _E019_EVENTS["THREE_WMATCH"]
         else:
-            raise ValueError(f"Unknown E018 arm schedule: {arm}")
+            raise ValueError(f"Unknown E018/E019 arm schedule: {arm}")
         os.environ.update(
             E018_ENABLE="True",
             E018_MODE="STATIC",

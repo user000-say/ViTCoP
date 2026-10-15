@@ -1,0 +1,462 @@
+{
+  "purpose": "symbolic catalog only; export real schedule events before building executable matrix",
+  "configurations": [
+    {
+      "stage1": "BASE",
+      "schedule": "ONE",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "LATE",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "LATE_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "THREE_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_a25",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.25,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_a75",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.75,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "previous_only",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 1.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_l05",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.05,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_l30",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.3,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "temporal_b2",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 2
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "scalar_ema",
+      "settings": {
+        "mode": "mean",
+        "alpha": 0.5,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "current_mean",
+      "settings": {
+        "mode": "mean",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "score_topk",
+      "settings": {
+        "mode": "score",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "EARLY",
+      "selector": "random_swap",
+      "settings": {
+        "mode": "random",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "LATE_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "LATE_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "THREE_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "BASE",
+      "schedule": "THREE_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "ONE",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "LATE",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "LATE_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "THREE_WMATCH",
+      "selector": "reference"
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_a25",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.25,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_a75",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.75,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "previous_only",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 1.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_l05",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.05,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_l30",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.3,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "temporal_b2",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 2
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "scalar_ema",
+      "settings": {
+        "mode": "mean",
+        "alpha": 0.5,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "current_mean",
+      "settings": {
+        "mode": "mean",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "score_topk",
+      "settings": {
+        "mode": "score",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 0
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "EARLY",
+      "selector": "random_swap",
+      "settings": {
+        "mode": "random",
+        "alpha": 0.0,
+        "lambda": 0.0,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "LATE_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "LATE_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "FIRST_SHIFT_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "THREE_WMATCH",
+      "selector": "current_exchange",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    },
+    {
+      "stage1": "COVER",
+      "schedule": "THREE_WMATCH",
+      "selector": "temporal_a50",
+      "settings": {
+        "mode": "exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "swaps": 4
+      }
+    }
+  ],
+  "count": 48
+}

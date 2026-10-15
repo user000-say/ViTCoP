@@ -1,0 +1,59 @@
+{
+  "source": "user-reported rounded task metrics, n=1024 TTFT cuda means",
+  "R4_recomputed": {
+    "COVER_ONE": 95.20732044521615,
+    "BASE_ONE": 95.21442320108989,
+    "COVER_EARLY": 96.10003064529238,
+    "BASE_EARLY": 96.09528893392114,
+    "COVER_LATE": 96.2393637229794,
+    "BASE_LATE": 95.77161886890345
+  },
+  "changes": {
+    "COVER_ONE_to_EARLY": {
+      "task_contributions_pp": {
+        "GQA": 0.19789983844911227,
+        "POPE": -0.2768065268065276,
+        "MME": -0.23353131749459982,
+        "MMBench": 1.205148205928236
+      },
+      "R4_change_pp": 0.8927102000762207,
+      "TTFT_mean_change_ms": 1.5
+    },
+    "COVER_EARLY_to_LATE": {
+      "task_contributions_pp": {
+        "GQA": -0.08885298869143735,
+        "POPE": -0.005827505827504668,
+        "MME": -0.0350971922246208,
+        "MMBench": 0.26911076443057635
+      },
+      "R4_change_pp": 0.13933307768701353,
+      "TTFT_mean_change_ms": 0.7999999999999972
+    },
+    "BASE_ONE_to_EARLY": {
+      "task_contributions_pp": {
+        "GQA": 0.16962843295638194,
+        "POPE": -0.2942890442890458,
+        "MME": -0.30102591792656525,
+        "MMBench": 1.3065522620904841
+      },
+      "R4_change_pp": 0.880865732831255,
+      "TTFT_mean_change_ms": 2.0
+    },
+    "BASE_EARLY_to_LATE": {
+      "task_contributions_pp": {
+        "GQA": 0.03634894991922594,
+        "POPE": -0.02913752913752748,
+        "MME": -0.26457883369330637,
+        "MMBench": -0.06630265210608491
+      },
+      "R4_change_pp": -0.3236700650176928,
+      "TTFT_mean_change_ms": 0.29999999999999716
+    }
+  },
+  "visual_work": {
+    "EARLY": 2284,
+    "LATE": 2564
+  },
+  "relative_extra_visual_work": 0.12259194395796857,
+  "note": "No confidence intervals, per-sample oracle, or learned policy effects can be inferred from these aggregates."
+}

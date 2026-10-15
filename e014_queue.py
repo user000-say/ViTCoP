@@ -24,6 +24,7 @@ from e014_arms import (
     FULL_E018_K32_STATIC,
     FULL_E018_EARLY_LATE,
     FULL_E018_LATE_ONLY,
+    FULL_E019_SCHEDULE_REF,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -67,6 +68,7 @@ PHASE_ARMS = {
     "full_e018_k32_static": FULL_E018_K32_STATIC,
     "full_e018_early_late": FULL_E018_EARLY_LATE,
     "full_e018_late_only": FULL_E018_LATE_ONLY,
+    "full_e019_schedule_ref": FULL_E019_SCHEDULE_REF,
 }
 
 

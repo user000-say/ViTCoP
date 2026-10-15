@@ -1,0 +1,99 @@
+{
+  "schema": "e019_runtime_v1",
+  "kind": "real",
+  "model_depth": 32,
+  "initial_visual_tokens": 172,
+  "schedules": {
+    "ONE": [
+      {
+        "after": 8,
+        "keep": 32
+      }
+    ],
+    "EARLY": [
+      {
+        "after": 4,
+        "keep": 102
+      },
+      {
+        "after": 12,
+        "keep": 32
+      }
+    ],
+    "LATE": [
+      {
+        "after": 4,
+        "keep": 102
+      },
+      {
+        "after": 16,
+        "keep": 32
+      }
+    ]
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "LATE": 2564,
+    "ONE": 2284
+  },
+  "source": {
+    "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+    "code_commit": "6662dd787cb3a50a5a8498af15a09a8a1b3edc79",
+    "prompt_hash": "llava_v1_conv",
+    "input_pipeline_hash": "e014_lmms_eval_full",
+    "cache_policy": "layer_local",
+    "query_rule": "Q_ATTN"
+  },
+  "metric_keys": {
+    "GQA": "exact_match",
+    "POPE": "pope_accuracy",
+    "MME": "mme_perception_score+mme_cognition_score",
+    "MMBench": "gpt_eval_score"
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "POPE": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "MME": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      },
+      "MMBench": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "8f8218e6cc07be33723f91126fe1d28784dffc7891fd86df82906a68134d7c6c"
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": "logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "POPE": {
+        "path": "logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MME": {
+        "path": "logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MMBench": {
+        "path": "logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      }
+    }
+  },
+  "estimated_job_seconds": {
+    "GQA": 2400,
+    "POPE": 900,
+    "MME": 900,
+    "MMBench": 1200
+  },
+  "timing_panel": "/home/xiangyue/ViTCoP/experiments/e014_latency_fair_256/panel/speed_256.jsonl",
+  "NOTE": "User skip-smoke; full official ACC via e014_queue. schedules.work aligned to e018_contract.token_work."
+}
