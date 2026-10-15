@@ -22,7 +22,8 @@ def synthetic_runtime():
             'schedules':{'ONE':[{'after':8,'keep':40}],
                          'EARLY':[{'after':4,'keep':120},{'after':12,'keep':40}],
                          'LATE':[{'after':4,'keep':120},{'after':16,'keep':40}]},
-            'expected_visual_work':{'EARLY':2560,'LATE':2880},
+            # Must match schedules.work / e018_contract.token_work (count prune layer at pre-prune N).
+            'expected_visual_work':{'EARLY':2720,'LATE':3040},
             'source':{k:'synthetic-only' for k in ['checkpoint_hash','code_commit','prompt_hash','input_pipeline_hash','cache_policy','query_rule']},
             'metric_keys':{t:'synthetic_'+t for t in ['GQA','POPE','MME','MMBench']},
             'panels':{phase:{t:{'path':'synthetic-panel-not-a-real-dataset','ids_hash':phase+'_'+t} for t in ['GQA','POPE','MME','MMBench']} for phase in ['screen','confirm']},

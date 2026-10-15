@@ -27,11 +27,21 @@ def _two_match(depth,initial,early,first,last):
     if not 1<=first<last<depth:return None
     # e018 token_work: initial*(first+1) + mid*(last-first) + final*(depth-1-last)
     denom=last-first
-    mid=(target-initial*(first+1)-final*(depth-1-last))//denom
-    if not final<mid<initial:return None
-    result=[{'after':first,'keep':int(mid)},{'after':last,'keep':final}]
-    if work(depth,initial,result)!=target:return None
-    return result
+    base=initial*(first+1)+final*(depth-1-last)
+    # Integer mid rarely hits exact W; pick nearest mid with |ΔW|/target ≤ 0.5%.
+    best=None; best_err=None
+    lo=final+1; hi=initial-1
+    if lo>hi:return None
+    approx=(target-base)/denom
+    for mid in sorted({int(approx), int(approx)+1, int(approx)-1, lo, hi}):
+        if not lo<=mid<=hi:continue
+        result=[{'after':first,'keep':int(mid)},{'after':last,'keep':final}]
+        used=work(depth,initial,result)
+        err=abs(used-target)
+        if best_err is None or err<best_err:
+            best_err,best=err,result
+    if best is None or best_err/target>0.005:return None
+    return best
 
 
 def variants(depth,initial,known):
