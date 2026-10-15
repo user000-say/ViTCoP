@@ -1,0 +1,147 @@
+{
+  "schema": "e018_truth_manifest_v1",
+  "commit_baseline": "c64832c",
+  "note": "ONE/TWO recovered from e014_arms E018_* and e018_stage2_support STATIC schedules",
+  "layer_semantics": "zero_based_post_complete_block; prune after counting that layer in W",
+  "selector": "Q_ATTN",
+  "cache_policy": "layer_local",
+  "stage1": {
+    "COVER": {
+      "variant": "FIXED_COVER",
+      "b": 32,
+      "N1": 172
+    },
+    "BASE": {
+      "variant": "BASE",
+      "b": 0,
+      "N1": 172
+    }
+  },
+  "schedules": {
+    "ONE": {
+      "events": [
+        [
+          8,
+          32
+        ]
+      ],
+      "W": 2284,
+      "kind": "single_fixed_prune"
+    },
+    "TWO": {
+      "events": [
+        [
+          4,
+          102
+        ],
+        [
+          12,
+          32
+        ]
+      ],
+      "W": 2284,
+      "kind": "progressive_fixed_two_prunes"
+    },
+    "EARLY": {
+      "events": [
+        [
+          4,
+          102
+        ],
+        [
+          12,
+          32
+        ]
+      ],
+      "W": 2284,
+      "alias_of": "TWO",
+      "kind": "progressive_last_delete_now"
+    },
+    "LATE": {
+      "events": [
+        [
+          4,
+          102
+        ],
+        [
+          16,
+          32
+        ]
+      ],
+      "W": 2564,
+      "delta_d": 4,
+      "kind": "progressive_defer_final_delete"
+    }
+  },
+  "same_cost_ONE_TWO": true,
+  "same_cost_EARLY_LATE": false,
+  "raw_metrics": {
+    "E018_COVER_ONE32": {
+      "gqa_exact_match": 0.5707584671648911,
+      "pope_accuracy": 0.8536666666666668,
+      "pope_f1": 0.8388202178435933,
+      "mme_perception": 1441.9780912364947,
+      "mme_cognition": 342.8571428571429,
+      "mme_total": 1784.8352340936376,
+      "mmbench_gpt_eval_score": 59.450171821305844
+    },
+    "E018_COVER_TWO32": {
+      "gqa_exact_match": 0.5756877086977262,
+      "pope_accuracy": 0.8442222222222222,
+      "pope_f1": 0.8237364847875283,
+      "mme_perception": 1443.610944377751,
+      "mme_cognition": 323.92857142857144,
+      "mme_total": 1767.5395158063225,
+      "mmbench_gpt_eval_score": 62.54295532646048
+    },
+    "E018_BASE_ONE32": {
+      "gqa_exact_match": 0.5675783113372556,
+      "pope_accuracy": 0.8504444444444446,
+      "pope_f1": 0.8349276428746627,
+      "mme_perception": 1429.686474589836,
+      "mme_cognition": 362.5,
+      "mme_total": 1792.186474589836,
+      "mmbench_gpt_eval_score": 59.79381443298969
+    },
+    "E018_BASE_TWO32": {
+      "gqa_exact_match": 0.5717920178088727,
+      "pope_accuracy": 0.8403333333333333,
+      "pope_f1": 0.8188122557054595,
+      "mme_perception": 1448.0973389355743,
+      "mme_cognition": 321.7857142857143,
+      "mme_total": 1769.8830532212885,
+      "mmbench_gpt_eval_score": 63.144329896907216
+    }
+  },
+  "four_arms_r4_inputs": {
+    "COVER_ONE": {
+      "GQA": 57.07584671648911,
+      "POPE": 85.36666666666667,
+      "MME": 1784.8352340936376,
+      "MMBench": 59.450171821305844
+    },
+    "COVER_TWO": {
+      "GQA": 57.56877086977262,
+      "POPE": 84.42222222222222,
+      "MME": 1767.5395158063225,
+      "MMBench": 62.54295532646048
+    },
+    "BASE_ONE": {
+      "GQA": 56.75783113372555,
+      "POPE": 85.04444444444445,
+      "MME": 1792.186474589836,
+      "MMBench": 59.79381443298969
+    },
+    "BASE_TWO": {
+      "GQA": 57.17920178088727,
+      "POPE": 84.03333333333333,
+      "MME": 1769.8830532212885,
+      "MMBench": 63.144329896907216
+    }
+  },
+  "pope_metric_key": "pope_accuracy,none",
+  "pope_denom_baseline": 85.8,
+  "r4_formula": "100/4*(GQA/61.9+POPE/85.8+MME/1852+MMBench/64.1)",
+  "acc_root": "/home/xiangyue/ViTCoP/logs/e014_aee/full/full_e018_k32_static",
+  "ttft_root": "/home/xiangyue/ViTCoP/experiments/e018_continuation/latency/runs"
+}

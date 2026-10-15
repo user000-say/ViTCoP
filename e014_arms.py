@@ -208,6 +208,25 @@ FULL_E018_K32_STATIC = [
     "E018_BASE_TWO32",
 ]
 
+# E018 extended: early/late final-delete on TWO backbone (Δd=4).
+# EARLY ≡ TWO (4:102,12:32, W=2284); LATE keeps 102 until post-16 →32 (W=2564).
+ARMS.update({
+    "E018_COVER_EARLY32": ("FIXED_COVER", 32, 8, 8, 32),
+    "E018_COVER_LATE32": ("FIXED_COVER", 32, 8, 8, 32),
+    "E018_BASE_EARLY32": ("BASE", 0, 8, 8, 32),
+    "E018_BASE_LATE32": ("BASE", 0, 8, 8, 32),
+})
+FULL_E018_EARLY_LATE = [
+    "E018_COVER_EARLY32",
+    "E018_COVER_LATE32",
+    "E018_BASE_EARLY32",
+    "E018_BASE_LATE32",
+]
+FULL_E018_LATE_ONLY = [
+    "E018_COVER_LATE32",
+    "E018_BASE_LATE32",
+]
+
 
 def apply_arm_env(arm: str) -> dict:
     import os
@@ -301,8 +320,10 @@ def apply_arm_env(arm: str) -> dict:
         # Isolated Stage2 continuation path; keep Stage1 via E014_* above.
         if arm.endswith("_ONE32"):
             events = "8:32"
-        elif arm.endswith("_TWO32"):
+        elif arm.endswith(("_TWO32", "_EARLY32")):
             events = "4:102,12:32"
+        elif arm.endswith("_LATE32"):
+            events = "4:102,16:32"
         else:
             raise ValueError(f"Unknown E018 arm schedule: {arm}")
         os.environ.update(

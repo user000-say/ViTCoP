@@ -22,6 +22,8 @@ from e014_arms import (
     FULL_E016_LAYER_SWEEP,
     FULL_E016_STAGE1_K96,
     FULL_E018_K32_STATIC,
+    FULL_E018_EARLY_LATE,
+    FULL_E018_LATE_ONLY,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -63,6 +65,8 @@ PHASE_ARMS = {
     "full_e016_k64_extra": FULL_E016_K64_EXTRA,
     "full_e016_layer_sweep": FULL_E016_LAYER_SWEEP,
     "full_e018_k32_static": FULL_E018_K32_STATIC,
+    "full_e018_early_late": FULL_E018_EARLY_LATE,
+    "full_e018_late_only": FULL_E018_LATE_ONLY,
 }
 
 

@@ -1,0 +1,612 @@
+{
+  "schema": "cursor_research_queue_v1",
+  "role": "planning ledger, not an integrated executable GPU scheduler",
+  "wall_clock_hours": 6,
+  "experiment_gpus": 3,
+  "dedicated_timing_gpu": "GPU3",
+  "finish_reserve_minutes": 30,
+  "max_experiment_jobs_per_gpu": 1,
+  "gates": {
+    "G0": "真实语义、复现与PyTorch数值检查通过",
+    "G1": "开发集同成本存在可用暂缓收益余量",
+    "G2": "独立评估与真实成本支持历史信息有增量"
+  },
+  "tasks": [
+    {
+      "id": "T00",
+      "name": "恢复ONE/TWO真实命令与逐层日程",
+      "priority": "P0",
+      "resource": "CPU",
+      "depends_on": [],
+      "requires_gate": null,
+      "deliverable": "四臂配置、commit、token日程和多次推理标记",
+      "status": "planned"
+    },
+    {
+      "id": "T01",
+      "name": "重算四任务指标并查POPE口径",
+      "priority": "P0",
+      "resource": "CPU",
+      "depends_on": [],
+      "requires_gate": null,
+      "deliverable": "原始四项指标、metric key、R4与交互项",
+      "status": "planned"
+    },
+    {
+      "id": "T02",
+      "name": "验证分支前缀、KV、位置及query span",
+      "priority": "P0",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T00"
+      ],
+      "requires_gate": null,
+      "deliverable": "真实前缀一致性及每层cache/位置记录",
+      "status": "planned"
+    },
+    {
+      "id": "T03",
+      "name": "PyTorch对齐NumPy并验FP32部署",
+      "priority": "P0",
+      "resource": "GPU_ANY",
+      "depends_on": [],
+      "requires_gate": null,
+      "deliverable": "实际数值误差；不得接受skip",
+      "status": "planned"
+    },
+    {
+      "id": "T04",
+      "name": "确定性与真实模型smoke",
+      "priority": "P0",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T02",
+        "T03"
+      ],
+      "requires_gate": null,
+      "deliverable": "同输入选点、预测和预算约束",
+      "status": "planned"
+    },
+    {
+      "id": "T05",
+      "name": "冻结图像组与训练开发独立评估划分",
+      "priority": "P0",
+      "resource": "CPU",
+      "depends_on": [],
+      "requires_gate": null,
+      "deliverable": "canonical图像ID、分组清单及未解封评估集",
+      "status": "planned"
+    },
+    {
+      "id": "T06",
+      "name": "冻结唯一工作点与已有选择规则",
+      "priority": "P0",
+      "resource": "CPU",
+      "depends_on": [
+        "T00",
+        "T01",
+        "T02",
+        "T05"
+      ],
+      "requires_gate": null,
+      "deliverable": "入口、最终K、暂缓边界、Q-ATTN及cache配置",
+      "status": "planned"
+    },
+    {
+      "id": "T07",
+      "name": "16至32对真实配对pilot与吞吐估计",
+      "priority": "P0",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T04",
+        "T06",
+        "T09"
+      ],
+      "requires_gate": null,
+      "deliverable": "有效标签、每对耗时与可完成采样数",
+      "status": "planned"
+    },
+    {
+      "id": "T08",
+      "name": "同题复现BASE/COVER乘ONE/TWO",
+      "priority": "P0",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "requires_gate": null,
+      "deliverable": "小面板四臂配对预测；确认原结果可信",
+      "status": "planned"
+    },
+    {
+      "id": "T09",
+      "name": "按文本长度分桶建立early/late成本表",
+      "priority": "P0",
+      "resource": "GPU3",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "requires_gate": null,
+      "deliverable": "冻结毫秒成本表与测量方差",
+      "status": "planned"
+    },
+    {
+      "id": "T10",
+      "name": "默认入口配对采样分片0",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T07",
+        "T08"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "默认目标256对；按pilot调整且不重叠",
+      "status": "planned"
+    },
+    {
+      "id": "T11",
+      "name": "默认入口配对采样分片1",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T07",
+        "T08"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "默认目标256对；同配置独立图像分片",
+      "status": "planned"
+    },
+    {
+      "id": "T12",
+      "name": "合并分片并检查身份和配置漂移",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T10",
+        "T11"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "有效pairs及拒绝/失败样本清单",
+      "status": "planned"
+    },
+    {
+      "id": "T13",
+      "name": "审计答案NLL与真实正确率的一致性",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T12"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "分支正确性互补、长度偏差和负收益比例",
+      "status": "planned"
+    },
+    {
+      "id": "T14",
+      "name": "固定token身份的延迟删除诊断",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T07"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "64例，区分延长计算与重新选点的作用",
+      "status": "planned"
+    },
+    {
+      "id": "T15",
+      "name": "开发集固定日程邻域包络",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T06",
+        "T08"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "最多3至5个固定层位；不改变其他变量",
+      "status": "planned"
+    },
+    {
+      "id": "T16",
+      "name": "同预算oracle余量与可学习性裁决",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T12",
+        "T13",
+        "T15"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "开发集余量、成本和G1继续/停止判断",
+      "status": "planned"
+    },
+    {
+      "id": "T17",
+      "name": "同容量四种输入控制器seed0训练",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T16"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "zero/geometry/retained/history四模型与日志",
+      "status": "planned"
+    },
+    {
+      "id": "T18",
+      "name": "同容量四种输入控制器seed1稳定性",
+      "priority": "P2",
+      "resource": "CPU",
+      "depends_on": [
+        "T17"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "完整seed1结果，不按最好种子选择",
+      "status": "planned"
+    },
+    {
+      "id": "T19",
+      "name": "同容量四种输入控制器seed2稳定性",
+      "priority": "P2",
+      "resource": "CPU",
+      "depends_on": [
+        "T17"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "完整seed2结果，不按最好种子选择",
+      "status": "planned"
+    },
+    {
+      "id": "T20",
+      "name": "验证集校准三档成本工作点",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T17"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "复用已训练权重，校准目标占比0.25/0.5/0.75",
+      "status": "planned"
+    },
+    {
+      "id": "T21",
+      "name": "冻结主checkpoint与主工作点",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T20"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "默认seed0及开发集选择规则；解封前锁定",
+      "status": "planned"
+    },
+    {
+      "id": "T22",
+      "name": "独立样本在线history策略评估",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "每题实际单路径预测、动作与token日程",
+      "status": "planned"
+    },
+    {
+      "id": "T23",
+      "name": "独立样本在线retained控制评估",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "相同图像/任务与独立实际预测",
+      "status": "planned"
+    },
+    {
+      "id": "T24",
+      "name": "独立样本强固定日程评估",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T15",
+        "T21"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "开发集已选定日程的独立预测",
+      "status": "planned"
+    },
+    {
+      "id": "T25",
+      "name": "独立样本简单entropy控制评估",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T13",
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "开发集校准后冻结的简单控制",
+      "status": "planned"
+    },
+    {
+      "id": "T26",
+      "name": "按长度分桶打乱动作的随机分配控制",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T22"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "保持动作占比；另报实际延迟差",
+      "status": "planned"
+    },
+    {
+      "id": "T27",
+      "name": "官方指标和配对图像组置信区间",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T22",
+        "T23",
+        "T24",
+        "T26"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "原始任务指标、R4、适当重采样单位",
+      "status": "planned"
+    },
+    {
+      "id": "T28",
+      "name": "准确率与实测成本包络及G2裁决",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T27",
+        "T30",
+        "T31",
+        "T32"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "history是否超过同容量控制及强固定包络",
+      "status": "planned"
+    },
+    {
+      "id": "T29",
+      "name": "摘要构造与选择器微基准",
+      "priority": "P1",
+      "resource": "GPU3",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "requires_gate": null,
+      "deliverable": "真实feature上的摘要/选择器开销分解",
+      "status": "planned"
+    },
+    {
+      "id": "T30",
+      "name": "控制器及分支同步开销",
+      "priority": "P1",
+      "resource": "GPU3",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "含布尔决策到实际分支的同步成本",
+      "status": "planned"
+    },
+    {
+      "id": "T31",
+      "name": "固定/retained/history交错TTFT",
+      "priority": "P1",
+      "resource": "GPU3",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "相同输入至少3轮逐样本TTFT",
+      "status": "planned"
+    },
+    {
+      "id": "T32",
+      "name": "固定生成长度端到端时间",
+      "priority": "P1",
+      "resource": "GPU3",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "生成长度和EOS策略一致的总时间",
+      "status": "planned"
+    },
+    {
+      "id": "T33",
+      "name": "测量漂移与顺序效应复核",
+      "priority": "P2",
+      "resource": "GPU3",
+      "depends_on": [
+        "T31",
+        "T32"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "新轮次重复同基线；仅检验漂移",
+      "status": "planned"
+    },
+    {
+      "id": "T34",
+      "name": "峰值内存与逐层KV长度核对",
+      "priority": "P2",
+      "resource": "GPU3",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "requires_gate": null,
+      "deliverable": "真实cache/显存记录，不由token数推测",
+      "status": "planned"
+    },
+    {
+      "id": "T35",
+      "name": "两种Stage1乘三种Stage2因子验证",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T28"
+      ],
+      "requires_gate": "G2",
+      "deliverable": "复用已做主臂，补齐剩余组合，检验交互",
+      "status": "planned"
+    },
+    {
+      "id": "T36",
+      "name": "跨Stage1零再训练迁移",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T28"
+      ],
+      "requires_gate": "G2",
+      "deliverable": "冻结源控制器在另一已有入口上的表现",
+      "status": "planned"
+    },
+    {
+      "id": "T37",
+      "name": "预先冻结OCR细节独立子集",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "固定/retained/history同题比较，禁止挑最好子集",
+      "status": "planned"
+    },
+    {
+      "id": "T38",
+      "name": "预先冻结计数和小目标独立子集",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "官方或明确逐题规则、集中退化与收益",
+      "status": "planned"
+    },
+    {
+      "id": "T39",
+      "name": "真正同图多问的动作响应",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T21"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "同图不同问题动作与正确率，不混作独立样本",
+      "status": "planned"
+    },
+    {
+      "id": "T40",
+      "name": "长短问题分桶的质量与成本差",
+      "priority": "P2",
+      "resource": "CPU",
+      "depends_on": [
+        "T22",
+        "T23",
+        "T24"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "沿已冻结分桶解释收益，不能按结果改桶",
+      "status": "planned"
+    },
+    {
+      "id": "T41",
+      "name": "扩充训练源配对数据",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T16"
+      ],
+      "requires_gate": "G1",
+      "deliverable": "仅在独立评估未解封时补至1024或2048对",
+      "status": "planned",
+      "condition": "independent_holdout_still_sealed; otherwise defer to next round"
+    },
+    {
+      "id": "T42",
+      "name": "一个相邻最终K的固定日程诊断",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T15"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "只研究固定方法预算敏感性；不冒用单K控制器",
+      "status": "planned"
+    },
+    {
+      "id": "T43",
+      "name": "一个较短暂缓间隔的固定分支诊断",
+      "priority": "P2",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T14"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "只研究early/late标签与收益来源，不宣称路由迁移",
+      "status": "planned"
+    },
+    {
+      "id": "T44",
+      "name": "dense/Stage1-only/两阶段损害拆分",
+      "priority": "P1",
+      "resource": "GPU_ANY",
+      "depends_on": [
+        "T04",
+        "T06"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "同题定位错误发生阶段；G1失败时优先接替",
+      "status": "planned"
+    },
+    {
+      "id": "T45",
+      "name": "预先规则采样的成功失败案例",
+      "priority": "P2",
+      "resource": "CPU",
+      "depends_on": [
+        "T12"
+      ],
+      "requires_gate": "G0",
+      "deliverable": "按损害类型选例，同时包含反例",
+      "status": "planned"
+    },
+    {
+      "id": "T46",
+      "name": "归档代码差异、命令与数据身份",
+      "priority": "P1",
+      "resource": "CPU",
+      "depends_on": [
+        "T06"
+      ],
+      "requires_gate": null,
+      "deliverable": "commit、diff、哈希、投影与完整重现命令",
+      "status": "planned"
+    },
+    {
+      "id": "T47",
+      "name": "最后30分钟汇总与续跑清单",
+      "priority": "P0",
+      "resource": "CPU",
+      "depends_on": [],
+      "requires_gate": null,
+      "deliverable": "全部任务状态、已完成证据、失败原因和下一队列",
+      "status": "planned",
+      "trigger": "hard deadline minus 30 minutes; summarize incomplete tasks too"
+    }
+  ]
+}

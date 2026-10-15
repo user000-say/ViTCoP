@@ -1,0 +1,28 @@
+{
+  "date_utc": "2026-10-15",
+  "test_command": "OPENBLAS_NUM_THREADS=1 python checks.py",
+  "tests_total": 12,
+  "passed": 11,
+  "skipped": 1,
+  "skipped_test": "PyTorch numeric parity: PyTorch unavailable locally",
+  "verified": [
+    "exact four-task R4 keys and rounded-value factorial arithmetic",
+    "completed-block schedule work accounting",
+    "regional counts, empty regions and second moments",
+    "matched content-control metadata",
+    "image-group split consistency",
+    "signed defer decision and positive cost validation",
+    "MLP finite-difference gradient check",
+    "synthetic fitting and checkpoint round trip",
+    "current-state feature dimensions",
+    "counterfactual prefix mismatch rejection",
+    "four-mode training CLI with synthetic-data guard"
+  ],
+  "not_verified": [
+    "PyTorch/CUDA numeric parity and hot-path timing",
+    "actual project adapter and cache cloning",
+    "ONE/TWO source configuration and raw task metrics",
+    "VLM accuracy, statistical significance, or latency benefit",
+    "acceptance or novelty sufficiency for any conference"
+  ]
+}

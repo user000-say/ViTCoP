@@ -1,0 +1,12 @@
+{
+  "tasks": 48,
+  "priorities": {
+    "P0": 11,
+    "P1": 22,
+    "P2": 15
+  },
+  "dependency_references_valid": true,
+  "dependency_graph_acyclic": true,
+  "algorithm_code_unchanged": true,
+  "new_model_or_gpu_tests": false
+}

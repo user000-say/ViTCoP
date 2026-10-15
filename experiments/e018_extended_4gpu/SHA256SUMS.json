@@ -1,0 +1,17 @@
+{
+  "CURSOR_6H_4GPU_CN.md": "d20332c57f5d17706e28b6fb0a273c182b458a25ab9c963078e406f4fe1e3a82",
+  "EXTENDED_TASK_BOOK_CN.md": "ac8003ce544df88a2ddd05df5b627299caabefd25dc1e2fc81b2fc66e478b75c",
+  "QUEUE_VALIDATION.json": "af7bbd0480eac78ac31aedda18fa3875ff0ec5f952c54dc9551099e71ff90fe5",
+  "README.md": "c4a069b8a6d37ce884bfc70ccc3ab5929c187d7f8ce6afa3350c938430c49668",
+  "RESEARCH_DECISION_CN.md": "630d35a2113af792a7047cae7c98dea168b48e27ac15f3fa4d112c3f863a0483",
+  "VALIDATION_LOCAL.json": "f7d6471b6332ab2f7d4bd475fe9e4c0ab8769be5503b3392347b46fb036159a5",
+  "adapter_contract.py": "c1a64026f4cbf522bd67d3ed202a8d17b80220ddb9582fdd3585170e17dda599",
+  "audit_r4.py": "b166d0e1d3bd16b07476bc2c78dec5c669964b9a14d6c6243f8e130c8a43d639",
+  "checks.py": "ce0d71ced2d5f0c65161bddab4428aef698a46359bd6961c161859bf11b28a08",
+  "collect_pairs.py": "1b814630431655c54a92c329f8a30cd9cf99af4aa7376d697ad8e4ff0772ac57",
+  "controller_numpy.py": "9d86ee7557c215da401c1032038da6192d1a8c75dc41961868809d4fec4b8ff2",
+  "controller_torch.py": "fb8197912c7f841d7f5086a2a4d28aceccc1a8b7e512abf3184e906a4b5b19a9",
+  "merge_pairs.py": "7dae0321719b8a0f0fd7508158ee6e8e9d8f8085e42b3068a5cf5f471e5e4df0",
+  "task_queue.json": "eb19dfc69f140ada4d94b72fd5281bab4b11a7604ffc24d19a470ee5e93f4a78",
+  "train_controller.py": "25008b6aeae8e2a95bde8ed07556ee87fc955e033259b64f31a5e14a61ab2fe5"
+}

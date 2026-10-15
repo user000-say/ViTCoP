@@ -1,0 +1,16 @@
+{
+  "schema": "e018_method_manifest_v1",
+  "workpoint": "K32_progressive_TWO_backbone",
+  "stage1_primary": "BASE (COVER as factor control)",
+  "selector": "Q_ATTN",
+  "cache_policy": "layer_local",
+  "events_early": "4:102,12:32",
+  "events_late": "4:102,16:32",
+  "final_k": 32,
+  "delta_d": 4,
+  "W_early": 2284,
+  "W_late": 2564,
+  "same_cost": false,
+  "controller": "not_yet_online; this round runs fixed EARLY/LATE STATIC ACC+TTFT",
+  "skip_smoke": true
+}

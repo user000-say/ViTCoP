@@ -1,0 +1,14 @@
+---
+description: After each delivery/install package or substantive experiment code change, automatically commit and push to fork for backtrace without waiting for the user to ask.
+alwaysApply: true
+---
+
+# Auto git snapshot for backtrace
+
+Whenever you install a handoff zip, merge experiment code, wire new arms/campaigns, or finish a delivery round:
+
+1. Stage the relevant new/changed files (code, experiment package, handoffs, scripts). Do not stage secrets, huge unrelated archives from older rounds, or `__pycache__`.
+2. Commit with a concise message explaining why (delivery id / experiment id).
+3. Push to `fork` remote (`git push fork HEAD:main` or current tracking branch) when a remote is configured.
+4. Use prior commit author via `GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars if local git identity is unset — never run `git config`.
+5. Do this at the end of the delivery work even if the user does not mention git.
