@@ -1,0 +1,157 @@
+{
+  "schema": "e020_runtime_v1",
+  "kind": "example",
+  "model_depth": 32,
+  "initial_visual_tokens": 172,
+  "layer_convention": "zero_based_after_block",
+  "schedules": {
+    "ONE": null,
+    "EARLY": [
+      [
+        4,
+        102
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "LATE": [
+      [
+        4,
+        102
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "LATE_WMATCH": [
+      [
+        4,
+        78
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "FIRST_SHIFT": [
+      [
+        2,
+        116
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "THREE_WMATCH": [
+      [
+        4,
+        103
+      ],
+      [
+        8,
+        101
+      ],
+      [
+        12,
+        32
+      ]
+    ]
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "FIRST_SHIFT": 2284,
+    "THREE_WMATCH": 2284,
+    "LATE": 2564,
+    "LATE_WMATCH": 2276
+  },
+  "source": {
+    "checkpoint_hash": null,
+    "code_commit": null,
+    "prompt_hash": null,
+    "input_pipeline_hash": null,
+    "cache_policy": null,
+    "query_rule": null,
+    "feature_protocol_hash": null
+  },
+  "metric_keys": {
+    "GQA": null,
+    "POPE": null,
+    "MME": null,
+    "MMBench": null
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    }
+  },
+  "model_directory": "/ABSOLUTE/PROJECT/e020_models",
+  "collection": {
+    "command": null,
+    "output_shard": "/ABSOLUTE/PROJECT/e020_pairs.npz",
+    "reuse_completed_shard": false
+  },
+  "forbidden_evaluation_image_ids": "/ABSOLUTE/PROJECT/e020_eval_image_ids.json",
+  "fit_epochs": 160,
+  "timing_panel": {
+    "task": "TTFT",
+    "metric_key": "TTFT_cuda_mean_ms",
+    "tag": "paired1024",
+    "panel": {
+      "path": null,
+      "ids_hash": null
+    },
+    "n": 1024,
+    "estimated_seconds": 600
+  },
+  "stress_panels": [],
+  "estimated_job_seconds": {
+    "GQA": 120,
+    "POPE": 90,
+    "MME": 120,
+    "MMBench": 120
+  },
+  "notes": [
+    "Verify actual completed-block profiles against original runner before changing kind to real.",
+    "ONE is intentionally null until exported from successful historical source.",
+    "panels.screen are development; confirm independent where available, otherwise disclose tuning reuse.",
+    "Explicitly preserve POPE F1 vs accuracy and MME paired questions.",
+    "Pair snapshot source_hash must equal build_matrix.digest(runtime.source)."
+  ]
+}

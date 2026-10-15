@@ -28,6 +28,9 @@ from e014_arms import (
     FULL_E019_SELECTOR_B,
     FULL_E019_JOINT_C,
     FULL_E019_REMAINING,
+    FULL_E020_A_NEIGHBOR,
+    FULL_E020_D_CONTROLS,
+    FULL_E020_PRIORITY,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -75,6 +78,9 @@ PHASE_ARMS = {
     "full_e019_selector_b": FULL_E019_SELECTOR_B,
     "full_e019_joint_c": FULL_E019_JOINT_C,
     "full_e019_remaining": FULL_E019_REMAINING,
+    "full_e020_a_neighbor": FULL_E020_A_NEIGHBOR,
+    "full_e020_d_controls": FULL_E020_D_CONTROLS,
+    "full_e020_priority": FULL_E020_PRIORITY,
 }
 
 

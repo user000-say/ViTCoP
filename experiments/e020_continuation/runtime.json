@@ -1,0 +1,131 @@
+{
+  "schema": "e020_runtime_v1",
+  "kind": "real",
+  "model_depth": 32,
+  "initial_visual_tokens": 172,
+  "layer_convention": "zero_based_after_block",
+  "schedules": {
+    "ONE": [
+      [
+        8,
+        32
+      ]
+    ],
+    "EARLY": [
+      [
+        4,
+        102
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "LATE": [
+      [
+        4,
+        102
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "LATE_WMATCH": [
+      [
+        4,
+        78
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "FIRST_SHIFT": [
+      [
+        2,
+        116
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "THREE_WMATCH": [
+      [
+        4,
+        103
+      ],
+      [
+        8,
+        101
+      ],
+      [
+        12,
+        32
+      ]
+    ]
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "FIRST_SHIFT": 2284,
+    "THREE_WMATCH": 2284,
+    "LATE": 2564,
+    "LATE_WMATCH": 2276
+  },
+  "source": {
+    "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+    "code_commit": "f17e8bd8fd4bfe357e7abd5fa3c9261f68079046",
+    "prompt_hash": "llava_v1_conv",
+    "input_pipeline_hash": "e014_lmms_eval_full",
+    "cache_policy": "layer_local",
+    "query_rule": "Q_ATTN",
+    "feature_protocol_hash": "e020_token_features_v1"
+  },
+  "metric_keys": {
+    "GQA": "exact_match",
+    "POPE": "pope_accuracy",
+    "MME": "mme_sum",
+    "MMBench": "gpt_eval_score"
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "POPE": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MME": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MMBench": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "POPE": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MME": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MMBench": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      }
+    }
+  },
+  "timing_panel": "/home/xiangyue/ViTCoP/experiments/e014_latency_fair_256/panel/speed_256.jsonl",
+  "NOTE": "Skip smoke per user; E019 B/C ACC in flight then E020 A-neigh+D controls full ACC."
+}

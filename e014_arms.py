@@ -318,6 +318,59 @@ FULL_E019_ALL48 = sorted({
     )
 })
 
+# E020: FIRST_SHIFT neighbourhood (A) + no-weight controls (D) first; learned B later.
+_E020_EVENTS = {
+    "EARLY": "4:102,12:32",
+    "FIRST_SHIFT": "2:116,12:32",
+    "THREE_WMATCH": "4:103,8:101,12:32",
+    "LATE": "4:102,16:32",
+    "LATE_WMATCH": "4:78,16:32",
+    "FIRST_PREV_WMATCH": "1:121,12:32",
+    "FIRST_NEXT_WMATCH": "3:109,12:32",
+    "FIRST_KMINUS8": "2:108,12:32",
+    "FIRST_KPLUS8": "2:124,12:32",
+}
+_E020_KINDS = {
+    "REF": {"kind": "reference"},
+    "CSCORE": {"kind": "current_score"},
+    "RDRIFT": {"kind": "rank_drift", "current_weight": 0.6},
+    "E019CUR": {"kind": "coverage_exchange", "alpha": 0.0, "lambda": 0.15, "rounds": 4},
+    "E019TMP": {"kind": "coverage_exchange", "alpha": 0.5, "lambda": 0.15, "rounds": 4},
+    "RANDR2": {"kind": "random", "group_size": 1, "rounds": 2, "shortlist": 16, "seed": 20},
+    "RANDR4": {"kind": "random", "group_size": 1, "rounds": 4, "shortlist": 16, "seed": 20},
+    "RANDG4R1": {"kind": "random", "group_size": 4, "rounds": 1, "shortlist": 16, "seed": 20},
+    "RANDG4R2": {"kind": "random", "group_size": 4, "rounds": 2, "shortlist": 16, "seed": 20},
+}
+
+
+def _e020_register():
+    arms = {}
+    # A neighbourhood references on BASE/COVER
+    for stage, variant, b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
+        for sched in ("FIRST_PREV_WMATCH", "FIRST_NEXT_WMATCH", "FIRST_KMINUS8", "FIRST_KPLUS8",
+                      "FIRST_SHIFT", "EARLY", "THREE_WMATCH"):
+            arms[f"E020_{stage}_{sched}_REF32"] = (variant, b, 8, 8, 32)
+        # D controls on FIRST_SHIFT (primary benchmark schedule)
+        for kind in _E020_KINDS:
+            if kind == "REF":
+                continue
+            arms[f"E020_{stage}_FIRST_SHIFT_{kind}32"] = (variant, b, 8, 8, 32)
+    return arms
+
+
+ARMS.update(_e020_register())
+FULL_E020_A_NEIGHBOR = sorted(
+    a for a in ARMS if a.startswith("E020_") and a.endswith("_REF32")
+    and any(s in a for s in ("FIRST_PREV", "FIRST_NEXT", "FIRST_KMINUS8", "FIRST_KPLUS8"))
+)
+FULL_E020_D_CONTROLS = sorted(
+    a for a in ARMS if a.startswith("E020_") and "FIRST_SHIFT_" in a
+    and not a.endswith("_REF32")
+)
+FULL_E020_PRIORITY = FULL_E020_A_NEIGHBOR + [
+    a for a in ARMS if a.startswith("E020_") and a.endswith("_FIRST_SHIFT_REF32")
+] + FULL_E020_D_CONTROLS
+
 
 def apply_arm_env(arm: str) -> dict:
     import os
@@ -407,11 +460,28 @@ def apply_arm_env(arm: str) -> dict:
     else:
         # Prevent accidental inheritance from a prior cascade job in the same shell.
         os.environ["E016_CASCADE"] = ""
-    if arm.startswith("E018_") or arm.startswith("E019_"):
-        # Isolated Stage2/E019 path; keep Stage1 via E014_* above.
+    if arm.startswith("E018_") or arm.startswith("E019_") or arm.startswith("E020_"):
+        # Isolated Stage2/E019/E020 path; keep Stage1 via E014_* above.
         events = None
         e019_sel = {"mode": "reference", "alpha": 0.0, "lambda": 0.0, "swaps": 0}
-        if arm.startswith("E019_"):
+        e020_kind = {"kind": "reference"}
+        if arm.startswith("E020_"):
+            body = arm[len("E020_"):]
+            if body.endswith("32"):
+                body = body[:-2]
+            parts = body.split("_")
+            kind_key = "REF"
+            if parts[-1] in _E020_KINDS:
+                kind_key = parts[-1]
+                sched_parts = parts[1:-1]
+            else:
+                sched_parts = parts[1:]
+            sched = "_".join(sched_parts)
+            if sched not in _E020_EVENTS:
+                raise ValueError(f"Unknown E020 schedule in arm {arm}: {sched}")
+            events = _E020_EVENTS[sched]
+            e020_kind = dict(_E020_KINDS[kind_key])
+        elif arm.startswith("E019_"):
             # Parse E019_{COVER|BASE}_{SCHEDULE}_{SELECTOR}32 or legacy ..._{SCHEDULE}32
             body = arm[len("E019_"):]
             if body.endswith("32"):
@@ -468,14 +538,37 @@ def apply_arm_env(arm: str) -> dict:
                 E019_LAMBDA=str(e019_sel["lambda"]),
                 E019_SWAPS=str(e019_sel["swaps"]),
                 E019_QUERY_GROUPS="4",
-                # ACC: keep identity checks; TTFT scripts may set E019_DEBUG=False
                 E019_DEBUG=os.environ.get("E019_DEBUG", "True"),
+                E020_ENABLE="False",
+            )
+        elif arm.startswith("E020_"):
+            kind = e020_kind.get("kind", "reference")
+            enable = kind != "reference"
+            # completed-block horizon of final event (zero-based last layer + 1)
+            last_layer = int(events.split(",")[-1].split(":")[0])
+            os.environ.update(
+                E019_ENABLE="False",
+                E020_ENABLE="True" if enable else "False",
+                E020_KIND=str(kind),
+                E020_MODEL=str(e020_kind.get("model", "current")),
+                E020_GROUP_SIZE=str(e020_kind.get("group_size", 1)),
+                E020_ROUNDS=str(e020_kind.get("rounds", e020_kind.get("swaps", 2))),
+                E020_SHORTLIST=str(e020_kind.get("shortlist", 16)),
+                E020_THRESHOLD=str(e020_kind.get("threshold", 0)),
+                E020_ALPHA=str(e020_kind.get("alpha", 0)),
+                E020_LAMBDA=str(e020_kind.get("lambda", 0.15)),
+                E020_CURRENT_WEIGHT=str(e020_kind.get("current_weight", 0.6)),
+                E020_SEED=str(e020_kind.get("seed", 20)),
+                E020_NEXT_AFTER=str(last_layer + 1),
+                E020_DEBUG=os.environ.get("E020_DEBUG", "True"),
             )
         else:
             os.environ["E019_ENABLE"] = "False"
+            os.environ["E020_ENABLE"] = "False"
     else:
         os.environ["E018_ENABLE"] = "False"
         os.environ["E019_ENABLE"] = "False"
+        os.environ["E020_ENABLE"] = "False"
     return {
         "arm": arm,
         "variant": variant,

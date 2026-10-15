@@ -1,0 +1,294 @@
+{
+  "reported_R4": {
+    "ONE": {
+      "COVER": 95.21,
+      "BASE": 95.22
+    },
+    "EARLY": {
+      "COVER": 96.1,
+      "BASE": 96.1
+    },
+    "LATE": {
+      "COVER": 96.24,
+      "BASE": 95.77
+    },
+    "LATE_WMATCH": {
+      "COVER": 95.04,
+      "BASE": 94.77
+    },
+    "FIRST_SHIFT": {
+      "COVER": 96.5,
+      "BASE": 95.5
+    },
+    "THREE_WMATCH": {
+      "COVER": 96.31,
+      "BASE": 96.11
+    }
+  },
+  "new_TTFT": null,
+  "new_per_task_scores": null,
+  "budget_assumption": {
+    "depth": 32,
+    "initial": 172,
+    "convention": "zero_based_after_block",
+    "status": "consistent reconstruction; project must verify actual event semantics"
+  },
+  "conditional_budget_profiles": {
+    "EARLY": {
+      "completed_block_events": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "per_block_visual": [
+        172,
+        172,
+        172,
+        172,
+        172,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "visual_token_layers": 2284,
+      "final_visual": 32,
+      "visual_square_sum": 250608
+    },
+    "LATE": {
+      "completed_block_events": [
+        [
+          5,
+          102
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "per_block_visual": [
+        172,
+        172,
+        172,
+        172,
+        172,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        102,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "visual_token_layers": 2564,
+      "final_visual": 32,
+      "visual_square_sum": 288128
+    },
+    "LATE_WMATCH": {
+      "completed_block_events": [
+        [
+          5,
+          78
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "per_block_visual": [
+        172,
+        172,
+        172,
+        172,
+        172,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        78,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "visual_token_layers": 2276,
+      "final_visual": 32,
+      "visual_square_sum": 236288
+    },
+    "FIRST_SHIFT": {
+      "completed_block_events": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "per_block_visual": [
+        172,
+        172,
+        172,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        116,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "visual_token_layers": 2284,
+      "final_visual": 32,
+      "visual_square_sum": 242768
+    },
+    "THREE_WMATCH": {
+      "completed_block_events": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "per_block_visual": [
+        172,
+        172,
+        172,
+        172,
+        172,
+        103,
+        103,
+        103,
+        103,
+        101,
+        101,
+        101,
+        101,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "visual_token_layers": 2284,
+      "final_visual": 32,
+      "visual_square_sum": 250616
+    }
+  },
+  "first_shift_entrance_schedule_interaction_R4_pp": 1.0,
+  "limitations": [
+    "Rounding may move deltas by 0.01 pp.",
+    "No paired significance claim without actual prediction records.",
+    "Fixed schedules do not establish per-input adaptive allocation.",
+    "The new comparison baseline is COVER FIRST_SHIFT, not merely EARLY."
+  ]
+}

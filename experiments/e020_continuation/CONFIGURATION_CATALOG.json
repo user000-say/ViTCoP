@@ -1,0 +1,1619 @@
+{
+  "status": "execution plan, no measured scores",
+  "configurations": [
+    {
+      "config_id": "BASE__EARLY__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__EARLY__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__THREE_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__THREE_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_current_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_current_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_full_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_full_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__current_score",
+      "block": "D_controls",
+      "selector": {
+        "kind": "current_score"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__current_score",
+      "block": "D_controls",
+      "selector": {
+        "kind": "current_score"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__e019_current",
+      "block": "D_controls",
+      "selector": {
+        "kind": "coverage_exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "rounds": 4
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__e019_current",
+      "block": "D_controls",
+      "selector": {
+        "kind": "coverage_exchange",
+        "alpha": 0.0,
+        "lambda": 0.15,
+        "rounds": 4
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__e019_temporal",
+      "block": "D_controls",
+      "selector": {
+        "kind": "coverage_exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "rounds": 4
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__e019_temporal",
+      "block": "D_controls",
+      "selector": {
+        "kind": "coverage_exchange",
+        "alpha": 0.5,
+        "lambda": 0.15,
+        "rounds": 4
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__random_g4_r1",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__random_g4_r1",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__random_g4_r2",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__random_g4_r2",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__random_r2",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__random_r2",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__random_r4",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__random_r4",
+      "block": "D_controls",
+      "selector": {
+        "kind": "random",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "seed": 20
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__rank_drift_control",
+      "block": "D_controls",
+      "selector": {
+        "kind": "rank_drift",
+        "current_weight": 0.6
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__rank_drift_control",
+      "block": "D_controls",
+      "selector": {
+        "kind": "rank_drift",
+        "current_weight": 0.6
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__EARLY__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__EARLY__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__EARLY__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__EARLY__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_KMINUS8__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "COVER__FIRST_KMINUS8__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "BASE__FIRST_KMINUS8__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "COVER__FIRST_KMINUS8__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "BASE__FIRST_KPLUS8__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "COVER__FIRST_KPLUS8__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "BASE__FIRST_KPLUS8__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "COVER__FIRST_KPLUS8__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "BASE__THREE_WMATCH__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__THREE_WMATCH__cf_full_g1_r4",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__THREE_WMATCH__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__THREE_WMATCH__cf_full_g4_r2",
+      "block": "C_transfer",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          103
+        ],
+        [
+          9,
+          101
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_current_g1_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_current_g1_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_current_g4_r1",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_current_g4_r1",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_current_g4_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_current_g4_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "current",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_full_g1_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_full_g1_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 1,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_full_g4_r1",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_full_g4_r1",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 1,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_full_g4_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_full_g4_r2",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "full",
+        "group_size": 4,
+        "rounds": 2,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_no_context_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "no_context",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_no_context_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "no_context",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_SHIFT__cf_shuffled_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "shuffled",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__FIRST_SHIFT__cf_shuffled_g1_r4",
+      "block": "B_continuation",
+      "selector": {
+        "kind": "continuation",
+        "model": "shuffled",
+        "group_size": 1,
+        "rounds": 4,
+        "shortlist": 16,
+        "threshold": 0.0
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          116
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "BASE__FIRST_KMINUS8__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "COVER__FIRST_KMINUS8__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          108
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2204
+    },
+    {
+      "config_id": "BASE__FIRST_KPLUS8__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "COVER__FIRST_KPLUS8__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          3,
+          124
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2364
+    },
+    {
+      "config_id": "BASE__FIRST_NEXT_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          4,
+          109
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2277
+    },
+    {
+      "config_id": "COVER__FIRST_NEXT_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          4,
+          109
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2277
+    },
+    {
+      "config_id": "BASE__FIRST_PREV_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          2,
+          121
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2283
+    },
+    {
+      "config_id": "COVER__FIRST_PREV_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          2,
+          121
+        ],
+        [
+          13,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 13,
+      "conditional_visual_work": 2283
+    },
+    {
+      "config_id": "BASE__LATE__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 17,
+      "conditional_visual_work": 2564
+    },
+    {
+      "config_id": "COVER__LATE__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          102
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 17,
+      "conditional_visual_work": 2564
+    },
+    {
+      "config_id": "BASE__LATE_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          78
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 17,
+      "conditional_visual_work": 2276
+    },
+    {
+      "config_id": "COVER__LATE_WMATCH__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          5,
+          78
+        ],
+        [
+          17,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 17,
+      "conditional_visual_work": 2276
+    },
+    {
+      "config_id": "BASE__ONE__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          9,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 9,
+      "conditional_visual_work": 2284
+    },
+    {
+      "config_id": "COVER__ONE__reference",
+      "block": "A_allocation",
+      "selector": {
+        "kind": "reference"
+      },
+      "completed_block_events_conditional_on_reported_convention": [
+        [
+          9,
+          32
+        ]
+      ],
+      "continuation_horizon_after": 9,
+      "conditional_visual_work": 2284
+    }
+  ],
+  "capacity": {
+    "configurations": 72,
+    "task_jobs": 288
+  }
+}

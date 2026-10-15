@@ -1,0 +1,29 @@
+{
+  "date_utc": "2026-10-15T18:03:19.806270+00:00",
+  "unittest_tests": 18,
+  "passed": 16,
+  "skipped": 2,
+  "failed": 0,
+  "skipped_reasons": [
+    "PyTorch unavailable locally: feature/scorer/selection parity",
+    "PyTorch unavailable locally: teacher-forced answer-only NLL"
+  ],
+  "verified": [
+    "Explicit layer-index convention and matched-budget arithmetic",
+    "Counterfactual pair direction and antisymmetric scorer",
+    "Image-disjoint fitting on SYNTHETIC learning fixture",
+    "Fixed-cardinality exchanges and protection",
+    "72 configurations/288 screen jobs",
+    "Actual subprocess retry/resume/deadline and GPU-env isolation on SYNTHETIC jobs",
+    "Real collection protocol with SYNTHETIC adapter and replay baseline reuse",
+    "Official metric rescoring and paired image-cluster bootstrap on SYNTHETIC data"
+  ],
+  "not_verified": [
+    "Project source integration",
+    "PyTorch/CUDA execution",
+    "New VLM accuracy",
+    "New TTFT or overhead",
+    "Publication novelty"
+  ],
+  "real_model_results_added": false
+}

@@ -145,6 +145,52 @@ def question_response(q, k, mask, q_idx, v0, vn, need_redundancy=True):
                 visual=visual)
 
 
+
+def _e020_load_path():
+    import sys
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[3] / "e020_lib"
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    return root
+
+
+def _e020_from_env():
+    """First-event continuation / controls. Mutually exclusive with E019 final refine."""
+    if os.environ.get("E020_ENABLE", "False") != "True":
+        return None
+    kind = os.environ.get("E020_KIND", "reference").strip().lower()
+    if kind in {"", "reference", "off", "none"}:
+        return None
+    _e020_load_path()
+    from module_torch import ContinuationHook
+    import json
+    spec = {
+        "kind": kind,
+        "model": os.environ.get("E020_MODEL", "current"),
+        "group_size": int(os.environ.get("E020_GROUP_SIZE", "1")),
+        "rounds": int(os.environ.get("E020_ROUNDS", "2")),
+        "shortlist": int(os.environ.get("E020_SHORTLIST", "16")),
+        "threshold": float(os.environ.get("E020_THRESHOLD", "0")),
+        "alpha": float(os.environ.get("E020_ALPHA", "0")),
+        "lambda": float(os.environ.get("E020_LAMBDA", "0.15")),
+        "current_weight": float(os.environ.get("E020_CURRENT_WEIGHT", "0.6")),
+        "seed": int(os.environ.get("E020_SEED", "20")),
+    }
+    # Optional learned scorer path; required only for kind=continuation
+    model = None
+    model_path = os.environ.get("E020_MODEL_PATH", "").strip()
+    if kind == "continuation":
+        if not model_path:
+            raise RuntimeError("E020 continuation requires E020_MODEL_PATH fitted checkpoint")
+        from module_torch import PairScorer
+        model = PairScorer(model_path)
+    debug = os.environ.get("E020_DEBUG", "True") == "True"
+    # Fixed random projection created lazily on first hidden use if needed
+    hook = ContinuationHook(model=model, projection=None, debug=debug)
+    return {"hook": hook, "spec": spec}
+
+
 def _e019_from_env():
     """Optional final-event EvidenceHook; reference / disabled leaves STATIC path unchanged."""
     if os.environ.get("E019_ENABLE", "False") != "True":
@@ -193,6 +239,10 @@ class Runtime:
         self.e019_hook = _e019_from_env()
         self.e019_groups = int(os.environ.get("E019_QUERY_GROUPS", "4"))
         self._e019_sample_seed = int(os.environ.get("E019_SAMPLE_SEED", "0"))
+        self.e020 = _e020_from_env()
+        # E020 first-event refine disables E019 final refine on the same request.
+        if self.e020 is not None:
+            self.e019_hook = None
 
     def _read(self, q, k, value, mask):
         s = self.state
@@ -214,6 +264,42 @@ class Runtime:
         else:
             score = side["q_attn" if self.cfg.selector == "Q_ATTN" else "qed"]
         baseline = torch.argsort(score, descending=True, stable=True)[:count].sort().values
+        # E020: refine ONLY the FIRST progressive prune (continuation / controls).
+        if (self.e020 is not None and self.cfg.events and layer == self.cfg.events[0][0]):
+            visual = side.get("visual")
+            if visual is None:
+                raise RuntimeError("E020 requires question→vision response matrix")
+            current = _group_query_response(visual, self.e019_groups)
+            _e020_load_path()
+            from dispatch import refine as e020_refine
+            spec = self.e020["spec"]
+            hook = self.e020["hook"]
+            next_after = int(os.environ.get(
+                "E020_NEXT_AFTER",
+                str(self.cfg.events[-1][0] + 1)))  # completed-block horizon
+            after = int(layer + 1)  # zero-based layer → completed blocks
+            gen = None
+            if spec["kind"] == "random":
+                gen = torch.Generator(device=score.device)
+                seed = int(spec.get("seed", 20))
+                if s.visual_ids.numel():
+                    seed = int((seed + s.visual_ids.long().sum() % 1000003).item())
+                gen.manual_seed(seed)
+            # Optional decoder projection for learned/random feature path
+            hidden_vis = None
+            if spec["kind"] in ("continuation", "random"):
+                # Prefer not requiring hidden; random mode works with scores/response only
+                # if select gets features — module_torch select needs token_features.
+                # For random, dispatch still builds features; hidden optional.
+                pass
+            refined = e020_refine(
+                spec, hook, score, current, baseline, s.visual_ids,
+                after=after, depth=len(self.model.layers), next_after=next_after,
+                final_k=int(self.cfg.events[-1][1]),
+                hidden=hidden_vis, encoder_rank=None, patch_xy=None, generator=gen)
+            if refined.numel() != count:
+                raise RuntimeError("E020 refine must preserve event K")
+            return refined.sort().values
         # E019: refine ONLY the final progressive prune; penultimate only captures.
         if self.e019_hook is not None and self.cfg.events and layer == self.cfg.events[-1][0]:
             visual = side.get("visual")
@@ -378,7 +464,11 @@ class Runtime:
             self._side = None
             layer.self_attn._e006_enabled = False
             layer.self_attn._e010_collect_local_influence = False
-            layer.self_attn._e018_callback = self._read if layer_idx in schedule else None
+            # E020: also read prompt→vision at layer 0 for history capture before first prune.
+            e020_capture = (self.e020 is not None and layer_idx == 0
+                            and self.cfg.events and self.cfg.events[0][0] > 0)
+            layer.self_attn._e018_callback = (
+                self._read if (layer_idx in schedule or e020_capture) else None)
             try:
                 output = layer(hidden, attention_mask=None, position_ids=s.positions[None],
                                past_key_value=cache, use_cache=True, output_attentions=False)
@@ -395,6 +485,12 @@ class Runtime:
                 if s.visual_ids.numel() != n_before:
                     self._record_physical(layer_idx)
             side = self._side
+            if e020_capture and side is not None:
+                vis = side.get("visual")
+                if vis is None:
+                    raise RuntimeError("E020 capture missing visual response at layer 0")
+                grouped = _group_query_response(vis, self.e019_groups)
+                self.e020["hook"].capture(grouped, s.visual_ids)
             if layer_idx in schedule:
                 if side is None:
                     raise RuntimeError("E018 SDPA callback was not executed; wrong attention implementation")
