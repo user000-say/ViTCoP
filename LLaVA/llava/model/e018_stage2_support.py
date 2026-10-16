@@ -149,7 +149,22 @@ def question_response(q, k, mask, q_idx, v0, vn, need_redundancy=True):
 def _e020_load_path():
     import sys
     from pathlib import Path
-    root = Path(__file__).resolve().parents[3] / "e020_lib"
+    here = Path(__file__).resolve()
+    root = None
+    for parent in [here.parent, *here.parents]:
+        cand = parent / "e020_lib"
+        if cand.is_dir() and (cand / "module_torch.py").is_file():
+            root = cand
+            break
+    if root is None:
+        # Live tree: .../ViTCoP/LLaVA/llava/model → parents[3]=ViTCoP
+        # Isolated code_runtime copy: walk until repo root.
+        for parent in here.parents:
+            if (parent / "e014_arms.py").is_file() and (parent / "e020_lib" / "module_torch.py").is_file():
+                root = parent / "e020_lib"
+                break
+    if root is None:
+        raise RuntimeError("e020_lib not found relative to e018_stage2_support.py")
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
     return root
@@ -424,9 +439,15 @@ class Runtime:
         if self.observer is not None:
             if self.cfg.mode == "ONLINE":
                 raise RuntimeError("Offline observer cannot run in ONLINE mode")
-            self.observer(dict(layer=layer, endpoint=endpoint, keep=keep.clone(),
-                               drop_ids=dropped, features=x, delta_work=delta,
-                               hidden=hidden, cache=cache, state=s, side_r=side["r"].clone()))
+            payload = dict(layer=layer, endpoint=endpoint, keep=keep.clone(),
+                           drop_ids=dropped, features=x, delta_work=delta,
+                           hidden=hidden, cache=cache, state=s, side_r=side["r"].clone())
+            if os.environ.get("E020_COLLECT", "False") == "True":
+                payload["q_attn"] = side["q_attn"].detach().clone()
+                if side.get("visual") is not None:
+                    payload["visual"] = side["visual"].detach().clone()
+                payload["patch_ids"] = s.visual_ids.detach().clone()
+            self.observer(payload)
         continue_it, pred, upper = False, None, None
         if self.cfg.mode == "PROXY":
             continue_it = bool((side["q_attn"][mask].sum() > self.cfg.proxy_threshold).item())
@@ -465,7 +486,9 @@ class Runtime:
             layer.self_attn._e006_enabled = False
             layer.self_attn._e010_collect_local_influence = False
             # E020: also read prompt→vision at layer 0 for history capture before first prune.
-            e020_capture = (self.e020 is not None and layer_idx == 0
+            # E020_COLLECT enables the same capture on the reference path for pairdata.
+            e020_collect = os.environ.get("E020_COLLECT", "False") == "True"
+            e020_capture = ((self.e020 is not None or e020_collect) and layer_idx == 0
                             and self.cfg.events and self.cfg.events[0][0] > 0)
             layer.self_attn._e018_callback = (
                 self._read if (layer_idx in schedule or e020_capture) else None)
@@ -490,7 +513,12 @@ class Runtime:
                 if vis is None:
                     raise RuntimeError("E020 capture missing visual response at layer 0")
                 grouped = _group_query_response(vis, self.e019_groups)
-                self.e020["hook"].capture(grouped, s.visual_ids)
+                if self.e020 is not None:
+                    self.e020["hook"].capture(grouped, s.visual_ids)
+                elif e020_collect:
+                    # Store on runtime for offline pairdata without enabling refine.
+                    self._e020_collect_prev = (grouped.detach().float().cpu(),
+                                               s.visual_ids.detach().cpu())
             if layer_idx in schedule:
                 if side is None:
                     raise RuntimeError("E018 SDPA callback was not executed; wrong attention implementation")
@@ -608,6 +636,13 @@ class Runtime:
                                torch.arange(a, b, device=hidden.device), metadata, n,
                                int(pos[-1].item()) + 1,
                                self.cfg.fingerprint(n, len(m.layers), metadata["stage1"]))
+            # Offline pairdata: pin first-event survivors to original patch IDs.
+            force = os.environ.get("E018_FORCE_FIRST_IDS", "").strip()
+            if force and self.cfg.events:
+                force_ids = torch.tensor(
+                    [int(x) for x in force.split(",") if x.strip() != ""],
+                    device=ids.device, dtype=ids.dtype)
+                self.state.forced_keeps[int(self.cfg.events[0][0])] = force_ids
             hidden, cache, history = self._tail(hidden, cache, output_hidden_states=output_hidden_states)
             # Compatibility counters for the existing lmms-eval audit path.
             m.e001_last_stage1_visual_tokens = int(n)

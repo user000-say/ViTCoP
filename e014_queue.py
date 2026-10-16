@@ -31,6 +31,7 @@ from e014_arms import (
     FULL_E020_A_NEIGHBOR,
     FULL_E020_D_CONTROLS,
     FULL_E020_PRIORITY,
+    FULL_E020_LEARNED,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -81,6 +82,7 @@ PHASE_ARMS = {
     "full_e020_a_neighbor": FULL_E020_A_NEIGHBOR,
     "full_e020_d_controls": FULL_E020_D_CONTROLS,
     "full_e020_priority": FULL_E020_PRIORITY,
+    "full_e020_learned": FULL_E020_LEARNED,
 }
 
 
@@ -133,7 +135,9 @@ def tasks(phase: str, arms: list[str], limit: int, task_names: tuple[str, ...] |
                 "arm": arm,
                 "marker": str(output / "metrics.json"),
                 "cmd": (
-                    f"export CUDA_VISIBLE_DEVICES=GPU PYTHONPATH={REPO} PYTHONUNBUFFERED=1 "
+                    f"export CUDA_VISIBLE_DEVICES=GPU "
+                    f"PYTHONPATH={REPO}:{REPO / 'e020_lib'}:{REPO / 'logs' / 'e014_aee' / 'code_runtime' / 'e020_lib'} "
+                    f"PYTHONUNBUFFERED=1 "
                     f"HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false "
                     f"E014_ARM={arm}; "
                     f"{PY} {REPO / 'e014_boot.py'} --profile ANCHOR_A --task {task} "
@@ -229,19 +233,33 @@ def main() -> None:
                 except Exception:
                     pass
         free = [g for g in gpus if mem.get(g, 99999) < args.mem_free_mib and g not in busy]
-        pending = [i for i in items if not Path(i["marker"]).exists() and not alive(claim_pid(i["name"]))]
+        pending = [
+            i for i in items
+            if not Path(i["marker"]).exists()
+            and not alive(claim_pid(i["name"]))
+            and attempts(i["name"]) < 3
+        ]
+        exhausted = [
+            i for i in items
+            if not Path(i["marker"]).exists() and attempts(i["name"]) >= 3
+        ]
         for gpu, item in zip(free, pending):
-            if attempts(item["name"]) >= 3:
-                log(f"SKIP max attempts {item['name']}")
-                continue
             log(f"LAUNCH gpu={gpu} {item['name']}")
             launch(item, gpu)
             time.sleep(2)
         done = sum(1 for i in items if Path(i["marker"]).exists())
         running = sum(1 for i in items if alive(claim_pid(i["name"])) and not Path(i["marker"]).exists())
-        log(f"progress done={done}/{len(items)} running={running} free_gpus={free}")
-        if done == len(items):
-            log("COMPLETE")
+        log(
+            f"progress done={done}/{len(items)} running={running} "
+            f"pending={len(pending)} exhausted={len(exhausted)} free_gpus={free}"
+        )
+        if done + len(exhausted) == len(items) and running == 0:
+            if exhausted:
+                for item in exhausted:
+                    log(f"FAILED max attempts {item['name']}")
+                log(f"COMPLETE_WITH_FAILURES done={done} failed={len(exhausted)}")
+            else:
+                log("COMPLETE")
             return
         if args.once:
             return

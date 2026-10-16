@@ -1,0 +1,29 @@
+{
+  "schema": "hypothesis_verdict_v1",
+  "anchor_R4": 96.5,
+  "e020": {
+    "status": "PARTIAL_NOLEARN_ONLY",
+    "priority_done": 10,
+    "priority_total": 26,
+    "learned_done": 0,
+    "learned_total": 28,
+    "models_present": [],
+    "verdict": [
+      "Anchor COVER_FIRST_SHIFT_REF R4=96.50 (target 96.50).",
+      "No D-control full rows yet \u2192 cannot test whether simple first-event exchanges beat the fixed schedule.",
+      "Learned B/C not runnable: no fitted PairScorer checkpoints (pairdata/fit pending). Core E020 conjecture NOT tested."
+    ],
+    "best_ref": "E020_COVER_FIRST_NEXT_WMATCH_REF32",
+    "best_control": null,
+    "best_learned": null
+  },
+  "e019": {
+    "status": "INCOMPLETE",
+    "remaining_done": 0,
+    "remaining_total": 36,
+    "verdict": [
+      "E019 B/C remaining ACC not finished."
+    ]
+  },
+  "overall": "NOT_PROVEN"
+}

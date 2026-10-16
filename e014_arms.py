@@ -1,6 +1,8 @@
 """E014 arm definitions. Env wiring only — no selector math."""
 from __future__ import annotations
 
+from pathlib import Path
+
 # name -> (variant, b, s, d, target_k)
 # Stage2 freeze: S=D primary L8; K32 additionally sweeps L8/L10/L12 full ACC.
 ARMS: dict[str, tuple[str, int, int, int, int]] = {
@@ -320,6 +322,7 @@ FULL_E019_ALL48 = sorted({
 
 # E020: FIRST_SHIFT neighbourhood (A) + no-weight controls (D) first; learned B later.
 _E020_EVENTS = {
+    "ONE": "8:32",
     "EARLY": "4:102,12:32",
     "FIRST_SHIFT": "2:116,12:32",
     "THREE_WMATCH": "4:103,8:101,12:32",
@@ -340,6 +343,12 @@ _E020_KINDS = {
     "RANDR4": {"kind": "random", "group_size": 1, "rounds": 4, "shortlist": 16, "seed": 20},
     "RANDG4R1": {"kind": "random", "group_size": 4, "rounds": 1, "shortlist": 16, "seed": 20},
     "RANDG4R2": {"kind": "random", "group_size": 4, "rounds": 2, "shortlist": 16, "seed": 20},
+    "CFFULL_G1R4": {"kind": "continuation", "model": "full", "group_size": 1, "rounds": 4, "shortlist": 16},
+    "CFFULL_G4R2": {"kind": "continuation", "model": "full", "group_size": 4, "rounds": 2, "shortlist": 16},
+    "CFCUR_G1R4": {"kind": "continuation", "model": "current", "group_size": 1, "rounds": 4, "shortlist": 16},
+    "CFCUR_G4R2": {"kind": "continuation", "model": "current", "group_size": 4, "rounds": 2, "shortlist": 16},
+    "CFNOCTX_G1R4": {"kind": "continuation", "model": "no_context", "group_size": 1, "rounds": 4, "shortlist": 16},
+    "CFSHUF_G1R4": {"kind": "continuation", "model": "shuffled", "group_size": 1, "rounds": 4, "shortlist": 16},
 }
 
 
@@ -347,29 +356,53 @@ def _e020_register():
     arms = {}
     # A neighbourhood references on BASE/COVER
     for stage, variant, b in (("COVER", "FIXED_COVER", 32), ("BASE", "BASE", 0)):
-        for sched in ("FIRST_PREV_WMATCH", "FIRST_NEXT_WMATCH", "FIRST_KMINUS8", "FIRST_KPLUS8",
-                      "FIRST_SHIFT", "EARLY", "THREE_WMATCH"):
+        for sched in _E020_EVENTS:
             arms[f"E020_{stage}_{sched}_REF32"] = (variant, b, 8, 8, 32)
-        # D controls on FIRST_SHIFT (primary benchmark schedule)
-        for kind in _E020_KINDS:
+        # D controls + B continuation heads on FIRST_SHIFT
+        for kind, spec in _E020_KINDS.items():
             if kind == "REF":
                 continue
+            if spec.get("kind") == "continuation":
+                continue  # added below
             arms[f"E020_{stage}_FIRST_SHIFT_{kind}32"] = (variant, b, 8, 8, 32)
+        for kind, spec in _E020_KINDS.items():
+            if spec.get("kind") != "continuation":
+                continue
+            arms[f"E020_{stage}_FIRST_SHIFT_{kind}32"] = (variant, b, 8, 8, 32)
+        # C transfer: full heads on EARLY/THREE/K±8
+        for sched in ("EARLY", "THREE_WMATCH", "FIRST_KMINUS8", "FIRST_KPLUS8"):
+            for kind in ("CFFULL_G1R4", "CFFULL_G4R2"):
+                arms[f"E020_{stage}_{sched}_{kind}32"] = (variant, b, 8, 8, 32)
     return arms
 
 
+
 ARMS.update(_e020_register())
+FULL_E020_A_ALL = sorted(a for a in ARMS if a.startswith("E020_") and a.endswith("_REF32"))
 FULL_E020_A_NEIGHBOR = sorted(
-    a for a in ARMS if a.startswith("E020_") and a.endswith("_REF32")
-    and any(s in a for s in ("FIRST_PREV", "FIRST_NEXT", "FIRST_KMINUS8", "FIRST_KPLUS8"))
+    a for a in FULL_E020_A_ALL
+    if any(s in a for s in ("FIRST_PREV", "FIRST_NEXT", "FIRST_KMINUS8", "FIRST_KPLUS8"))
 )
 FULL_E020_D_CONTROLS = sorted(
     a for a in ARMS if a.startswith("E020_") and "FIRST_SHIFT_" in a
     and not a.endswith("_REF32")
+    and not any(x in a for x in ("CFFULL", "CFCUR", "CFNOCTX", "CFSHUF"))
 )
+FULL_E020_B_LEARNED = sorted(
+    a for a in ARMS if a.startswith("E020_") and "FIRST_SHIFT_" in a
+    and any(x in a for x in ("CFFULL", "CFCUR", "CFNOCTX", "CFSHUF"))
+)
+FULL_E020_C_TRANSFER = sorted(
+    a for a in ARMS if a.startswith("E020_")
+    and any(s in a for s in ("_EARLY_CFFULL", "_THREE_WMATCH_CFFULL", "_FIRST_KMINUS8_CFFULL", "_FIRST_KPLUS8_CFFULL"))
+)
+FULL_E020_NOLEARN = sorted(set(FULL_E020_A_ALL) | set(FULL_E020_D_CONTROLS))
 FULL_E020_PRIORITY = FULL_E020_A_NEIGHBOR + [
-    a for a in ARMS if a.startswith("E020_") and a.endswith("_FIRST_SHIFT_REF32")
+    a for a in FULL_E020_A_ALL if a.endswith("_FIRST_SHIFT_REF32")
 ] + FULL_E020_D_CONTROLS
+FULL_E020_LEARNED = sorted(set(FULL_E020_B_LEARNED) | set(FULL_E020_C_TRANSFER))
+# Models dir used by continuation arms (populated by fit_models after pairdata).
+E020_MODELS_DIR = Path(__file__).resolve().parent / "experiments" / "e020_continuation" / "models"
 
 
 def apply_arm_env(arm: str) -> dict:
@@ -546,11 +579,20 @@ def apply_arm_env(arm: str) -> dict:
             enable = kind != "reference"
             # completed-block horizon of final event (zero-based last layer + 1)
             last_layer = int(events.split(",")[-1].split(":")[0])
+            model_name = str(e020_kind.get("model", "current"))
+            model_path = ""
+            if kind == "continuation":
+                cand = E020_MODELS_DIR / f"{model_name}.npz"
+                if not cand.is_file():
+                    raise FileNotFoundError(
+                        f"E020 continuation arm {arm} needs fitted model at {cand}")
+                model_path = str(cand)
             os.environ.update(
                 E019_ENABLE="False",
                 E020_ENABLE="True" if enable else "False",
                 E020_KIND=str(kind),
-                E020_MODEL=str(e020_kind.get("model", "current")),
+                E020_MODEL=model_name,
+                E020_MODEL_PATH=model_path,
                 E020_GROUP_SIZE=str(e020_kind.get("group_size", 1)),
                 E020_ROUNDS=str(e020_kind.get("rounds", e020_kind.get("swaps", 2))),
                 E020_SHORTLIST=str(e020_kind.get("shortlist", 16)),
