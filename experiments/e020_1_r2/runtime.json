@@ -1,0 +1,189 @@
+{
+  "schema": "e020_runtime_v1",
+  "kind": "real",
+  "model_depth": 32,
+  "initial_visual_tokens": 172,
+  "layer_convention": "zero_based_after_block",
+  "schedules": {
+    "ONE": [
+      [
+        8,
+        32
+      ]
+    ],
+    "EARLY": [
+      [
+        4,
+        102
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "LATE": [
+      [
+        4,
+        102
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "LATE_WMATCH": [
+      [
+        4,
+        78
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "FIRST_SHIFT": [
+      [
+        2,
+        116
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "THREE_WMATCH": [
+      [
+        4,
+        103
+      ],
+      [
+        8,
+        101
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "FIRST_NEXT_WMATCH": [
+      [
+        3,
+        109
+      ],
+      [
+        12,
+        32
+      ]
+    ]
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "FIRST_SHIFT": 2284,
+    "THREE_WMATCH": 2284,
+    "LATE": 2564,
+    "LATE_WMATCH": 2276
+  },
+  "source": {
+    "checkpoint_hash": "f112de882e31171a105f0d3f69d9e6e8700a40149f0944f4b507d3a41789e492",
+    "code_commit": "f17e8bd8fd4bfe357e7abd5fa3c9261f68079046",
+    "prompt_hash": "llava_v1_conv",
+    "input_pipeline_hash": "e014_lmms_eval_full",
+    "cache_policy": "layer_local",
+    "query_rule": "Q_ATTN",
+    "feature_protocol_hash": "4a0fe05099f309daf55df23669b7b73d722f35546fb2e53207f7a439f8770030",
+    "feature_schema": "e020_prompt_features_v2"
+  },
+  "metric_keys": {
+    "GQA": "exact_match",
+    "POPE": "pope_accuracy",
+    "MME": "mme_sum",
+    "MMBench": "gpt_eval_score"
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "POPE": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MME": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MMBench": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/GQA.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "POPE": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/POPE.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MME": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MME.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      },
+      "MMBench": {
+        "path": "/home/xiangyue/ViTCoP/logs/e014_aee/full/panels/MMBench.FULL",
+        "ids_hash": "898f40ccd25869ad29664b78a40a787a0eb7d27f785c6bd743a6683339458616"
+      }
+    }
+  },
+  "timing_panel": "/home/xiangyue/ViTCoP/experiments/e014_latency_fair_256/panel/speed_256.jsonl",
+  "NOTE": "Skip smoke per user; E019 B/C ACC in flight then E020 A-neigh+D controls full ACC.",
+  "revision": "E020.1_R2",
+  "external_anchors": {
+    "OFFICIAL_S0": {
+      "stage1": "OFFICIAL",
+      "schedule_name": "S0",
+      "selector_name": "reference",
+      "selector": {
+        "kind": "reference"
+      },
+      "application": "original_project_path",
+      "native_method": "ViTCoP_S0",
+      "budget": {
+        "per_block_visual": [],
+        "visual_token_layers": null
+      },
+      "original_runner_config": {},
+      "status": "PENDING_REAL_TRACE_EXPORT",
+      "note": "Do not fabricate events from reported W=2034; export from successful S0 runner."
+    }
+  },
+  "collection": {
+    "adapter": "replay_adapter:make",
+    "command": [
+      "python",
+      "pairdata.py",
+      "--adapter",
+      "replay_adapter:make",
+      "--config",
+      "{config}",
+      "--out",
+      "{out}",
+      "--states",
+      "256",
+      "--actions",
+      "16",
+      "--candidate-limit",
+      "16",
+      "--shortlist",
+      "16",
+      "--group-sizes",
+      "1",
+      "--noop-every",
+      "8"
+    ],
+    "output_shard": "/home/xiangyue/ViTCoP/experiments/e020_1_r2/data/e0201r2_pairs.npz",
+    "max_examples": 128
+  }
+}

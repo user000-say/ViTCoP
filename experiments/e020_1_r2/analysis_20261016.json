@@ -1,0 +1,104 @@
+{
+  "source": "Pasted user report 2026-10-16 plus explicit historical EARLY task values. Not server file access.",
+  "task_values": {
+    "COVER_EARLY": {
+      "GQA": 57.57,
+      "POPE": 84.42,
+      "MME": 1767.5,
+      "MMBench": 62.54
+    },
+    "BASE_EARLY": {
+      "GQA": 57.18,
+      "POPE": 84.03,
+      "MME": 1769.9,
+      "MMBench": 63.14
+    },
+    "COVER_FIRST_SHIFT": {
+      "GQA": 57.88,
+      "POPE": 84.61,
+      "MME": 1768.5,
+      "MMBench": 63.06
+    },
+    "BASE_FIRST_SHIFT": {
+      "GQA": 57.14,
+      "POPE": 84.54,
+      "MME": 1715.5,
+      "MMBench": 63.14
+    },
+    "COVER_THREE": {
+      "GQA": 57.62,
+      "POPE": 84.5,
+      "MME": 1767.2,
+      "MMBench": 62.97
+    },
+    "BASE_THREE": {
+      "GQA": 57.12,
+      "POPE": 84.17,
+      "MME": 1774.3,
+      "MMBench": 62.97
+    }
+  },
+  "R4_recomputed_from_displayed_values": {
+    "COVER_EARLY": 96.10003064529238,
+    "BASE_EARLY": 96.09528893392114,
+    "COVER_FIRST_SHIFT": 96.49690092167523,
+    "BASE_FIRST_SHIFT": 95.49339399096976,
+    "COVER_THREE": 96.30719156191105,
+    "BASE_THREE": 96.10494143770823
+  },
+  "COVER_FIRST_vs_EARLY_R4_contributions": {
+    "GQA": 0.12520193861066328,
+    "POPE": 0.0553613053613047,
+    "MME": 0.013498920086393088,
+    "MMBench": 0.20280811232449422
+  },
+  "BASE_FIRST_vs_EARLY_R4_contributions": {
+    "GQA": -0.016155088852988348,
+    "POPE": 0.1486013986014001,
+    "MME": -0.7343412526997852,
+    "MMBench": 0.0
+  },
+  "COVER_vs_BASE_FIRST_R4_contributions": {
+    "GQA": 0.2988691437802916,
+    "POPE": 0.020396270396268408,
+    "MME": 0.7154427645788337,
+    "MMBench": -0.031201248049921335
+  },
+  "entrance_schedule_interaction_contributions": {
+    "GQA": 0.14135702746365164,
+    "POPE": -0.09324009324009538,
+    "MME": 0.7478401727861783,
+    "MMBench": 0.20280811232449422
+  },
+  "MME_fraction_of_FIRST_gap": 0.7129425245482583,
+  "MME_fraction_of_interaction": 0.7487647330017001,
+  "new_best_reported": {
+    "config": "COVER_FIRST_NEXT_WMATCH_REF",
+    "R4": 96.67,
+    "per_task_values": null,
+    "TTFT": null
+  },
+  "BASE_SHIFT_control_deltas": {
+    "E019CUR": -0.06,
+    "E019TMP": -0.15,
+    "RANDR2": 0.13,
+    "RANDR4": 0.31,
+    "RANDG4R1": 0.36,
+    "RANDG4R2": 0.44,
+    "RDRIFT": 0.54,
+    "KPLUS8": 0.84
+  },
+  "COVER_SHIFT_control_deltas": {
+    "E019CUR": 0.01,
+    "E019TMP": -0.27,
+    "CSCORE": 0.0
+  },
+  "learning_module_tested": false,
+  "reported_learned_jobs": 0,
+  "limitations": [
+    "Rounded metrics need not reproduce the last reported 0.01 exactly.",
+    "R4 equality does not establish selected-set or prediction equality.",
+    "Different random settings are not independent RNG seeds.",
+    "No new TTFT, significance, saturation or state-adaptive-budget claim."
+  ]
+}

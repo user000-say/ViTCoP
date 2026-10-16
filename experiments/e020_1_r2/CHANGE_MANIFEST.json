@@ -1,0 +1,110 @@
+{
+  "revision": "E020.1 R2",
+  "based_on": "E020_1_CLOSURE",
+  "files": [
+    {
+      "file": "CURSOR_E020_1_CN.md",
+      "change": "modified"
+    },
+    {
+      "file": "CURSOR_E020_1_R2_CN.md",
+      "change": "added"
+    },
+    {
+      "file": "EVIDENCE_LEDGER.json",
+      "change": "added"
+    },
+    {
+      "file": "README.md",
+      "change": "modified"
+    },
+    {
+      "file": "RESEARCH_DECISION_R2_CN.md",
+      "change": "added"
+    },
+    {
+      "file": "VALIDATION_LOCAL.json",
+      "change": "modified"
+    },
+    {
+      "file": "checks_closure.py",
+      "change": "modified"
+    },
+    {
+      "file": "checks_r2.py",
+      "change": "added"
+    },
+    {
+      "file": "close_core.py",
+      "change": "modified"
+    },
+    {
+      "file": "core_matrix.py",
+      "change": "modified"
+    },
+    {
+      "file": "core_progress.py",
+      "change": "modified"
+    },
+    {
+      "file": "diagnostics.py",
+      "change": "modified"
+    },
+    {
+      "file": "dispatch.py",
+      "change": "modified"
+    },
+    {
+      "file": "exchange_numpy.py",
+      "change": "modified"
+    },
+    {
+      "file": "factorial_interaction.py",
+      "change": "added"
+    },
+    {
+      "file": "features.py",
+      "change": "modified"
+    },
+    {
+      "file": "fit_models.py",
+      "change": "modified"
+    },
+    {
+      "file": "measurement_anchors.py",
+      "change": "added"
+    },
+    {
+      "file": "module_torch.py",
+      "change": "modified"
+    },
+    {
+      "file": "pairdata.py",
+      "change": "modified"
+    },
+    {
+      "file": "policy_calibration.py",
+      "change": "added"
+    },
+    {
+      "file": "policy_protocol.py",
+      "change": "added"
+    },
+    {
+      "file": "replay.example.json",
+      "change": "modified"
+    },
+    {
+      "file": "runtime.example.json",
+      "change": "modified"
+    },
+    {
+      "file": "scorer_numpy.py",
+      "change": "modified"
+    },
+    {
+      "file": "selector_audit.py",
+      "change": "modified"
+    }
+  ]
+}

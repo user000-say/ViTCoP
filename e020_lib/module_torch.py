@@ -52,6 +52,9 @@ def token_features(scores,response,**kwargs):
 class PairScorer(nn.Module):
     def __init__(self,path):
         super().__init__()
+        import hashlib
+        from pathlib import Path
+        self.loaded_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest()
         import json
         with np.load(path,allow_pickle=False) as data:
             self.metadata = json.loads(str(data['metadata']))
@@ -67,9 +70,9 @@ class PairScorer(nn.Module):
 
 
 @torch.no_grad()
-def select(x,scores,selected,model,*,after,depth,next_after,final_k,rounds=2,
+def select(x,scores,selected,model,*,after,depth,next_after,final_k,rounds=1,
            group_size=1,shortlist=16,threshold=0.,protected=None,
-           mode='learned',generator=None):
+           mode='learned',generator=None,candidate_limit=None):
     if rounds < 0 or group_size < 1 or shortlist < group_size:
         raise ValueError('invalid exchange settings')
     if not 0 <= after < next_after <= depth:
@@ -86,6 +89,10 @@ def select(x,scores,selected,model,*,after,depth,next_after,final_k,rounds=2,
         if not nd or not ni: break
         dg = di[:nd*group_size].reshape(nd,group_size).repeat_interleave(ni,dim=0)
         ig = ii[:ni*group_size].reshape(ni,group_size).repeat(nd,1)
+        if candidate_limit is not None and len(dg)>candidate_limit:
+            from policy_protocol import catalogue_indices
+            take=torch.as_tensor(catalogue_indices(len(dg),candidate_limit),device=x.device)
+            dg,ig=dg[take],ig[take]
         valid = ~protect[dg].any(1)
         context = (x[selected].sum(0)[None,:]-x[dg].sum(1))/max(k-group_size,1)
         const = x.new_tensor([k/n,group_size/n,after/depth,(next_after-after)/depth,final_k/n,n/576])
@@ -134,14 +141,28 @@ class ContinuationHook:
 
     @torch.no_grad()
     def refine(self,scores,response,baseline_indices,patch_ids,*,after,depth,next_after,
-               final_k,hidden=None,encoder_rank=None,patch_xy=None,rounds=2,
-               group_size=1,shortlist=16,threshold=0.,mode='learned'):
+               final_k,hidden=None,encoder_rank=None,patch_xy=None,rounds=1,
+               group_size=1,shortlist=16,threshold=None,mode='learned',candidate_limit=None):
         if mode == 'reference' or rounds == 0:
             return baseline_indices.sort().values
         if mode == 'learned' and self.model is None:
             raise ValueError('missing trained scorer: never use random weights as fallback')
-        previous=self.aligned_previous(patch_ids)
-        if mode=='learned' and self.model.metadata.get('mode')!='current' and previous is None:
+        if mode=='learned':
+            from policy_protocol import validate_model_policy
+            policy=validate_model_policy(self.model.metadata)
+            if (rounds,group_size,shortlist)!=(policy['rounds'],policy['group_size'],policy['shortlist']):
+                raise ValueError('direct hook settings differ from calibrated one-step deployment')
+            if candidate_limit is not None and candidate_limit!=policy['candidate_limit']:
+                raise ValueError('direct hook candidate catalogue mismatch')
+            candidate_limit=policy['candidate_limit']
+            if threshold is not None and threshold!=self.model.metadata['decision_threshold']:
+                raise ValueError('direct hook threshold differs from validation calibration')
+            threshold=self.model.metadata['decision_threshold']
+            if not self.model.metadata['accept_enabled']:return baseline_indices.sort().values
+        if threshold is None:threshold=0.
+        needs_history=mode=='learned' and self.model.metadata.get('mode')=='full'
+        previous=self.aligned_previous(patch_ids) if needs_history else None
+        if needs_history and previous is None:
             raise ValueError('history-enabled model requires its actual previous prompt response')
         if self.debug:
             if patch_ids.numel() != scores.numel() or patch_ids.unique().numel() != patch_ids.numel():
@@ -153,4 +174,5 @@ class ContinuationHook:
         with torch.autocast(device_type=x.device.type,enabled=False):
             return select(x,scores.float(),baseline_indices,self.model,after=after,depth=depth,
                           next_after=next_after,final_k=final_k,rounds=rounds,
-                          group_size=group_size,shortlist=shortlist,threshold=threshold,mode=mode)
+                          group_size=group_size,shortlist=shortlist,threshold=threshold,mode=mode,
+                          candidate_limit=candidate_limit)

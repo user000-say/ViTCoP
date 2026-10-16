@@ -16,6 +16,12 @@ class PairScorer:
         self.mean, self.std, self.mask = map(np.asarray, (mean, std, mask))
         self.w, self.b, self.v = map(np.asarray, (w, b, v))
         self.target_scale = float(target_scale)
+        if (self.mean.shape!=(INPUT_DIM,) or self.std.shape!=(INPUT_DIM,) or self.mask.shape!=(INPUT_DIM,)
+            or self.w.ndim!=2 or self.w.shape[0]!=INPUT_DIM or self.b.shape!=(self.w.shape[1],)
+            or self.v.shape!=self.b.shape or np.any(self.std<=0) or self.target_scale<=0
+            or not all(np.isfinite(a).all() for a in (self.mean,self.std,self.mask,self.w,self.b,self.v))
+            or not np.isfinite(self.target_scale)):
+            raise ValueError('invalid scorer dimensions, normalization or weights')
 
     def predict(self, pairs):
         pairs = np.asarray(pairs, dtype=float)

@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-16",
+  "scope": "Current reported E019/E020 primary-model experiment, not a validated CVPR contribution.",
+  "claims": [
+    {
+      "claim": "COVER NEXT reported R4=96.67",
+      "stage": "P_REPORTED_POINT_ESTIMATE",
+      "missing": [
+        "raw per-task outputs",
+        "paired uncertainty",
+        "real TTFT",
+        "independent confirmation"
+      ]
+    },
+    {
+      "claim": "Entrance x schedule aggregate interaction",
+      "stage": "P_REPORTED_OBSERVATION",
+      "missing": [
+        "raw four-arm paired analysis",
+        "MME category attribution",
+        "competing mechanism tests",
+        "generalization"
+      ]
+    },
+    {
+      "claim": "Supervised one-step exchange improves selection",
+      "stage": "I_LOCAL_IMPLEMENTATION_ONLY",
+      "missing": [
+        "actual server backend",
+        "real calibrated weights",
+        "real deployment trace",
+        "ACC against strong controls",
+        "total overhead"
+      ]
+    },
+    {
+      "claim": "E020.1 R2 improves paper evidence quality",
+      "stage": "I_LOCAL_IMPLEMENTATION_AND_PROTOCOL",
+      "missing": [
+        "real outcome showing scientific or efficiency value"
+      ]
+    },
+    {
+      "claim": "Tokens are information-saturated",
+      "stage": "H_UNSUPPORTED",
+      "missing": [
+        "fixed-identity timing intervention",
+        "cache semantics control",
+        "task outcome evidence"
+      ]
+    },
+    {
+      "claim": "External accuracy-latency Pareto advantage",
+      "stage": "H_UNTESTED",
+      "missing": [
+        "official S0 trace",
+        "recent strong baselines",
+        "end-to-end timing",
+        "multiple budgets",
+        "other architecture",
+        "OCR/grounding"
+      ]
+    }
+  ],
+  "score_interpretation": "Supervisor scores are subjective feedback, not scientific measurements or acceptance probabilities.",
+  "next_decision": "Complete current-state real paired-data-to-policy loop; separate proposal headroom, prediction, label alignment and runtime cost failures."
+}

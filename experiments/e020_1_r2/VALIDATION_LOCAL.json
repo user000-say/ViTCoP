@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-16",
+  "command": "python3 -m unittest checks checks_closure checks_r2 -q",
+  "tests_run": 42,
+  "passed": 38,
+  "skipped": 4,
+  "failures": 0,
+  "skipped_reason": "PyTorch unavailable in both local Python runtimes; Torch parity and causal NLL checks require server.",
+  "synthetic_end_to_end": "collection -> fitting -> core scheduler -> confirmation completed with training_kind=synthetic and validated_algorithm_gain=false",
+  "real_gpu_acc_measured": false,
+  "real_ttft_measured": false,
+  "real_weights_fitted": false,
+  "server_backend_integrated": false,
+  "scope": "Synthetic correctness tests and protocol/implementation review only; not scientific efficacy evidence.",
+  "server_revalidation": {
+    "date": "2026-10-16T23:32:20.139945+08:00",
+    "command": "python3 -m unittest checks checks_closure checks_r2 -v",
+    "tests_run": 42,
+    "passed": 42,
+    "failures": 0,
+    "torch_available": true,
+    "note": "Server env has PyTorch; all 42 tests OK including Torch parity."
+  },
+  "prior_round_results": "PRIOR_ROUND_RESULTS.json (E020 priority 104/104 complete)",
+  "backend_status": "project_e020_backend.py installed; smoke/collect queued after E019"
+}

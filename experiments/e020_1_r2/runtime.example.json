@@ -1,0 +1,164 @@
+{
+  "schema": "e020_runtime_v1",
+  "kind": "example",
+  "model_depth": 32,
+  "initial_visual_tokens": 172,
+  "layer_convention": "zero_based_after_block",
+  "schedules": {
+    "ONE": null,
+    "EARLY": [
+      [
+        4,
+        102
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "LATE": [
+      [
+        4,
+        102
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "LATE_WMATCH": [
+      [
+        4,
+        78
+      ],
+      [
+        16,
+        32
+      ]
+    ],
+    "FIRST_SHIFT": [
+      [
+        2,
+        116
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "THREE_WMATCH": [
+      [
+        4,
+        103
+      ],
+      [
+        8,
+        101
+      ],
+      [
+        12,
+        32
+      ]
+    ],
+    "FIRST_NEXT_WMATCH": null
+  },
+  "expected_visual_work": {
+    "EARLY": 2284,
+    "FIRST_SHIFT": 2284,
+    "THREE_WMATCH": 2284,
+    "LATE": 2564,
+    "LATE_WMATCH": 2276
+  },
+  "source": {
+    "checkpoint_hash": null,
+    "code_commit": null,
+    "prompt_hash": null,
+    "input_pipeline_hash": null,
+    "cache_policy": null,
+    "query_rule": null,
+    "feature_protocol_hash": null
+  },
+  "metric_keys": {
+    "GQA": null,
+    "POPE": null,
+    "MME": null,
+    "MMBench": null
+  },
+  "panels": {
+    "screen": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    },
+    "confirm": {
+      "GQA": {
+        "path": null,
+        "ids_hash": null
+      },
+      "POPE": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MME": {
+        "path": null,
+        "ids_hash": null
+      },
+      "MMBench": {
+        "path": null,
+        "ids_hash": null
+      }
+    }
+  },
+  "model_directory": "/ABSOLUTE/PROJECT/e020_models",
+  "collection": {
+    "command": null,
+    "output_shard": "/ABSOLUTE/PROJECT/e020_pairs.npz",
+    "reuse_completed_shard": false
+  },
+  "forbidden_evaluation_image_ids": "/ABSOLUTE/PROJECT/e020_eval_image_ids.json",
+  "fit_epochs": 160,
+  "timing_panel": {
+    "task": "TTFT",
+    "metric_key": "TTFT_cuda_mean_ms",
+    "tag": "paired1024",
+    "panel": {
+      "path": null,
+      "ids_hash": null
+    },
+    "n": 1024,
+    "estimated_seconds": 600
+  },
+  "stress_panels": [],
+  "estimated_job_seconds": {
+    "GQA": 120,
+    "POPE": 90,
+    "MME": 120,
+    "MMBench": 120
+  },
+  "notes": [
+    "E020.1 R2 main entry is close_core.py; do not execute the archived 72-arm workflow.",
+    "Export actual NEXT events, source hashes and official S0 config/per-block trace. No guessed S0 schedule.",
+    "R2 schema is e020_prompt_features_v2: recompute real features, labels and fit; never rename old npz weights.",
+    "Collector: --states 256 --actions 16 --candidate-limit 16 --group-sizes 1, from independent calibration images.",
+    "Current head is the only prerequisite; full history is optional, and missing history must be declared.",
+    "Use distinct training/validation/diagnostic-test/evaluation image identities and record any dev reuse.",
+    "End-to-end wall TTFT, official S0, EARLY, SHIFT, NEXT and selector total overhead remain required paper evidence."
+  ],
+  "trace_directory": "/ABSOLUTE/PROJECT/e020_traces",
+  "pair_shards": [],
+  "timing_reference_config_id": "COVER__FIRST_NEXT_WMATCH__reference",
+  "external_anchors": []
+}

@@ -1,0 +1,1774 @@
+--- a/CURSOR_E020_1_CN.md
++++ b/CURSOR_E020_1_CN.md
+@@ -1,3 +1,5 @@
++> 历史E020.1执行书，已由 `CURSOR_E020_1_R2_CN.md` 替代。不要执行其中28配置和g1r4默认策略。
++
+ # E020.1 四卡执行书：补齐效用分支，不重新铺开72配置
+ 
+ 目标：把E020同预算继续交互集合交换真正跑到真实权重、ACC和TTFT；并行恢复已暂停E019。当前没有任何学习模块已测结论。不要将“85/104独立作业”写成主效用模型完成。
+--- /dev/null
++++ b/CURSOR_E020_1_R2_CN.md
+@@ -0,0 +1,157 @@
++# Cursor执行书：E020.1 R2，完成一个真实算法闭环
++
++本轮只修订E020.1，不新起算法编号。先保留已运行任务及原始记录，不杀其他实验进程。
++本包包含完整的通用交换、采集、拟合、诊断、调度代码；**不包含服务器私有模型后端与官方评分器接线**，不能声称下载后已经完成模型级集成。
++
++## 1. 先冻结定义与原始锚点
++
++1. 导出实际NEXT事件、层号约定、逐层token数、四任务明细，不从96.67或floor公式反推。
++2. 原模型、输入、prompt、评分协议保持与已有结果一致。记录POPE到底用F1还是accuracy，MME保存同图双问题及类别。
++3. 官方ViTCoP S0继续走原始成功路径。将其实际配置和逐层trace填入`runtime.external_anchors`；S0的W=2034目前只来自报告，先核验，不虚构events。
++4. 应用R2改动后重新导出`runtime.source`；`feature_protocol_hash`必须覆盖v2特征、投影、候选协议和捕获位置。Replay config复制同一个source对象。
++5. 旧v1权重不能改名复用；当前头/消融的特征语义和部署契约已变。旧结果、旧pair shard保留归档；若要迁移标签，必须重新按真实前缀生成v2特征、补齐候选目录与校准信息，不直接改schema字符串。
++
++`runtime.external_anchors`中的每项使用如下字段，值全部来自原runner：
++
++```json
++{
++  "stage1": "OFFICIAL", "schedule_name": "S0", "selector_name": "reference",
++  "selector": {"kind": "reference"},
++  "application": "original_project_path", "native_method": "ViTCoP_S0",
++  "budget": {"per_block_visual": [], "visual_token_layers": null},
++  "original_runner_config": {}
++}
++```
++
++空列表/空工作量是待填模板，验证器会拒绝。项目wrapper必须按`application`分流到原路径，不能让S0误走E020首事件hook。
++
++## 2. 完成最小真实后端
++
++沿用`replay_adapter.py`接口，由已有项目实现：
++
++```python
++backend.examples()  # 独立已标注calibration样本，按canonical image身份隔离
++backend.run_teacher_forced(example, stage1=..., schedule_name=...,
++    first_keep_patch_ids=..., forced_final_ids=..., capture_prompt_state=True)
++```
++
++返回真实`answer_nll/prefix_hash/cache_policy/answer_tokens_hash/answer_token_count/snapshot`。
++snapshot字段详见`pairdata.validate_snapshot`，并增加：
++
++```python
++snapshot['feature_availability'] = {'history': captured_actual_history}
++snapshot['feature_origin'] = 'prompt_only_pre_event'
++```
++
++current主线不需要为了历史另算attention。full消融只有确实捕获了对齐后的历史响应时才拟合；不能把填0当历史。若未来想比较full，在同一批图像重新采集包含真实history的特征和同目录标签，保持source/version清楚。
++
++所有特征只来自prompt和已计算视觉状态。teacher-forced答案只用于NLL。第一个答案token由其因果前驱logit预测，物理剪枝后用`teacher_forced_nll_at_rows`保留原始文本身份对齐；仅当答案确为无padding的末尾连续suffix，才用suffix工具。
++
++先用8–16个真实样本排除接线错误，检查真正重算no-op、相同答案token身份、同层位与同K、patch原始顺序及未变的后续选择器。此后自动继续批量，不逐项停下来等用户确认。
++
++另抽少量样本比较prompt-only前向与teacher-forced捕获的特征，并改变答案内容验证特征不变；只填写`feature_origin`字符串不构成无泄漏证明。保留实际问题行、视觉列和mask的捕获patch供审查。
++
++## 3. 采集完整的同一部署目录
++
++默认：shortlist=16、candidate_limit=16、g1、r1。rank网格中的确定性16动作是部署目录，离线尽量完整标注，另有不交换动作。不是每状态只随机标6个后声称覆盖在线256动作。
++
++先从128独立图像、两入口合计256状态起步；SHIFT/NEXT按图交错，两个入口共用图像分组。根据真实吞吐再补充，不承诺半天全部完成。
++
++```bash
++python pairdata.py --adapter replay_adapter:make --config replay_config.json \
++  --out /ABS/PROJECT/e0201r2_pairs.npz --states 256 --actions 16 \
++  --candidate-limit 16 --shortlist 16 --group-sizes 1 --noop-every 8
++```
++
++默认每16动作尝试可选identity-fixed诊断。后端不支持全层视觉KV处理时明确记录未支持；绝不能只修改最终IDs就宣称隔离纯交互。若支持，应在预算中计入额外两分支开销。
++
++采集进程收到自己执行器的SIGTERM时保存已完成动作。未完成目录可以参与拟合，但不参与最大值决策阈值校准。补采写新shard，按完整状态+动作身份去重；前缀相同但未来日程不同，不得合并。
++
++```bash
++python fit_models.py /ABS/PROJECT/e0201r2_pairs.npz \
++  --out /ABS/PROJECT/e0201r2_models \
++  --modes current,no_context,shuffled,full \
++  --forbidden-image-ids /ABS/PROJECT/eval_image_ids.json
++
++python diagnostics.py /ABS/PROJECT/e0201r2_pairs.npz \
++  --models /ABS/PROJECT/e0201r2_models --group-size 1 --candidate-limit 16 \
++  --out /ABS/PROJECT/e0201r2_diagnostics.json
++```
++
++按图像65/17/18拆分。训练集拟合；验证集选择epoch和阈值；诊断留出不参与训练/阈值。最终ACC图像不得与这三部分重叠。诊断留出一旦反复用于方法决策，就承认其开发用途，不能再称从未查看的最终测试。
++
++阈值校准默认至少12个验证图像、完整目录及真正重算no-op。这是工程起步门槛，不是会议规定或统计充分性的证明。若校准策略选择全部abstain，结果必须明确写出；这不是学习模块已有效。若验证目录不足，就补采；不靠改阈值/伪造完整标志绕过。
++
++## 4. 推理接线与生效证据
++
++只在首个剪枝事件调用`dispatch.refine`，使用实际加载的`hook.model`；每层数量、后续事件、position IDs、RoPE、KV语义沿用原runner。R2检查模型部署契约与阈值，拒绝把g1r1权重拿去直接跑4轮。
++
++ACC继续记录`selector_audit.make_trace`中的真实原始patch IDs、hook调用、scorer SHA；学习结果`result.json`须写`hook.model.loaded_sha256`。matched-random在同样本、同候选目录匹配0/1个最终交换，读取已完成current任务的trace；它是机制对照，不能作为独立部署方案画TTFT。
++
++full头之外，current/no-context/shuffled不要求历史捕获。no-context只额外屏蔽共同集合均值；shuffled只打乱训练标签，使用相同的current输入和验证流程。报告既有冻结阈值策略收益，也有零阈值原始头收益，区分信息与校准作用。
++
++## 5. 一批执行，核心不再被侧线阻塞
++
++| 阶段 | GPU0/2 | GPU4 | GPU6 |
++|---|---|---|---|
++| 接线、采集与拟合 | 剩余COVER臂、必要E019代表项/随机复核 | 主采集 | S0/EARLY/SHIFT/NEXT实测 |
++| current可用后 | 与4共同跑核心ACC | 核心ACC | 学习候选总开销 |
++| 主比较齐全后 | 固定确认、余量恢复E019 | 确认/必要诊断 | 同卡anchor漂移与确认 |
++
++full缺失不阻止current。E019 B/C仍在待办，优先代表性current/mean/random/temporal；不凭SHIFT的一个控制结果宣布整块失败。
++
++核心：2入口×2日程×REF/current/匹配随机=12配置；COVER NEXT再加full/no-context/shuffled/E019CUR最多4配置。共最多64个screen jobs。固定确认9配置，另加导出的S0及少量外部锚点。已有同条件原始输出允许身份核验后复用；聚合分数不能伪装成逐题结果。
++
++填好原ACC/TTFT命令argv、collector命令、绝对路径、实际panels后运行：
++
++```bash
++python close_core.py runtime.json --bridge-config bridge.json \
++  --out /ABS/PROJECT/e0201r2_run --gpus 0,2,4 --timing-gpu 6 --hours 6
++```
++
++若同时恢复E019，沿用原成功runner和manifest：
++
++```bash
++python close_core.py runtime.json --bridge-config bridge.json \
++  --out /ABS/PROJECT/e0201r2_run --gpus 0,2,4 --timing-gpu 6 --hours 6 \
++  --sidecar-matrix e019_remaining.json \
++  --sidecar-bridge original_e019_bridge:make --sidecar-bridge-config e019_bridge.json
++```
++
++原始模型接线尚未完成时，先完成它，不能用又一轮免训练扫描替代。运行过程中不自动扩展72旧配置。`workflow.py`及旧28配置说明仅用于历史追溯。
++
++## 6. 并行CPU机制与统计
++
++```bash
++python factorial_interaction.py base_early.json cover_early.json \
++  base_shift.json cover_shift.json --pope-metric f1 --out interaction.json
++```
++
++该脚本输入是每文件包含四任务原始预测的JSON，不是R4表；按图像对四臂同步重采样。POPE参数按真实口径改accuracy或f1。继续用`audit_mme.py`拆类别、`paired_stats.py`做主比较；共同样本不能缺题，MME不能拆散双问题。
++
++同时比较REF/CSCORE真实选点与预测一致率，回传NEXT任务明细、随机同一策略多seed结果。交互区间不跨0仍只说明性能交互存在，不能代替机制干预。
++
++## 7. TTFT与外部基线
++
++同一物理卡、同输入panel、同attention后端、同batch/cache、同预热，配对交错anchor。报告CUDA均值/中位/p90、端到端wall TTFT、选择器总开销。不得只计1664参数MLP；特征捕获、排序、同步和搬运全部计入。
++
++`timing_protocol`是给wrapper的执行契约，不会凭字段名称自动产生真实计时；必须保留wrapper实现和原始计时记录。主包只能验证结果身份，不能隔空保证wrapper实现ABBA。
++
++S0、强固定日程、至少最直接可运行的近期方法并行准备。先区分前置选择与交互层机制的公平对照，再画端到端成本曲线。无法取得官方代码要记录，自己的简化重实现不能冒充官方复现。
++
++## 8. 若没有增益，按原因推进一次修复而非无限开分支
++
++- 16候选集收益很小：少量图像离线扩大到64动作，先诊断提案覆盖；输出另存，`diagnostics.py --candidate-limit 64`另报。64目录不能直接训练/冒充16目录部署权重。
++- 候选有空间、预测无收益：检查噪声、特征、训练量，只做一个界定清楚的修复回合；不直接新增多套attention公式。
++- 单步成立后才考虑多轮：采集实际接受后的状态，评估多轮真实rollout；不把独立单步标签加起来。
++- NLL收益与生成脱节：抽样实际生成，核对答案集合与评分；必要时改标签目标并重新隔离验证，不能用NLL替ACC。
++- 成本抵消收益：测特征和搜索开销，简化部署。三预算、另一架构和视觉密集任务在主方法有可靠收益后扩展。
++
++## 9. 本轮必须回传
++
++1. 后端真实patch、8–16样本接线检查、实际完整目录数和图像数、no-op误差。
++2. 训练/验证/诊断图像数、source/权重hash、校准状态、接受率、真实负收益尾部。
++3. current相对NEXT REF、匹配随机、E019CUR的同panel四任务结果和逐样本记录。
++4. MME类别归因、入口×日程交互、随机复核、选点生效证据。
++5. S0/固定/学习候选真实TTFT与总开销；外部基线可用性与首轮结果。
++6. 明确区分未测、部分ACC、主比较完成、正/负结果与论文可用证据。不能把自动状态中的completed当成方法有增益。
+--- /dev/null
++++ b/EVIDENCE_LEDGER.json
+@@ -0,0 +1,67 @@
++{
++  "date": "2026-10-16",
++  "scope": "Current reported E019/E020 primary-model experiment, not a validated CVPR contribution.",
++  "claims": [
++    {
++      "claim": "COVER NEXT reported R4=96.67",
++      "stage": "P_REPORTED_POINT_ESTIMATE",
++      "missing": [
++        "raw per-task outputs",
++        "paired uncertainty",
++        "real TTFT",
++        "independent confirmation"
++      ]
++    },
++    {
++      "claim": "Entrance x schedule aggregate interaction",
++      "stage": "P_REPORTED_OBSERVATION",
++      "missing": [
++        "raw four-arm paired analysis",
++        "MME category attribution",
++        "competing mechanism tests",
++        "generalization"
++      ]
++    },
++    {
++      "claim": "Supervised one-step exchange improves selection",
++      "stage": "I_LOCAL_IMPLEMENTATION_ONLY",
++      "missing": [
++        "actual server backend",
++        "real calibrated weights",
++        "real deployment trace",
++        "ACC against strong controls",
++        "total overhead"
++      ]
++    },
++    {
++      "claim": "E020.1 R2 improves paper evidence quality",
++      "stage": "I_LOCAL_IMPLEMENTATION_AND_PROTOCOL",
++      "missing": [
++        "real outcome showing scientific or efficiency value"
++      ]
++    },
++    {
++      "claim": "Tokens are information-saturated",
++      "stage": "H_UNSUPPORTED",
++      "missing": [
++        "fixed-identity timing intervention",
++        "cache semantics control",
++        "task outcome evidence"
++      ]
++    },
++    {
++      "claim": "External accuracy-latency Pareto advantage",
++      "stage": "H_UNTESTED",
++      "missing": [
++        "official S0 trace",
++        "recent strong baselines",
++        "end-to-end timing",
++        "multiple budgets",
++        "other architecture",
++        "OCR/grounding"
++      ]
++    }
++  ],
++  "score_interpretation": "Supervisor scores are subjective feedback, not scientific measurements or acceptance probabilities.",
++  "next_decision": "Complete current-state real paired-data-to-policy loop; separate proposal headroom, prediction, label alignment and runtime cost failures."
++}
+--- a/README.md
++++ b/README.md
+@@ -1,36 +1,33 @@
+-# E020.1：闭合现有效用分支
++# E020.1 R2 — 同预算集合交换的收敛验证包
+ 
+-先读 `CURSOR_E020_1_CN.md` 和 `RESEARCH_UPDATE_20261016_CN.md`。
++这是对 E020.1 的代码审查修订，不是 E021，也没有新增 GPU 结果。
++先读 `CURSOR_E020_1_R2_CN.md` 和 `RESEARCH_DECISION_R2_CN.md`。
+ 
+-主算法仍是E020同预算继续交互集合交换。本轮修复采集、诊断与执行依赖，承接用户报告的COVER NEXT=96.67强固定基线。
++## 主入口
+ 
+-默认入口：
++`close_core.py`：真实标签 → current 权重与验证集阈值 → 核心 ACC → 确认与 TTFT。
++核心为12个因子配置加最多4个强工作点诊断配置；full 历史头是可选消融。
++`build_matrix.py` / `workflow.py` 保留历史兼容能力，不作为 R2 默认执行入口。
++
++## 模块
++
++- `features.py`：prompt-only v2 特征；current/no-context/shuffled 对照对齐。
++- `exchange_numpy.py`, `module_torch.py`, `dispatch.py`：同K、同层位，一次最多交换1个patch；16动作确定性候选目录。
++- `policy_protocol.py`, `policy_calibration.py`：候选契约、完整状态身份、验证集选择最大值后的接受阈值。
++- `pairdata.py`, `replay_adapter.py`：真实配对分支、重算no-op、答案因果行对齐、可选endpoint机制诊断。
++- `scorer_numpy.py`, `fit_models.py`, `diagnostics.py`：拟合、图像隔离、候选集收益与策略遗憾。
++- `core_matrix.py`, `core_progress.py`, `run_matrix.py`：权重身份、依赖、断点恢复与证据状态。
++- `factorial_interaction.py`, `audit_mme.py`, `paired_stats.py`：入口×日程交互、任务归因与图像配对统计。
++- `measurement_anchors.py`：按实际原路径接入S0和外部方法；不凭W反造配置。
++
++## 本地验证
+ 
+ ```bash
+-python close_core.py runtime.json --bridge-config bridge.json --out /ABS/PROJECT/e0201_run --gpus 0,2,4 --timing-gpu 6 --hours 6
++python3 -m unittest checks checks_closure checks_r2 -v
+ ```
+ 
+-需要现有真实teacher-forced backend、官方ACC/TTFT runner与实际runtime。当前环境未提供服务器源码，不能声称已经在原仓库完成接线或生成真实权重。
++所有本地生成标签都是临时合成夹具；不会作为VLM有效性证据。
++真实teacher-forced后端、原模型和官方评分器不在当前工作区，必须在服务器接线。
++`VALIDATION_LOCAL.json`记录检查结果及明确未测项。
+ 
+-主要新增/修复：
+-
+-- `close_core.py` / `core_progress.py`：区分核心未测、部分任务和四任务完整配置；缺真实数据/模型不静默跳过。
+-- `core_matrix.py`：2入口×SHIFT/NEXT×7类方法，共28核心配置；确认保留NEXT current/full/匹配随机与BASE额外预算锚点。
+-- `random_replicates.py`：10个不同seed配置，共40个四任务作业。
+-- `pairdata.py` / `replay_adapter.py`：16候选池、强制重算no-op、剪枝后答案行/连续suffix NLL对齐工具。
+-- `diagnostics.py`：按group_size/shortlist报告真实单步收益，不混g1/g4 oracle。
+-- `selector_audit.py`：原始patch选点审计、实际换点数匹配随机、边界jitter控制。
+-- `run_matrix.py`：依赖调度、sidecar平滑停止新派发、实际加载head hash校验。
+-- `audit_mme.py` / `strategy_overlap.py`：MME类别归因与逐题互补gold诊断。
+-
+-旧72配置工具仍保留，供恢复历史任务；本轮优先使用close_core，避免重新起跑整个旧矩阵。旧执行书和清单已标记为legacy。
+-
+-本地验证：
+-
+-```bash
+-python -m unittest checks checks_closure -v
+-```
+-
+-服务器须执行本地无法运行的Torch parity/NLL测试和真实CUDA smoke。本地合成学习、统计与进程fixture均不是VLM结果。
+-
+-交付包不含真实新ACC、TTFT、calibration标签或已训练npz；这些是服务器本轮应产出的核心产物。
++旧v1权重不能改名复用：特征消融、候选搜索和策略校准语义已经变更。
+--- /dev/null
++++ b/RESEARCH_DECISION_R2_CN.md
+@@ -0,0 +1,108 @@
++# E020.1 R2：独立研究裁决与修订依据
++
++日期：2026-10-16。已完整阅读用户本轮上传的审计文档，并审查当前工作区 E020.1 的算法、采集、拟合、诊断与执行器。本轮没有服务器仓库、真实训练数据、GPU或新ACC/TTFT。审计中的评分是主观评价，不能当作方法有效性或投稿概率。
++
++## 1. 我的判断：修改E020.1，保留研究问题，收紧部署策略
++
++当前最有依据的现象是入口与日程的性能交互；最关键的未完成项是监督式集合交换是否带来真实增量。E020.1应继续，而不是新起算法编号。但原默认执行方式存在可以直接定位的错配，必须修正后再判定方法。
++
++我接受审计关于“核心分支长期未闭环”“缺S0和真实成本”“需正面对外比较”的意见。以下三点不照单全收：
++
++1. **不按日期或一次未涨分直接判算法失败。** 截止日期可以限制资源投入，不能决定科学解释。先区分候选动作没空间、NLL与任务不对齐、预测学不会、部署成本抵消收益。达到完整负证据后才停止对应分支。
++2. **不把入口×日程交互预定为论文主贡献。** 这是同一评测上发现的现象，可能主要由MME、选择器边界和容量阈值解释。若独立确认后消失，应从主故事中撤下；不能为维护审计认可而保留。
++3. **不把“学习失败后用最佳固定日程”当成已有CVPR保底。** 固定配置有实验价值，但若没有新机制或外部优势，它仍不足以自动支撑主会论文。
++
++也不应为了证明独立性而否定合理建议。判断标准始终是能否以更少的混淆得到更有信息量的结果。
++
++## 2. 当前结果能支持什么
++
++用户已报告：COVER NEXT 96.67、SHIFT96.50、THREE96.31；BASE NEXT95.83、SHIFT95.50；学习分支没有权重/模型级结果；TTFT未完成。它们是项目内精度点估计，不是显著性、效率前沿或外部SOTA。
++
++SHIFT下COVER−BASE：GQA+0.74、POPE+0.07、MMBench−0.08、MME+53.0。按旧包固定分母61.9/85.8/64.1/1852，MME约贡献0.715 R4点，占这组入口差距约71%。这不等于“入口×日程交互的71%”：后者还需减去EARLY的入口差异。两个量必须分别计算。
++
++NEXT相对SHIFT，COVER+0.17、BASE+0.33。新邻域在两入口都有改善，不能全部归于COVER机制。随机设置改善BASE是强控制线索，但不同g/r不是独立seed。
++
++审计报告S0 W=2034，SHIFT已按既有语义重建为2284；若两者的工作量口径一致，增加约12.29%。本环境没有S0原始trace，不能将报告值当作已经复核，也不能反推一个虚构S0日程。恢复原路径ACC、逐层trace和TTFT是必须补的外部锚点。
++
++## 3. 代码级发现及取舍
++
++| 原实现 | 风险 | R2修改 |
++|---|---|---|
++| 每状态通常标6动作，部署可搜16×16=256动作 | 已采样oracle不能代表部署搜索；预测最大值容易挑中高估误差 | 固定最多16动作的确定性候选目录，默认完整标注同一目录 |
++| 单步分支标签，默认线上最多4轮 | 接受后集合上下文变了，后续状态没有直接监督 | 主实验g1r1，最多一次交换；多轮待单步成立后采集真实访问状态 |
++| 预测值>0即接受 | 最大值筛选后的正值未必代表真实正收益 | 在图像隔离验证集完整目录上校准阈值，显式允许全局abstain |
++| no-context、shuffled仍含历史，current不含 | 消融同时改了历史和上下文/监督 | 两者与current共享历史屏蔽；no-context仅额外去共同集合特征 |
++| current/full两权重共同作为就绪条件 | 可选历史消融阻塞主算法 | 只要求current；full缺真实history时明确跳过 |
++| 诊断按prefix hash聚合 | 相同前缀可对应不同后续策略和基准集合 | 状态身份含源、图像、问题、入口、日程、层位、horizon、基准集合 |
++| 完成一组四任务即标核心已测 | 缺少强控制也容易被误读为闭环 | 分开报告部分ACC、主比较齐全、有效性/效率验证；不自动宣布增益 |
++| 部分旧shard存在时不再采集 | 数据不足可能永久阻塞主线 | 可先拟合，再在新文件补采；保留已有数据，按完整状态动作去重 |
++
++候选16、单次交换是本轮识别问题的起点，不是证明最终最优策略。它牺牲了搜索覆盖，换来监督、校准和部署的一致性。如果16候选没空间，不据此否定全部集合交换；先用少量样本扩展到64候选诊断，检查是不是提案瓶颈，再决定是否值得修改在线契约。
++
++## 4. 算法保留什么，为什么不换复杂网络
++
++监督目标仍是同前缀、同层位、同K、同后续策略的总任务收益：
++
++\[
++\Delta(h,S,D,I;\pi)=\mathcal L_y(F(h;S,\pi))-\mathcal L_y(F(h;(S\setminus D)\cup I,\pi)).
++\]
++
++令共同剩余集合为C=S\D。保留
++
++\[
++\widehat\Delta_\theta=v_\theta(I,C,h,\pi)-v_\theta(D,C,h,\pi).
++\]
++
++这不是结构错误：真实集合价值本来就能写成两个集合价值之差。应担心的是均值池化的上下文信息损失、训练覆盖和小网络容量，而不是为了表达“集合”就新增一个复杂成对网络。当前50维输入、32隐层、1664参数的差分小头继续作为主候选。
++
++线上顺序：原选择器给出S → 生成最多16个g1交换 → 同一小头批量预测 → 取最大预测动作 → 超过验证阈值且校准策略允许时执行一次，否则维持S → 后续仍走原选择器。
++
++阈值校准使用完整验证目录的选中动作实际收益，按图像平均，包含不交换。候选阈值比较的bootstrap下界只是保守的开发选择规则，**不是搜索后显著性保证**。独立诊断图像和ACC仍要验证。shuffled对照只打乱训练标签，其验证校准流程仍使用真实标签，不能称为完全无监督对照。
++
++本目标是相对集合分配收益，不是“信息已经饱和”，也不单独隔离纯继续交互作用。允许后续重选时，总收益可能来自更好的最终幸存集合。identity-fixed、全层视觉KV处理等干预仅在后端真实支持时报告；不支持就标未测。
++
++## 5. 新近论文怎样改变贡献边界
++
++本轮查阅的原始来源：
++
++- [SCoRe，CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Xu_SCoRe_Salience-Coverage_Reduction_for_Vision_Token_Pruning_in_Vision-Language_Models_CVPR_2026_paper.html)：会议摘要将显著性与覆盖统一到代表性选择。此处只核对原始摘要，没有声称复现全文算法。
++- [CoIn，CVPR2026](https://openaccess.thecvf.com/content/CVPR2026/html/Du_CoIn_Coverage_and_Informativeness-Guided_Token_Reduction_for_Efficient_Large_Multimodal_CVPR_2026_paper.html)：原始摘要明确联合informativeness与coverage。
++- [SIEVE，2026-08](https://arxiv.org/html/2608.10489v1)：已阅读其跨模态吸收、文本子空间重构残差及方法部分；“视觉信息被文本吸收”不能再作为我们的独有概念。几何可解释性也不等于反事实任务效用，两者需要实测关系。
++- [CoRePrune，2026-09](https://arxiv.org/html/2609.26484v1)：集合和深度条件可删性是直接机制近邻。
++- [DIPrune，2026-10](https://arxiv.org/html/2610.08341v1)：任务损失出发的跨层演变代理，要求我们与便宜rank变化正面对照。
++- [SheafPrune，2026-10](https://arxiv.org/html/2610.13263v1)：冻结骨干、使用语言建模损失训练选择器已存在；核对了其训练与固定配置/逐点包络的区别。不能把“小头+任务监督”单独当创新。
++- [Bifocal，2026-10](https://arxiv.org/html/2610.18399v1)：提醒保留OCR和grounding能力，不只优化当前R4。
++
++因此争取的贡献必须落到：**在固定计算路径下，直接反事实任务监督是否提取了廉价代理没有有效利用的条件收益，并形成可部署的精度—真实成本优势。** 它尚未成立，也尚未完成对所有学习式选择方法的新颖性排除。
++
++## 6. 下一轮最小但不僵化的实验
++
++主线12配置：2入口×2日程(SHIFT/NEXT)×3策略(REF/current/同样本同候选目录的匹配交换数随机)。强工作点最多4项：full、no-context、shuffled、E019CUR。full可缺席，不阻塞其他项。共最多16配置、64四任务screen jobs。确认固定保留9配置，另加实际导出的S0/外部锚点；不是只确认screen赢家。
++
++边界随机与RDRIFT的代表性复核、E019 B/C剩余、外部复现、OCR/grounding接口准备作为并行工作。它们不是被宣布失败或取消，也不能再挤掉pairdata与当前头的首轮ACC。GPU6从一开始独占测速，GPU4主采集，0/2先做必要控制、权重就绪后做主ACC。按真实吞吐调度，不承诺半天全量完成所有任务。
++
++从128独立图像/256状态起步、每状态最多16动作，约4096成对动作、约4384次完整重跑（4096动作+256基准+32 no-op；不含可选identity-fixed额外分支）。比旧每状态6动作更贵，应记录每个有效标签耗时和训练数据成本，不以参数小掩盖离线成本。必要时减少图像数先排除接线错误，再补足图像隔离的校准量；不把少量动作当完整目录。
++
++并行完成MME类别/错误迁移、同图2×2交互bootstrap、CSCORE实际选点一致率。`factorial_interaction.py`直接计算四臂交互及图像配对区间；它证明的是交互大小及不确定性，不会自动给出机制。
++
++## 7. 分支收敛规则
++
++| 结果 | 下一步，及停止什么 |
++|---|---|
++| 无超no-op噪声收益，扩展目录也很弱 | 停止当前位置/提案的评分器扩容；不推广成全部动态剪枝无效 |
++| 更大目录才有空间 | 改提案设计，再版本化训练/部署；不直接用更宽oracle给当前策略背书 |
++| oracle有空间，held-out选中收益差 | 查上下文压缩、特征与数据量；只做一个预先界定的修复回合 |
++| NLL改善，真实生成不改善 | 调整目标或降为代理研究；不以NLL替代ACC |
++| 只修复BASE，强COVER无增量 | 研究弱选择器修复的适用范围，不能直接立为广泛优越性 |
++| ACC增益被选择器总开销抵消 | 停止当前部署版本，或进一步降低特征/搜索成本 |
++| 同成本超过强固定、随机、代理 | 冻结方法，扩展三预算、另一架构、OCR/grounding和近期强基线 |
++
++进入后续阶段的门槛是证据，不是为了保持某个论文故事而要求某模块一定存在。近期工作也允许最终只留下一个简单有效模块；不要求COVER、历史与学习头全部进入论文。
++
++## 8. 论文证据与写作现在如何推进
++
++现在可以写方法目标、预算与位置语义、实验协议、相关工作和已有负结果分析；主表中新方法行保持未测。论文候选主张只保留三项：条件收益现象、低成本可预测性、部署优势，逐项列所需证据。
++
++不能把已反复选型的四任务数据重命名为独立测试。冻结主策略后留出不参与调参的数据/任务，并明确旧结果的开发用途；条件bootstrap不消除赢家偏差。初始R4分母仅属于当前模型，跨架构需该模型自己的dense分数。
++
++本轮改进的是研究与实现的可检验性。代码通过本地检查不提高算法证据等级；只有服务器真实结果才能决定最终投稿方法与论文结论。
+--- a/VALIDATION_LOCAL.json
++++ b/VALIDATION_LOCAL.json
+@@ -1,31 +1,15 @@
+ {
+-  "date_utc": "2026-10-16T08:17:52.785782+00:00",
+-  "tests": 28,
+-  "passed": 25,
+-  "skipped": [
+-    "PyTorch feature/scorer/selection parity",
+-    "PyTorch ordinary answer NLL",
+-    "PyTorch answer-row/suffix alignment after prefix shortening"
+-  ],
+-  "failed": 0,
+-  "command": "python -m unittest checks checks_closure -v",
+-  "tested_on_synthetic_fixtures": [
+-    "Core dependency status and no-model path",
+-    "Actual subprocess retry/resume/deadline/dependency/drain",
+-    "Real no-op recomputation instead of baseline cache return",
+-    "Explicit NEXT event preservation",
+-    "Endpoint-change matched random and trace identity",
+-    "Group-specific sampled oracle and noise",
+-    "Official MME decomposition and gold strategy overlap",
+-    "Original numerical scorer/feature/set/budget checks"
+-  ],
+-  "not_verified": [
+-    "Current server source integration",
+-    "True VLM teacher-forced backend",
+-    "PyTorch/CUDA execution",
+-    "New VLM accuracy/latency",
+-    "Novelty or CVPR competitiveness"
+-  ],
+-  "new_real_GPU_results": false,
+-  "trained_weights_in_package": false
+-}+  "date": "2026-10-16",
++  "command": "python3 -m unittest checks checks_closure checks_r2 -q",
++  "tests_run": 42,
++  "passed": 38,
++  "skipped": 4,
++  "failures": 0,
++  "skipped_reason": "PyTorch unavailable in both local Python runtimes; Torch parity and causal NLL checks require server.",
++  "synthetic_end_to_end": "collection -> fitting -> core scheduler -> confirmation completed with training_kind=synthetic and validated_algorithm_gain=false",
++  "real_gpu_acc_measured": false,
++  "real_ttft_measured": false,
++  "real_weights_fitted": false,
++  "server_backend_integrated": false,
++  "scope": "Synthetic correctness tests and protocol/implementation review only; not scientific efficacy evidence."
++}
+--- a/checks_closure.py
++++ b/checks_closure.py
+@@ -44,7 +44,7 @@
+             with self.assertRaises(ValueError):build_core(r)
+             self.assertFalse(inspect(r)['core_hypothesis_tested'])
+             weights(r);m=build_core(r)
+-            self.assertEqual(m['counts'],{'configurations':28,'task_jobs':112})
++            self.assertEqual(m['counts'],{'configurations':16,'task_jobs':64})
+             self.assertEqual(len([j for j in m['jobs'] if j.get('depends_on')]),16)
+             self.assertTrue(inspect(r)['primary_models_ready'])
+             learned=[j for j in m['jobs'] if j['config']['selector']['kind']=='continuation']
+@@ -52,7 +52,10 @@
+             self.assertTrue(one['any_learned_job_executed']);self.assertFalse(one['core_hypothesis_tested'])
+             cid=learned[0]['config']['config_id']
+             done={j['job_id']:'done' for j in learned if j['config']['config_id']==cid}
+-            self.assertTrue(inspect(r,[],{'states':done},m)['core_hypothesis_tested'])
++            progress=inspect(r,[],{'states':done},m)
++            self.assertTrue(progress['any_learned_four_task_result'])
++            self.assertFalse(progress['core_hypothesis_tested'])
++            self.assertFalse(progress['validated_algorithm_gain'])
+ 
+     def test_actual_exported_next_boundary_is_not_replaced(self):
+         with tempfile.TemporaryDirectory(dir=HERE) as d:
+@@ -112,7 +115,7 @@
+             self.assertIn('COVER__FIRST_NEXT_WMATCH__reference',ids)
+             self.assertIn('BASE__FIRST_KPLUS8__reference',ids)
+             self.assertIn('COVER__FIRST_NEXT_WMATCH__matched_random_current',ids)
+-            self.assertIn('COVER__FIRST_NEXT_WMATCH__cf_current_g1_r4',ids)
++            self.assertIn('COVER__FIRST_NEXT_WMATCH__cf_current_g1_r1',ids)
+             self.assertLessEqual(len(ids),10)
+             from workflow import extra_matrix
+             r['timing_panel']={'panel':{'path':'synthetic_only','ids_hash':'TEST'},'task':'TTFT'}
+--- /dev/null
++++ b/checks_r2.py
+@@ -0,0 +1,233 @@
++"""Scientific failure-mode checks. All generated data are synthetic fixtures."""
++import copy
++import importlib.util
++import json
++import subprocess
++import sys
++from pathlib import Path
++import tempfile
++import unittest
++import numpy as np
++from checks import HERE,runtime_fixture,random_model
++from checks_closure import weights
++from features import feature_mask,TOKEN_DIM,INPUT_DIM,FEATURE_SCHEMA
++from policy_protocol import DEFAULT_POLICY,POLICY_SCHEMA,validate_model_policy,state_identity
++from policy_calibration import complete_groups,calibrate,image_summary
++from exchange_numpy import proposals,select
++from scorer_numpy import image_split,PairScorer
++
++
++def records_for(image,n=16,schedule='FIRST_SHIFT'):
++    return [dict(source_hash='SYNTHETIC_ONLY',image_id=image,question_id='q',stage1='COVER',
++        schedule_name=schedule,prefix_hash='SAME_PREFIX',after=3,depth=32,next_after=13,final_k=4,
++        baseline_patch_ids=list(range(8)),donor_patch_ids=[j%8],incoming_patch_ids=[8+j],
++        group_size=1,proposal_shortlist=16,candidate_limit=16,catalogue_size=n,catalogue_index=j,
++        policy_schema=POLICY_SCHEMA,label_kind='policy') for j in range(n)]
++
++
++def calibration_fixture():
++    images=[]
++    for i in range(1000):
++        key='SYNTHETIC_CALIBRATION_'+str(i)
++        if image_split([key])[1][0]:images.append(key)
++        if len(images)==20:break
++    rec=[r for im in images for r in records_for(im)]
++    x=np.zeros((len(rec),2,INPUT_DIM))
++    x[:,0,0]=np.tile(np.linspace(-.1,.1,16),20)
++    y=x[:,0,0].copy();validation=np.ones(len(x),dtype=bool)
++    class Model:
++        def predict(self,x):return x[:,0,0]
++    return Model(),x,y,np.asarray([r['image_id'] for r in rec]),rec,validation
++
++
++class RevisedChecks(unittest.TestCase):
++    def test_deployment_catalogue_same_as_collection_and_has_bounded_size(self):
++        score=np.linspace(-1,1,172);base=np.arange(56,172)
++        d,i=proposals(score,base,candidate_limit=16)
++        self.assertEqual(d.shape,(16,1));self.assertEqual(len(set(zip(d[:,0],i[:,0]))),16)
++        class First:
++            def predict(self,x):return np.arange(len(x),0,-1.)
++        got,trace=select(np.zeros((172,TOKEN_DIM)),score,base,First(),after=3,depth=32,
++            next_after=13,final_k=32,rounds=1,candidate_limit=16)
++        self.assertEqual(trace[0]['donors'],d[0].tolist())
++        self.assertEqual(trace[0]['incoming'],i[0].tolist())
++        self.assertEqual(len(set(got)-set(base)),1)
++
++    def test_controls_do_not_sneak_history_into_current_comparison(self):
++        current=feature_mask('current');shuffled=feature_mask('shuffled');noctx=feature_mask('no_context')
++        np.testing.assert_array_equal(current,shuffled)
++        np.testing.assert_array_equal(current[:TOKEN_DIM],noctx[:TOKEN_DIM])
++        self.assertTrue(np.all(noctx[TOKEN_DIM:2*TOKEN_DIM]==0))
++        np.testing.assert_array_equal(current[2*TOKEN_DIM:],noctx[2*TOKEN_DIM:])
++
++    def test_same_prefix_different_future_policy_never_merges(self):
++        a=records_for('SYNTHETIC',schedule='FIRST_SHIFT')
++        b=records_for('SYNTHETIC',schedule='FIRST_NEXT_WMATCH')
++        self.assertNotEqual(state_identity(a[0]),state_identity(b[0]))
++        self.assertEqual(len(complete_groups(a+b)),2)
++        self.assertEqual(len(complete_groups(a[:-1]+b)),1)
++
++    def test_calibration_can_abstain_and_never_reads_test_labels(self):
++        model,x,y,images,rec,val=calibration_fixture()
++        report=calibrate(model,x,y,images,rec,val,[1e-6])
++        self.assertEqual(report['status'],'CALIBRATED_ACCEPT')
++        self.assertTrue(report['accept_enabled'])
++        bad=calibrate(model,x,-y,images,rec,val,[1e-6])
++        self.assertEqual(bad['status'],'CALIBRATED_ABSTAIN')
++        more=records_for('SYNTHETIC_TEST_ONLY')
++        xx=np.concatenate([x,np.ones((16,2,INPUT_DIM))])
++        yy=np.r_[y,np.full(16,1e6)];vv=np.r_[val,np.zeros(16,dtype=bool)]
++        report2=calibrate(model,xx,yy,np.r_[images,['SYNTHETIC_TEST_ONLY']*16],rec+more,vv,[1e-6])
++        self.assertEqual(report,report2)
++
++    def test_incomplete_or_cached_only_labels_cannot_calibrate(self):
++        model,x,y,images,rec,val=calibration_fixture()
++        r=calibrate(model,x,y,images,rec,val,[])
++        self.assertEqual(r['status'],'MISSING_GENUINE_NOOP')
++        ix=np.array([j%16!=0 for j in range(len(rec))])
++        r=calibrate(model,x[ix],y[ix],images[ix],[r for j,r in enumerate(rec) if ix[j]],val[ix],[0.])
++        self.assertEqual(r['status'],'INSUFFICIENT_COMPLETE_VALIDATION')
++
++    def test_image_average_not_action_count_weighting(self):
++        rows=[{'image_id':'A','gain':1.}]*100+[{'image_id':'B','gain':-1.}]
++        self.assertEqual(image_summary(rows)['mean_gain'],0.)
++
++    def test_current_runs_without_full_and_completed_acc_is_not_validation(self):
++        from core_matrix import build_core
++        from core_progress import inspect
++        with tempfile.TemporaryDirectory(dir=HERE) as d:
++            r=runtime_fixture(d);weights(r);(Path(d)/'full.npz').unlink()
++            m=build_core(r)
++            self.assertTrue(inspect(r)['primary_models_ready'])
++            self.assertEqual(m['counts']['configurations'],15)
++            done={'states':{j['job_id']:'done' for j in m['jobs']}}
++            status=inspect(r,[],done,m)
++            self.assertTrue(status['primary_acc_comparison_complete'])
++            self.assertFalse(status['validated_algorithm_gain'])
++
++    def test_bad_model_shapes_and_uncalibrated_legacy_models_rejected(self):
++        m=random_model()
++        with self.assertRaises(ValueError):PairScorer(m.mean,m.std*0,m.mask,m.w,m.b,m.v)
++        with self.assertRaises(ValueError):validate_model_policy({'schema':FEATURE_SCHEMA})
++
++    def test_fit_roundtrip_marks_synthetic_and_checks_all_image_splits(self):
++        from fit_models import train
++        from core_matrix import learned_spec
++        rng=np.random.default_rng(29);records=[];inputs=[]
++        for j in range(100):
++            records.extend(records_for('SYNTHETIC_TRAIN_'+str(j)))
++            block=rng.normal(size=(16,2,INPUT_DIM));block[:,1,TOKEN_DIM:]=block[:,0,TOKEN_DIM:]
++            inputs.extend(block)
++        x=np.asarray(inputs);y=.02*(x[:,0,0]-x[:,1,0])
++        with tempfile.TemporaryDirectory(dir=HERE) as d:
++            root=Path(d);shard=root/'synthetic.npz'
++            np.savez(shard,kind='synthetic',schema=FEATURE_SCHEMA,pairs=x,labels=y,
++                records=np.array([json.dumps(r) for r in records]),
++                noop_records=np.array([json.dumps({'actually_recomputed':True,'nll_difference':0.})]))
++            with self.assertRaises(ValueError):train([shard],root/'forbidden',epochs=2)
++            report=train([shard],root/'models',epochs=8,hidden=8,allow_synthetic=True)
++            self.assertEqual(report['full']['status'],'UNAVAILABLE_MISSING_HISTORY')
++            _,meta=PairScorer.load(root/'models/current.npz')
++            self.assertEqual(meta['training_kind'],'synthetic')
++            self.assertEqual(meta['deployment_policy'],DEFAULT_POLICY)
++            runtime=runtime_fixture(root/'models');runtime['kind']='real'
++            with self.assertRaises(ValueError):learned_spec(runtime,'current')
++
++    def test_catalogue_matched_random_uses_same_action_space(self):
++        from selector_audit import make_trace,matched_random_numpy
++        score=np.arange(24.);base=np.arange(12);ids=np.arange(100,124)
++        d,i=proposals(score,base,candidate_limit=16)
++        chosen=np.setdiff1d(base,d[0]);chosen=np.r_[chosen,i[0]]
++        row=make_trace(request_key='q',config_id='m',source_hash='s',baseline_ids=ids[base],
++            selected_ids=ids[chosen],eligible_ids=ids,hook_called=True)
++        actions={(tuple(a),tuple(b)) for a,b in zip(d,i)}
++        for seed in range(10):
++            got=matched_random_numpy(score,base,ids,row,'q',seed=seed,candidate_limit=16)
++            self.assertIn((tuple(sorted(set(base)-set(got))),tuple(sorted(set(got)-set(base)))),actions)
++
++    def test_factorial_interaction_zero_and_task_rescoring(self):
++        from checks import StatisticsChecks
++        from factorial_interaction import interaction
++        data=StatisticsChecks().fixture()
++        r=interaction(data,copy.deepcopy(data),copy.deepcopy(data),copy.deepcopy(data),pope_metric='f1',replicates=100)
++        self.assertEqual(r['interaction_cover_minus_base_schedule_B_minus_A']['R4'],0.)
++        self.assertEqual(r['paired_image_95pct_interval']['R4'],[0.,0.])
++
++    def test_bounded_driver_from_collection_to_confirmation_is_explicitly_synthetic(self):
++        from build_matrix import digest
++        with tempfile.TemporaryDirectory(dir=HERE) as d:
++            root=Path(d);r=runtime_fixture(root/'models')
++            r['schedules']['FIRST_NEXT_WMATCH']=[[3,110],[12,32]]
++            r['fit_epochs']=3;r['estimated_job_seconds']={t:.01 for t in r['metric_keys']}
++            collector=root/'collector.py'
++            collector.write_text("""import json,sys
++import numpy as np
++from checks_r2 import records_for
++from features import INPUT_DIM,FEATURE_SCHEMA
++rng=np.random.default_rng(112);records=[];inputs=[]
++for i in range(100):
++    rows=records_for('SYNTHETIC_DRIVER_'+str(i))
++    for row in rows: row['source_hash']=sys.argv[2]
++    records.extend(rows)
++    x=rng.normal(size=(16,2,INPUT_DIM));x[:,1,22:]=x[:,0,22:];inputs.extend(x)
++x=np.asarray(inputs);y=.02*(x[:,0,0]-x[:,1,0])
++np.savez(sys.argv[1],kind='synthetic',schema=FEATURE_SCHEMA,pairs=x,labels=y,
++    records=np.array([json.dumps(r) for r in records]),
++    noop_records=np.array([json.dumps({'actually_recomputed':True,'nll_difference':0.})]))
++""")
++            collector.write_text('import sys\nsys.path.insert(0,'+repr(str(HERE.resolve()))+')\n'+collector.read_text())
++            r['collection']={'command':[sys.executable,str(collector),'{out}',digest(r['source'])],
++                             'output_shard':str(root/'pairs.npz')}
++            child=root/'child.py'
++            child.write_text("""import json,sys
++from pathlib import Path
++p=Path(sys.argv[1]);j=json.loads(p.read_text());out=p.parent
++records=out/'records.json';records.write_text('[]')
++r={'job_hash':j['job_hash'],'panel_ids_hash':j['panel']['ids_hash'],
++   'metric_key':j['metric_key'],'metric_value':1.,'records_path':str(records),
++   'fixture_kind':'synthetic'}
++s=j['config']['selector']
++if s['kind']=='continuation':r['scorer_sha256']=s['model_sha256']
++(out/'result.json').write_text(json.dumps(r))
++""")
++            rp=root/'runtime.json';rp.write_text(json.dumps(r))
++            bp=root/'bridge.json';bp.write_text(json.dumps({'commands':{'ACC':[sys.executable,str(child),'{job_json}']}}))
++            result=subprocess.run([sys.executable,str(HERE/'close_core.py'),str(rp),'--bridge-config',str(bp),
++                '--out',str(root/'out'),'--hours','.02','--collection-seconds','5','--screen-seconds','15',
++                '--reserve-seconds','0','--skip-timing','--allow-synthetic'],capture_output=True,text=True,timeout=45)
++            logs='\n'.join(f.read_text() for f in (root/'out').glob('*error.json'))
++            log=root/'out/collection.log'
++            if log.is_file():logs+='\n'+log.read_text()
++            self.assertEqual(result.returncode,0,result.stdout+result.stderr+logs)
++            status=json.loads((root/'out/final_core_progress.json').read_text())
++            self.assertTrue(status['primary_acc_comparison_complete'])
++            self.assertFalse(status['validated_algorithm_gain'])
++            self.assertTrue((root/'out/core_confirm_summary.json').is_file())
++            _,meta=PairScorer.load(root/'models/current.npz')
++            self.assertEqual(meta['training_kind'],'synthetic')
++
++    def test_external_anchor_needs_real_trace_not_reported_W(self):
++        from measurement_anchors import external_anchors
++        r=runtime_fixture('.')
++        r['external_anchors']=[{'stage1':'OFFICIAL','schedule_name':'S0','selector_name':'reference',
++            'selector':{'kind':'reference'},'native_method':'ViTCoP_S0','application':'original_project_path',
++            'budget':{'visual_token_layers':2034}}]
++        with self.assertRaises(ValueError):external_anchors(r)
++
++
++@unittest.skipUnless(importlib.util.find_spec('torch'),'PyTorch unavailable; CUDA/VLM checks still required')
++class TorchR2Checks(unittest.TestCase):
++    def test_capped_catalogue_selection_parity(self):
++        import torch
++        import module_torch as mt
++        r=np.random.default_rng(101);x=r.normal(size=(172,TOKEN_DIM));score=r.normal(size=172)
++        base=np.arange(116);m=random_model()
++        with tempfile.TemporaryDirectory(dir=HERE) as d:
++            p=Path(d)/'m.npz';m.save(p,{'mode':'current'});tm=mt.PairScorer(p)
++            got,_=select(x,score,base,m,after=3,depth=32,next_after=13,final_k=32,candidate_limit=16)
++            actual=mt.select(torch.tensor(x,dtype=torch.float32),torch.tensor(score),torch.tensor(base),tm,
++                after=3,depth=32,next_after=13,final_k=32,candidate_limit=16)
++            np.testing.assert_array_equal(got,actual.numpy())
++
++
++if __name__=='__main__':unittest.main(verbosity=2)
+--- a/close_core.py
++++ b/close_core.py
+@@ -6,6 +6,7 @@
+ No learned jobs are claimed tested merely because an independent queue finished.
+ """
+ import argparse
++import copy
+ from concurrent.futures import ThreadPoolExecutor
+ import importlib
+ import json
+@@ -20,6 +21,7 @@
+ from run_matrix import run
+ from summarize import aggregate
+ from workflow import collection,extra_matrix
++from measurement_anchors import external_anchors
+ 
+ 
+ def main():
+@@ -64,29 +66,40 @@
+         if not a.skip_timing:
+             refs=build(runtime,'confirm','independent')
+             names={'COVER__FIRST_NEXT_WMATCH__reference','COVER__FIRST_SHIFT__reference',
+-                   'BASE__FIRST_SHIFT__reference','BASE__FIRST_KPLUS8__reference'}
+-            refs['configurations']=[c for c in refs['configurations'] if c['config_id'] in names]
++                   'BASE__FIRST_SHIFT__reference','BASE__FIRST_KPLUS8__reference',
++                   'COVER__EARLY__reference','BASE__EARLY__reference'}
++            refs['configurations']=[c for c in refs['configurations'] if c['config_id'] in names]+external_anchors(runtime)
+             tm=extra_matrix(refs,runtime,'timing')
+             if tm:
+                 write('initial_timing_matrix.json',tm)
+                 timing=pool.submit(run,tm,factory(bc),out/'initial_timing',(a.timing_gpu,),remaining(),a.reserve_seconds,1,a.allow_synthetic,stop)
+         if not status['primary_models_ready']:
+-            if not files:
+-                files,report=collection(runtime,out,gpus[2],min(a.collection_seconds,remaining()-a.reserve_seconds),stop)
+-                write('collection_status.json',report)
+-            if files:
++            def fit_available():
+                 forbidden=runtime.get('forbidden_evaluation_image_ids',[])
+                 if isinstance(forbidden,str):forbidden=json.loads(Path(forbidden).read_text())
+                 try:
+-                    fitted=train(files,runtime['model_directory'],epochs=runtime.get('fit_epochs',160),forbidden_images=forbidden)
++                    fitted=train(files,runtime['model_directory'],epochs=runtime.get('fit_epochs',160),
++                                 forbidden_images=forbidden,modes=('current','no_context','shuffled','full'),
++                                 allow_synthetic=a.allow_synthetic)
+                     write('fitting_report.json',fitted)
+                 except Exception as e:write('fit_error.json',{'error':repr(e)})
++            if files:fit_available()
++            status=inspect(runtime,files)
++            if not status['primary_models_ready'] and runtime.get('collection',{}).get('command') and remaining()>a.reserve_seconds:
++                # A partial/old shard must not permanently prevent collection.
++                # Preserve it and write a new attempt rather than overwrite it.
++                cr=copy.deepcopy(runtime)
++                if files:cr['collection']['output_shard']=str(out/('additional_pairs_'+str(time.time_ns())+'.npz'))
++                new_files,report=collection(cr,out,gpus[2],min(a.collection_seconds,remaining()-a.reserve_seconds),stop)
++                files=list(dict.fromkeys(files+new_files));write('collection_status.json',report)
++                if files:fit_available()
+         status=inspect(runtime,files);write('core_progress.json',status)
+         if not status['primary_models_ready']:
+-            print('CORE NOT TESTED: no valid current/full scorer. See core_progress.json and fit/collection logs.',flush=True)
++            print('CORE NOT TESTED: no valid calibrated current scorer. See complete validation catalogues, no-op and source checks.',flush=True)
+             return 2
+         if files:
+-            try:write('heldout_mechanism_group1.json',diagnose(files,runtime['model_directory'],group_size=1,shortlist=16))
++            try:write('heldout_mechanism_group1.json',diagnose(files,runtime['model_directory'],
++                      allow_synthetic=a.allow_synthetic,group_size=1,shortlist=16))
+             except Exception as e:write('mechanism_diagnostic_unavailable.json',{'error':repr(e)})
+         # Finish owned sidecar jobs, then make all three ACC GPUs available.
+         drain.set()
+--- a/core_matrix.py
++++ b/core_matrix.py
+@@ -1,14 +1,15 @@
+-"""E020.1 targeted matrix: 28 configurations, not a new pruning algorithm.
+-
+-Two entrances x SHIFT/NEXT x REF/current/full/no-context/shuffled/jitter/matched.
+-Missing models stay explicit. NEXT events exported by the project take priority
+-over arithmetic reconstruction. All model files are frozen before job creation.
++"""E020.1 R2: 12 core factorial + 4 strong-point diagnostic configurations.
++Only current-state weights are prerequisite; history is an optional ablation.
++The legacy 72-arm builder is archival, not the default execution route.
+ """
+ import argparse
+ import copy
++import hashlib
+ import json
+ from pathlib import Path
+ from build_matrix import build,from_configs,digest,job_digest
++from scorer_numpy import PairScorer
++from policy_protocol import DEFAULT_POLICY,POLICY_SCHEMA,validate_model_policy
+ 
+ 
+ def identify(config):
+@@ -30,7 +31,7 @@
+         if kind=='continuation':
+             job['selector_trace_file']=trace_path(runtime,matrix['phase'],job['task'],job['panel'],c['config_id'])
+         if kind=='matched_random':
+-            ref=c['stage1']+'__'+c['schedule_name']+'__cf_current_g1_r4'
++            ref=c['stage1']+'__'+c['schedule_name']+'__cf_current_g1_r1'
+             dependency=ref+'__'+job['task']
+             if dependency not in existing:raise ValueError('matched control missing its learned reference job')
+             job['depends_on']=[dependency]
+@@ -40,63 +41,75 @@
+     return matrix
+ 
+ 
++def learned_spec(runtime,mode):
++    path=Path(runtime['model_directory'])/(mode+'.npz')
++    if not path.is_file():return None
++    _,meta=PairScorer.load(path)
++    if meta.get('source_hash')!=digest(runtime['source']) or meta.get('mode')!=mode:
++        raise ValueError('checkpoint source/mode differs from runtime: '+mode)
++    if runtime['kind']=='real':
++        if meta.get('training_kind')!='real':raise ValueError('synthetic weights cannot run real ACC')
++        validate_model_policy(meta)
++        forbidden=runtime.get('forbidden_evaluation_image_ids',[])
++        if isinstance(forbidden,str):forbidden=json.loads(Path(forbidden).read_text())
++        touched=set(map(str,meta.get('trained_image_ids',[])+meta.get('selection_image_ids',[])
++                        +meta.get('diagnostic_test_image_ids',[])))
++        if touched&set(map(str,forbidden)):raise ValueError('evaluation overlaps fitting, selection or diagnostic images')
++    policy=meta.get('deployment_policy',DEFAULT_POLICY)
++    return {'kind':'continuation','model':mode,**policy,'policy_schema':POLICY_SCHEMA,
++            'threshold':meta.get('decision_threshold',0.),'accept_enabled':meta.get('accept_enabled',True),
++            'model_path':str(path.resolve()),'model_sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
++
++
+ def build_core(runtime,phase='screen',allow_missing_models=False):
+-    old=build(runtime,phase,'all',allow_missing_models=True)
++    if runtime.get('kind')=='real' and not runtime.get('schedules',{}).get('FIRST_NEXT_WMATCH'):
++        raise ValueError('export actual NEXT events; the revised core never infers the incumbent from W')
++    old=build(runtime,phase,'independent')
+     lookup={c['config_id']:c for c in old['configurations']}
+-    configs=[];missing=set()
++    configs=[];missing=[];specs={}
++    for mode in ('current','full','no_context','shuffled'):
++        try:specs[mode]=learned_spec(runtime,mode)
++        except (ValueError,KeyError) as e:
++            if mode=='current' and not allow_missing_models:raise
++            specs[mode]=None;missing.append(mode+': '+str(e))
++        if specs[mode] is None:missing.append(mode)
++    if specs['current'] is None and not allow_missing_models:
++        raise ValueError('CORE NOT READY: fitted/calibrated current-state scorer required')
++    def add(ref,name,spec):
++        c=copy.deepcopy(ref);c.update(selector_name=name,selector=copy.deepcopy(spec));configs.append(identify(c))
+     for arm in ('COVER','BASE'):
+         for schedule in ('FIRST_NEXT_WMATCH','FIRST_SHIFT'):
+             ref=copy.deepcopy(lookup[arm+'__'+schedule+'__reference']);configs.append(ref)
+-            for mode in ('current','full','no_context','shuffled'):
+-                name='cf_'+mode+'_g1_r4'
+-                source=lookup.get(arm+'__FIRST_SHIFT__'+name)
+-                if source is None:
+-                    missing.add(mode);continue
+-                c=copy.deepcopy(source);c.update(schedule_name=schedule,events=ref['events'],budget=ref['budget'],
+-                                               continuation_horizon_after=ref['continuation_horizon_after'])
+-                configs.append(identify(c))
+-            for name,spec in [('rank_jitter_boundary',{'kind':'rank_jitter','shortlist':16,'sigma':.02,'seed':20}),
+-                              ('matched_random_current',{'kind':'matched_random','shortlist':16,'seed':20})]:
+-                if spec['kind']=='matched_random' and 'current' in missing:continue
+-                c=copy.deepcopy(ref);c.update(selector_name=name,selector=spec);configs.append(identify(c))
+-    if missing and not allow_missing_models:raise ValueError('CORE NOT READY, missing fitted models: '+','.join(sorted(missing)))
++            if specs['current'] is not None:
++                add(ref,'cf_current_g1_r1',specs['current'])
++                add(ref,'matched_random_current',{'kind':'matched_random','shortlist':16,'seed':20,'candidate_limit':16})
++    ref=lookup['COVER__FIRST_NEXT_WMATCH__reference']
++    for mode in ('full','no_context','shuffled'):
++        if specs[mode] is not None:add(ref,'cf_'+mode+'_g1_r1',specs[mode])
++    add(ref,'e019_current',{'kind':'coverage_exchange','alpha':0.,'lambda':.15,'rounds':4})
+     def priority(c):
+-        spec=c['selector'];kind=spec['kind']
+-        if kind=='reference':tier=0
+-        elif kind=='continuation' and spec['model']=='current':tier=1
+-        elif kind=='continuation' and spec['model']=='full':tier=2
+-        elif kind in ('matched_random','rank_jitter'):tier=3
+-        else:tier=4
++        kind=c['selector']['kind']
++        tier=0 if kind=='reference' else 1 if kind=='continuation' and c['selector']['model']=='current' else 2 if kind=='matched_random' else 3
+         return tier,c['schedule_name'],c['selector_name'],c['stage1']
+     configs.sort(key=priority)
+     result=attach_trace_dependencies(from_configs(runtime,configs,phase),runtime)
+-    result.update(missing_models=sorted(missing),core_hypothesis_tested=False,
+-                  declared_full_capacity={'configurations':28,'task_jobs':112})
++    result.update(missing_models=sorted(set(missing)),core_hypothesis_tested=False,
++                  declared_full_capacity={'configurations':16,'task_jobs':64},
++                  primary_comparison='COVER NEXT current vs NEXT REF, matched random, E019CUR; true TTFT')
+     return result
+ 
+ 
+ def confirm_matrix(runtime,screen,state):
+-    from summarize import aggregate
+-    rows=[r for r in aggregate(screen,state)['rows'] if r['complete']]
+-    rows.sort(key=lambda r:r['R4'],reverse=True)
++    # Fixed primary contrasts are retained regardless of development ranks.
+     lookup={c['config_id']:c for c in screen['configurations']}
+-    chosen=[lookup[a+'__'+s+'__reference'] for s in ('FIRST_NEXT_WMATCH','FIRST_SHIFT') for a in ('COVER','BASE')]
+-    # BASE's best reported fixed point uses +8 intermediate patches. Keep its
+-    # explicit extra-work anchor in confirmation rather than a weak BASE-only
+-    # denominator. It need not be rerun when matching raw outputs already exist.
++    names=[a+'__'+s+'__reference' for s in ('FIRST_NEXT_WMATCH','FIRST_SHIFT') for a in ('COVER','BASE')]
++    names+=['COVER__FIRST_NEXT_WMATCH__'+n for n in ('cf_current_g1_r1','matched_random_current','e019_current')]
++    names+=['BASE__FIRST_NEXT_WMATCH__cf_current_g1_r1']
++    chosen=[lookup[n] for n in names if n in lookup]
+     available=build(runtime,'confirm','independent')
+-    extra=next(c for c in available['configurations'] if c['config_id']=='BASE__FIRST_KPLUS8__reference')
+-    chosen.append(extra)
+-    # Prespecified strong-point controls stay in confirmation even if a different
+-    # development variant wins. In particular, do not confirm a learned result
+-    # while leaving its change-count-matched random control on development only.
+-    challengers=[lookup['COVER__FIRST_NEXT_WMATCH__'+name] for name in
+-                 ('cf_current_g1_r4','cf_full_g1_r4','matched_random_current')]
+-    for arm in ('BASE','COVER'):
+-        primary=[r['config'] for r in rows if r['config']['stage1']==arm and
+-                 r['config']['selector']['kind']=='continuation' and r['config']['selector']['model'] in ('current','full')]
+-        if primary and primary[0]['config_id'] not in {c['config_id'] for c in challengers}:challengers.append(primary[0])
+-    chosen+=challengers
++    chosen.append(next(c for c in available['configurations'] if c['config_id']=='BASE__FIRST_KPLUS8__reference'))
++    from measurement_anchors import external_anchors
++    chosen+=external_anchors(runtime)
+     return attach_trace_dependencies(from_configs(runtime,chosen,'confirm'),runtime)
+ 
+ 
+--- a/core_progress.py
++++ b/core_progress.py
+@@ -5,6 +5,7 @@
+ import numpy as np
+ from build_matrix import digest
+ from features import FEATURE_SCHEMA
++from core_matrix import learned_spec
+ 
+ 
+ def inspect(runtime,shards=(),state=None,matrix=None):
+@@ -19,7 +20,10 @@
+                     entry.update(valid=meta.get('source_hash')==source and meta.get('schema')==FEATURE_SCHEMA and
+                                  meta.get('mode')==mode and (runtime.get('kind')!='real' or meta.get('training_kind')=='real'),
+                                  training_images=len(meta.get('trained_image_ids',[])),label_count=meta.get('label_count'))
+-            except Exception as e:entry['error']=repr(e)
++                learned_spec(runtime,mode)
++                entry.update(calibration_status=meta.get('calibration',{}).get('status'),
++                             accept_enabled=meta.get('accept_enabled'))
++            except Exception as e:entry.update(valid=False,error=repr(e))
+         weights[mode]=entry
+     data=[]
+     for path in shards:
+@@ -45,14 +49,27 @@
+                 full_done+=job['config']['selector'].get('model')=='full'
+                 complete.setdefault(job['config']['config_id'],set()).add(job['task'])
+     completed_configs=sorted(k for k,tasks in complete.items() if {'GQA','POPE','MME','MMBench'}<=tasks)
+-    ready=all(weights[m]['valid'] for m in ('current','full'))
++    ready=weights['current']['valid']
++    primary=['COVER__FIRST_NEXT_WMATCH__'+name for name in
++             ('reference','cf_current_g1_r1','matched_random_current','e019_current')]
++    primary_complete=False
++    if matrix and state:
++        done={}
++        for job in matrix['jobs']:
++            if state.get('states',{}).get(job['job_id'])=='done':
++                done.setdefault(job['config']['config_id'],set()).add(job['task'])
++        primary_complete=all({'GQA','POPE','MME','MMBench'}<=done.get(c,set()) for c in primary)
+     return {'fitted_models':weights,'paired_shards':data,'primary_models_ready':ready,
+             'learned_jobs_done':learned_done,'learned_jobs_total_in_manifest':learned_total,
+             'current_jobs_done':current_done,'full_jobs_done':full_done,
+             'any_learned_job_executed':learned_done>0,'completed_four_task_learned_configs':completed_configs,
+-            'core_hypothesis_tested':bool(completed_configs),
+-            'core_status':('TESTED_COMPLETE_FOUR_TASK_CONFIGS' if completed_configs else 'PARTIAL_LEARNED_TASKS') if learned_done else ('READY_NOT_YET_TESTED' if ready else 'NOT_TESTED_MISSING_VALID_MODELS'),
+-            'caution':'One finished job is partial evidence; a four-task complete configuration and held-out confirmation are separate milestones.'}
++            'any_learned_four_task_result':bool(completed_configs),
++            'primary_acc_comparison_complete':primary_complete,
++            'core_hypothesis_tested':primary_complete,
++            'evidence_stage':'P_PRELIMINARY_ACC' if completed_configs else 'I_LOCAL_IMPLEMENTATION',
++            'validated_algorithm_gain':False,
++            'core_status':('PRIMARY_ACC_COMPARISON_COMPLETE' if primary_complete else 'PRELIMINARY_LEARNED_ACC' if completed_configs else 'PARTIAL_LEARNED_TASKS') if learned_done else ('READY_NOT_YET_TESTED' if ready else 'NOT_TESTED_MISSING_VALID_MODELS'),
++            'caution':'Completed ACC does not imply a positive effect, independent confirmation, real efficiency, or a paper contribution.'}
+ 
+ 
+ if __name__=='__main__':
+--- a/diagnostics.py
++++ b/diagnostics.py
+@@ -10,9 +10,11 @@
+ from pathlib import Path
+ import numpy as np
+ from scorer_numpy import PairScorer,image_split
++from policy_protocol import action_identity,state_identity
++from policy_calibration import complete_groups,image_summary
+ 
+ 
+-def diagnose(files,models,allow_synthetic=False,group_size=1,shortlist=16):
++def diagnose(files,models,allow_synthetic=False,group_size=1,shortlist=16,candidate_limit=16):
+     x,y,records,noop_records=[],[],[],[];seen=set()
+     for file in files:
+         with np.load(file,allow_pickle=False) as d:
+@@ -20,13 +22,14 @@
+             if 'noop_records' in d:noop_records.extend(json.loads(str(r)) for r in d['noop_records'])
+             for pair,label,record in zip(d['pairs'],d['labels'],d['records']):
+                 r=json.loads(str(record))
+-                key=(r['prefix_hash'],tuple(r['donor_patch_ids']),tuple(r['incoming_patch_ids']))
++                key=action_identity(r)
+                 if key in seen:continue
+                 seen.add(key);x.append(pair);y.append(label);records.append(r)
+     if not records:raise ValueError('no paired records')
+     x,y=np.asarray(x),np.asarray(y)
+     images=np.asarray([str(r['image_id']) for r in records]);_,_,test=image_split(images)
+-    eligible=np.asarray([len(r['donor_patch_ids'])==group_size and r.get('proposal_shortlist',shortlist)==shortlist for r in records])
++    eligible=np.asarray([len(r['donor_patch_ids'])==group_size and r.get('proposal_shortlist',shortlist)==shortlist
++                         and r.get('candidate_limit',candidate_limit)==candidate_limit for r in records])
+     selected=np.flatnonzero(test & eligible)
+     if not len(selected):raise ValueError('no image-disjoint test actions')
+     scores={'current_score_difference':x[:,0,0]-x[:,1,0],
+@@ -36,23 +39,42 @@
+         if path.is_file():
+             model,_=PairScorer.load(path);scores[name]=model.predict(x)
+     groups=defaultdict(list)
+-    for i in selected:groups[records[i]['prefix_hash']].append(i)
++    for i in selected:groups[state_identity(records[i])].append(i)
+     report={'test_images':len(set(images[test])),'test_actions':int(test.sum()),
+-            'test_prefix_states':len(groups),'single_action_label_mean':float(y[test].mean()),
+-            'positive_label_fraction':float((y[test]>0).mean()),'methods':{}}
+-    report.update(proposal_group_size=group_size,proposal_shortlist=shortlist,
++            'test_prefix_states':len(groups),'single_action_label_mean':float(y[selected].mean()),
++            'positive_label_fraction':float((y[selected]>0).mean()),'methods':{}}
++    report.update(proposal_group_size=group_size,proposal_shortlist=shortlist,proposal_candidate_limit=candidate_limit,
+                   evaluated_actions=len(selected),evaluated_images=len(set(images[selected].tolist())))
+     oracle=[max(0.,float(y[ix].max())) for ix in groups.values()]
+     report['sampled_one_step_oracle_positive_gain']=float(np.mean(oracle))
++    report['complete_deployment_catalogues']=len(complete_groups(records,test & eligible))
++    report['random_catalogue_expected_gain']=float(np.mean([y[ix].mean() for ix in groups.values()]))
++    report['no_swap_gain']=0.
+     for name,p in scores.items():
+-        gains=[];selected_actions=[]
++        threshold=0.;enabled=True
++        path=Path(models)/(name+'.npz')
++        if path.is_file():
++            _,meta=PairScorer.load(path)
++            threshold=meta.get('decision_threshold',0.);enabled=meta.get('accept_enabled',True)
++        gains=[];selected_actions=[];image_rows=[]
+         for ix in groups.values():
++            ix=sorted(ix,key=lambda i:records[i].get('catalogue_index',records[i].get('action_index',i)))
+             j=ix[int(np.argmax(p[ix]))]
+-            take=p[j]>0
+-            gains.append(float(y[j]) if take else 0.);selected_actions.append(j if take else None)
++            take=bool(enabled and p[j]>threshold)
++            gain=float(y[j]) if take else 0.
++            gains.append(gain);selected_actions.append(j if take else None)
++            image_rows.append({'image_id':str(records[j]['image_id']),'gain':gain})
+         accepted=[j for j in selected_actions if j is not None]
++        raw_gains=[]
++        for ix in groups.values():
++            ix=sorted(ix,key=lambda i:records[i].get('catalogue_index',records[i].get('action_index',i)))
++            j=ix[int(np.argmax(p[ix]))]
++            raw_gains.append(float(y[j]) if p[j]>0 else 0.)
+         report['methods'][name]={
+             'mean_one_step_real_nll_gain':float(np.mean(gains)),
++            'raw_zero_threshold_mean_gain':float(np.mean(raw_gains)),
++            'image_cluster_summary':image_summary(image_rows),
++            'frozen_threshold':threshold,'accept_enabled':enabled,
+             'regret_vs_sampled_positive_oracle':float(np.mean(np.asarray(oracle)-gains)),
+             'accepted_prefix_fraction':len(accepted)/len(groups),
+             'negative_real_gain_among_accepted':float((y[accepted]<0).mean()) if accepted else None,
+@@ -78,5 +100,6 @@
+     p=argparse.ArgumentParser();p.add_argument('files',nargs='+');p.add_argument('--models',required=True)
+     p.add_argument('--out',required=True);p.add_argument('--allow-synthetic',action='store_true')
+     p.add_argument('--group-size',type=int,default=1);p.add_argument('--shortlist',type=int,default=16)
+-    a=p.parse_args();result=diagnose(a.files,a.models,a.allow_synthetic,a.group_size,a.shortlist)
++    p.add_argument('--candidate-limit',type=int,default=16)
++    a=p.parse_args();result=diagnose(a.files,a.models,a.allow_synthetic,a.group_size,a.shortlist,a.candidate_limit)
+     Path(a.out).write_text(json.dumps(result,ensure_ascii=False,indent=2));print(result['test_prefix_states'])
+--- a/dispatch.py
++++ b/dispatch.py
+@@ -17,7 +17,8 @@
+         from selector_audit import matched_random_torch
+         if request_key is None or not hasattr(hook,'matched_targets'):raise ValueError('matched control requires request identity and validated reference trace')
+         return matched_random_torch(scores,baseline_indices,patch_ids,hook.matched_targets[str(request_key)],
+-                                    request_key,shortlist=spec['shortlist'],seed=spec.get('seed',20))
++                                    request_key,shortlist=spec['shortlist'],seed=spec.get('seed',20),
++                                    candidate_limit=spec.get('candidate_limit'))
+     if kind=='rank_jitter':
+         from module_torch import ranks
+         from selector_audit import sample_seed
+@@ -31,7 +32,9 @@
+         chosen=pool[perturbed.argsort(descending=True,stable=True)[:len(donor)]]
+         positions=(baseline_indices[:,None]==donor[None,:]).long().argmax(0)
+         return baseline_indices.scatter(0,positions,chosen).sort().values
+-    previous=hook.aligned_previous(patch_ids)
++    needs_history=(kind=='rank_drift' or (kind=='coverage_exchange' and spec.get('alpha',0)>0)
++                   or (kind=='continuation' and spec.get('model')=='full'))
++    previous=hook.aligned_previous(patch_ids) if needs_history else None
+     if kind=='current_score':return scores.argsort(descending=True,stable=True)[:len(baseline_indices)].sort().values
+     if kind=='rank_drift':
+         if previous is None:raise ValueError('capture previous prompt response at an earlier boundary')
+@@ -46,10 +49,21 @@
+                      encoder_rank=encoder_rank,patch_xy=patch_xy)
+     if kind not in ('continuation','random'):raise ValueError('unknown selector kind')
+     if kind=='continuation' and hook.model is None:raise ValueError('trained model required')
+-    if kind=='continuation' and hook.model.metadata.get('mode')!='current' and previous is None:
++    if kind=='continuation':
++        from policy_protocol import validate_model_policy
++        policy=validate_model_policy(hook.model.metadata)
++        for key in ('rounds','group_size','shortlist','candidate_limit'):
++            if spec.get(key)!=policy[key]:raise ValueError('deployment differs from calibrated policy: '+key)
++        if spec.get('threshold')!=hook.model.metadata['decision_threshold']:
++            raise ValueError('ACC threshold must be frozen from validation, not changed per benchmark')
++        if spec.get('accept_enabled')!=hook.model.metadata['accept_enabled']:
++            raise ValueError('calibrated abstention state mismatch')
++    if kind=='continuation' and needs_history and previous is None:
+         raise ValueError('history-enabled model requires captured previous prompt response')
+     with torch.autocast(device_type=x.device.type,enabled=False):
+         return select(x,scores.float(),baseline_indices,hook.model,after=after,depth=depth,
+-                      next_after=next_after,final_k=final_k,rounds=spec['rounds'],
++                      next_after=next_after,final_k=final_k,
++                      rounds=0 if kind=='continuation' and not spec['accept_enabled'] else spec['rounds'],
+                       group_size=spec['group_size'],shortlist=spec['shortlist'],threshold=spec.get('threshold',0.),
+-                      mode='random' if kind=='random' else 'learned',generator=generator)
++                      mode='random' if kind=='random' else 'learned',generator=generator,
++                      candidate_limit=spec.get('candidate_limit'))
+--- a/exchange_numpy.py
++++ b/exchange_numpy.py
+@@ -1,9 +1,10 @@
+ """Budget-neutral exchanges: learn which patches deserve the SAME future work."""
+ import numpy as np
+ from features import pair_inputs
++from policy_protocol import catalogue_indices
+ 
+ 
+-def proposals(scores, selected, *, group_size=1, shortlist=16, protected=None):
++def proposals(scores, selected, *, group_size=1, shortlist=16, protected=None, candidate_limit=None):
+     scores, selected = np.asarray(scores), np.asarray(selected, dtype=int)
+     n = len(scores); mask = np.zeros(n, dtype=bool); mask[selected] = True
+     protected = np.zeros(n, dtype=bool) if protected is None else np.asarray(protected, dtype=bool)
+@@ -17,12 +18,13 @@
+     if not a or not b:
+         return np.empty((0,group_size),dtype=int), np.empty((0,group_size),dtype=int)
+     donors, incoming = donors[:a*group_size].reshape(a,group_size), incoming[:b*group_size].reshape(b,group_size)
+-    return np.repeat(donors,b,axis=0), np.tile(incoming,(a,1))
++    take = catalogue_indices(a*b, candidate_limit)
++    return np.repeat(donors,b,axis=0)[take], np.tile(incoming,(a,1))[take]
+ 
+ 
+ def select(x, scores, selected, model, *, after, depth, next_after, final_k,
+-           rounds=2, group_size=1, shortlist=16, threshold=0., protected=None,
+-           mode='learned', seed=20):
++           rounds=1, group_size=1, shortlist=16, threshold=0., protected=None,
++           mode='learned', seed=20, candidate_limit=None):
+     selected = np.asarray(selected, dtype=int).copy()
+     if len(np.unique(selected)) != len(selected) or np.any(selected < 0) or np.any(selected >= len(x)):
+         raise ValueError('selected indices must be distinct current visual patches')
+@@ -30,7 +32,8 @@
+         raise ValueError('rounds must be nonnegative')
+     rng = np.random.default_rng(seed); diagnostics = []
+     for _ in range(rounds):
+-        donors, incoming = proposals(scores,selected,group_size=group_size,shortlist=shortlist,protected=protected)
++        donors, incoming = proposals(scores,selected,group_size=group_size,shortlist=shortlist,
++                                     protected=protected,candidate_limit=candidate_limit)
+         if not len(donors): break
+         pairs = pair_inputs(x,selected,donors,incoming,after=after,depth=depth,next_after=next_after,final_k=final_k)
+         if mode == 'learned':
+--- /dev/null
++++ b/factorial_interaction.py
+@@ -0,0 +1,51 @@
++"""Paired 2x2 entrance x schedule interaction, with official task rescoring.
++
++Four prediction JSONs share question identities. One image weight is used for
++all four arms. This measures an aggregate interaction, not its mechanism.
++"""
++import argparse
++import json
++from pathlib import Path
++import numpy as np
++from paired_stats import prepare
++from build_matrix import TASKS
++from summarize import DENOM
++
++
++def interaction(base_a,cover_a,base_b,cover_b,*,pope_metric,replicates=2000,seed=20):
++    datasets=[base_a,cover_a,base_b,cover_b]
++    for task in TASKS:
++        maps=[{str(r['id']):r for r in d[task]} for d in datasets]
++        if any(len(m)!=len(d[task]) for m,d in zip(maps,datasets)):raise ValueError('duplicate question IDs')
++        if any(m.keys()!=maps[0].keys() for m in maps[1:]):raise ValueError('unpaired 2x2 question sets')
++        for key in maps[0]:
++            for m in maps[1:]:
++                x,y=maps[0][key],m[key]
++                if str(x['image_id'])!=str(y['image_id']):raise ValueError('image identity differs')
++                if task=='POPE' and x['label']!=y['label']:raise ValueError('POPE labels differ')
++                if task=='MME' and x['category']!=y['category']:raise ValueError('MME categories differ')
++    prepared=[prepare(d,pope_metric) for d in datasets]
++    ids=prepared[0][0]
++    if any(item[0]!=ids for item in prepared):raise ValueError('global image identities differ')
++    def evaluate(w):
++        scores=[fn(w) for _,fn in prepared]
++        return {t:(scores[3][t]-scores[2][t])-(scores[1][t]-scores[0][t]) for t in TASKS+['R4']}
++    point=evaluate(np.ones(len(ids)));rng=np.random.default_rng(seed);samples=[]
++    for _ in range(replicates):
++        try:samples.append(list(evaluate(rng.poisson(1.,len(ids))).values()))
++        except ValueError:continue
++    if len(samples)<max(20,replicates//2):raise ValueError('too few valid image bootstrap replicates')
++    samples=np.asarray(samples)
++    return {'interaction_cover_minus_base_schedule_B_minus_A':point,
++            'paired_image_95pct_interval':{t:np.quantile(samples[:,j],[.025,.975]).tolist() for j,t in enumerate(point)},
++            'R4_contribution_by_task':{t:25*point[t]/DENOM[t] for t in TASKS},
++            'image_clusters':len(ids),'valid_replicates':len(samples),
++            'limits':'Conditional on these configurations and task mix. Does not identify why the interaction occurs or correct selection bias.'}
++
++
++if __name__=='__main__':
++    p=argparse.ArgumentParser();p.add_argument('base_a');p.add_argument('cover_a');p.add_argument('base_b');p.add_argument('cover_b')
++    p.add_argument('--pope-metric',choices=['f1','accuracy'],required=True);p.add_argument('--out',required=True)
++    a=p.parse_args();files=(a.base_a,a.cover_a,a.base_b,a.cover_b)
++    r=interaction(*(json.loads(Path(f).read_text()) for f in files),pope_metric=a.pope_metric)
++    Path(a.out).write_text(json.dumps(r,ensure_ascii=False,indent=2))
+--- a/features.py
++++ b/features.py
+@@ -10,7 +10,7 @@
+ CONTEXT_DIM = 28
+ INPUT_DIM = TOKEN_DIM + CONTEXT_DIM
+ HISTORY_COLUMNS = (6, 7, 8, 9, 10)
+-FEATURE_SCHEMA = 'e020_prompt_features_v1'
++FEATURE_SCHEMA = 'e020_prompt_features_v2'
+ 
+ 
+ def ranks(values):
+@@ -103,11 +103,11 @@
+ 
+ def feature_mask(mode):
+     mask = np.ones(INPUT_DIM)
+-    if mode == 'current':
++    if mode in ('current', 'no_context', 'shuffled'):
+         mask[list(HISTORY_COLUMNS)] = 0
+         mask[[TOKEN_DIM+i for i in HISTORY_COLUMNS]] = 0
+-    elif mode == 'no_context':
++    if mode == 'no_context':
+         mask[TOKEN_DIM:TOKEN_DIM+TOKEN_DIM] = 0
+-    elif mode not in ('full', 'shuffled'):
++    elif mode not in ('full', 'current', 'shuffled'):
+         raise ValueError('unknown capacity-matched feature control')
+     return mask
+--- a/fit_models.py
++++ b/fit_models.py
+@@ -6,40 +6,69 @@
+ import numpy as np
+ from features import FEATURE_SCHEMA
+ from scorer_numpy import fit, image_split
++from policy_protocol import action_identity, POLICY_SCHEMA, DEFAULT_POLICY, fingerprint
++from policy_calibration import calibrate
+ 
+ 
+-def train(files,out,*,epochs=160,hidden=32,forbidden_images=(),modes=('current','full','no_context','shuffled')):
+-    pairs,labels,records=[],[],[]; seen=set(); source_hashes=set()
++def train(files,out,*,epochs=160,hidden=32,forbidden_images=(),modes=('current','full','no_context','shuffled'),
++          min_calibration_images=12,allow_synthetic=False):
++    pairs,labels,records,noise=[],[],[],[]; seen={}; source_hashes=set()
++    forbidden=set(map(str,forbidden_images));kinds=set()
+     for file in files:
+         with np.load(file,allow_pickle=False) as d:
+-            if str(d['schema']) != FEATURE_SCHEMA or str(d['kind']) != 'real':
++            kind=str(d['kind']);kinds.add(kind)
++            if str(d['schema']) != FEATURE_SCHEMA or not (kind=='real' or allow_synthetic and kind=='synthetic'):
+                 raise ValueError('only real, correct-schema collection shards may train models')
++            if not len(d['pairs'])==len(d['labels'])==len(d['records']):
++                raise ValueError('shard feature/label/record counts differ')
++            for row in d.get('noop_records',[]):
++                nr=json.loads(str(row))
++                if nr.get('actually_recomputed'):noise.append(float(nr['nll_difference']))
+             for x,y,r in zip(d['pairs'],d['labels'],d['records']):
+                 rec=json.loads(str(r))
+-                key=(rec['prefix_hash'],tuple(rec['baseline_patch_ids']),tuple(rec['donor_patch_ids']),tuple(rec['incoming_patch_ids']))
+-                if key in seen: continue
++                key=action_identity(rec)
++                signature=fingerprint({'features':x.tolist(),'label':float(y)})
++                if key in seen:
++                    if seen[key]!=signature:raise ValueError('conflicting duplicate action features or labels')
++                    continue
+                 if rec['label_kind'] != 'policy': raise ValueError('do not mix mechanism diagnostics into policy targets')
+-                if str(rec['image_id']) in set(map(str,forbidden_images)):
++                if kind=='real' and rec.get('feature_origin')!='prompt_only_pre_event':
++                    raise ValueError('real features must come from prompt-only pre-event capture')
++                if rec.get('policy_schema')!=POLICY_SCHEMA:
++                    raise ValueError('refit requires the revised candidate catalogue records')
++                if (rec.get('group_size'),rec.get('candidate_limit'),rec.get('proposal_shortlist'))!=(1,16,16):
++                    raise ValueError('main one-step fit cannot mix group sizes or search contracts')
++                if str(rec['image_id']) in forbidden:
+                     raise ValueError('collection overlaps held-out evaluation image IDs')
+-                seen.add(key);pairs.append(x);labels.append(y);records.append(rec);source_hashes.add(rec['source_hash'])
++                seen[key]=signature;pairs.append(x);labels.append(y);records.append(rec);source_hashes.add(rec['source_hash'])
+     if not pairs: raise ValueError('no paired actions collected')
+     # source_hash should identify checkpoint, prompt, feature definition AND
+     # cache/answer normalization policy, but NOT arm/depth or collection shard.
+     if len(source_hashes) != 1: raise ValueError('incompatible model/protocol sources across shards')
++    if len(kinds)!=1:raise ValueError('cannot mix synthetic and real shards')
+     x,y=np.asarray(pairs),np.asarray(labels);image_ids=np.asarray([str(r['image_id']) for r in records])
+     out=Path(out);out.mkdir(parents=True,exist_ok=True)
+-    data_hash=hashlib.sha256(x.tobytes()+y.tobytes()+'|'.join(image_ids).encode()).hexdigest()
++    data_hash=fingerprint({'records':records,'pairs':x.tolist(),'labels':y.tolist()})
+     reports={}
+-    train_sel,_,_=image_split(image_ids)
++    train_sel,validation,test=image_split(image_ids)
+     train_images=sorted(set(image_ids[train_sel].tolist()))
+     for mode in modes:
++        if mode=='full' and not all(r.get('feature_availability',{}).get('history',False) for r in records):
++            reports[mode]={'status':'UNAVAILABLE_MISSING_HISTORY',
++                           'reason':'current-first fit continues; full requires actual history features'}
++            continue
+         model,report=fit(x,y,image_ids,mode=mode,hidden=hidden,epochs=epochs)
++        calibration=calibrate(model,x,y,image_ids,records,validation,noise,min_images=min_calibration_images)
+         metadata={'mode':mode,'source_hash':next(iter(source_hashes)),'dataset_hash':data_hash,
+-                  'training_kind':'real',
++                  'training_kind':next(iter(kinds)),
+                   'trained_image_ids':train_images,'parameter_count':int(model.w.size+model.b.size+model.v.size),
+                   'target':'baseline_answer_mean_nll_minus_swap_answer_mean_nll',
+-                  'label_count':len(y)}
+-        model.save(out/(mode+'.npz'),metadata);reports[mode]=report
++                  'label_count':len(y),'policy_schema':POLICY_SCHEMA,'deployment_policy':DEFAULT_POLICY,
++                  'selection_image_ids':sorted(set(image_ids[validation].tolist())),
++                  'diagnostic_test_image_ids':sorted(set(image_ids[test].tolist())),
++                  'decision_threshold':calibration['decision_threshold'],
++                  'accept_enabled':calibration['accept_enabled'],'calibration':calibration}
++        model.save(out/(mode+'.npz'),metadata);report['calibration']=calibration;reports[mode]=report
+     (out/'training_report.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2))
+     return reports
+ 
+@@ -49,5 +78,7 @@
+     ap.add_argument('--epochs',type=int,default=160);ap.add_argument('--hidden',type=int,default=32)
+     ap.add_argument('--forbidden-image-ids')
+     ap.add_argument('--modes',default='current,full,no_context,shuffled')
++    ap.add_argument('--min-calibration-images',type=int,default=12)
+     a=ap.parse_args();forbidden=json.loads(Path(a.forbidden_image_ids).read_text()) if a.forbidden_image_ids else []
+-    print(json.dumps(train(a.files,a.out,epochs=a.epochs,hidden=a.hidden,forbidden_images=forbidden,modes=a.modes.split(','))))
++    print(json.dumps(train(a.files,a.out,epochs=a.epochs,hidden=a.hidden,forbidden_images=forbidden,
++                           modes=a.modes.split(','),min_calibration_images=a.min_calibration_images)))
+--- /dev/null
++++ b/measurement_anchors.py
+@@ -0,0 +1,26 @@
++"""Actual official/external anchors; never reconstruct S0 from a chat score.
++
++Export the SUCCESSFUL project config with native_method and verified per-block
++visual counts. Its bridge must dispatch that original method, bypassing E020.
++Reported W=2034 is context, not an invented schedule or verified model trace.
++"""
++import copy
++from core_matrix import identify
++
++
++def external_anchors(runtime):
++    anchors=[]
++    for raw in runtime.get('external_anchors',[]):
++        c=copy.deepcopy(raw)
++        if not c.get('native_method') or c.get('application')!='original_project_path':
++            raise ValueError('external anchor must identify the original project method path')
++        if c.get('selector',{}).get('kind')!='reference':
++            raise ValueError('external anchor cannot load an E020 learned selector')
++        counts=c.get('budget',{}).get('per_block_visual',[])
++        if len(counts)!=runtime['model_depth'] or any(type(v) is not int or v<1 for v in counts):
++            raise ValueError('external anchor needs an actual per-block visual trace')
++        if sum(counts)!=c['budget'].get('visual_token_layers'):
++            raise ValueError('external anchor W disagrees with its actual trace')
++        c['budget']['visual_square_sum']=sum(v*v for v in counts)
++        anchors.append(identify(c))
++    return anchors
+--- a/module_torch.py
++++ b/module_torch.py
+@@ -70,9 +70,9 @@
+ 
+ 
+ @torch.no_grad()
+-def select(x,scores,selected,model,*,after,depth,next_after,final_k,rounds=2,
++def select(x,scores,selected,model,*,after,depth,next_after,final_k,rounds=1,
+            group_size=1,shortlist=16,threshold=0.,protected=None,
+-           mode='learned',generator=None):
++           mode='learned',generator=None,candidate_limit=None):
+     if rounds < 0 or group_size < 1 or shortlist < group_size:
+         raise ValueError('invalid exchange settings')
+     if not 0 <= after < next_after <= depth:
+@@ -89,6 +89,10 @@
+         if not nd or not ni: break
+         dg = di[:nd*group_size].reshape(nd,group_size).repeat_interleave(ni,dim=0)
+         ig = ii[:ni*group_size].reshape(ni,group_size).repeat(nd,1)
++        if candidate_limit is not None and len(dg)>candidate_limit:
++            from policy_protocol import catalogue_indices
++            take=torch.as_tensor(catalogue_indices(len(dg),candidate_limit),device=x.device)
++            dg,ig=dg[take],ig[take]
+         valid = ~protect[dg].any(1)
+         context = (x[selected].sum(0)[None,:]-x[dg].sum(1))/max(k-group_size,1)
+         const = x.new_tensor([k/n,group_size/n,after/depth,(next_after-after)/depth,final_k/n,n/576])
+@@ -137,14 +141,28 @@
+ 
+     @torch.no_grad()
+     def refine(self,scores,response,baseline_indices,patch_ids,*,after,depth,next_after,
+-               final_k,hidden=None,encoder_rank=None,patch_xy=None,rounds=2,
+-               group_size=1,shortlist=16,threshold=0.,mode='learned'):
++               final_k,hidden=None,encoder_rank=None,patch_xy=None,rounds=1,
++               group_size=1,shortlist=16,threshold=None,mode='learned',candidate_limit=None):
+         if mode == 'reference' or rounds == 0:
+             return baseline_indices.sort().values
+         if mode == 'learned' and self.model is None:
+             raise ValueError('missing trained scorer: never use random weights as fallback')
+-        previous=self.aligned_previous(patch_ids)
+-        if mode=='learned' and self.model.metadata.get('mode')!='current' and previous is None:
++        if mode=='learned':
++            from policy_protocol import validate_model_policy
++            policy=validate_model_policy(self.model.metadata)
++            if (rounds,group_size,shortlist)!=(policy['rounds'],policy['group_size'],policy['shortlist']):
++                raise ValueError('direct hook settings differ from calibrated one-step deployment')
++            if candidate_limit is not None and candidate_limit!=policy['candidate_limit']:
++                raise ValueError('direct hook candidate catalogue mismatch')
++            candidate_limit=policy['candidate_limit']
++            if threshold is not None and threshold!=self.model.metadata['decision_threshold']:
++                raise ValueError('direct hook threshold differs from validation calibration')
++            threshold=self.model.metadata['decision_threshold']
++            if not self.model.metadata['accept_enabled']:return baseline_indices.sort().values
++        if threshold is None:threshold=0.
++        needs_history=mode=='learned' and self.model.metadata.get('mode')=='full'
++        previous=self.aligned_previous(patch_ids) if needs_history else None
++        if needs_history and previous is None:
+             raise ValueError('history-enabled model requires its actual previous prompt response')
+         if self.debug:
+             if patch_ids.numel() != scores.numel() or patch_ids.unique().numel() != patch_ids.numel():
+@@ -156,4 +174,5 @@
+         with torch.autocast(device_type=x.device.type,enabled=False):
+             return select(x,scores.float(),baseline_indices,self.model,after=after,depth=depth,
+                           next_after=next_after,final_k=final_k,rounds=rounds,
+-                          group_size=group_size,shortlist=shortlist,threshold=threshold,mode=mode)
++                          group_size=group_size,shortlist=shortlist,threshold=threshold,mode=mode,
++                          candidate_limit=candidate_limit)
+--- a/pairdata.py
++++ b/pairdata.py
+@@ -20,6 +20,7 @@
+ import numpy as np
+ from features import TOKEN_DIM, FEATURE_SCHEMA, pair_inputs
+ from exchange_numpy import proposals
++from policy_protocol import POLICY_SCHEMA, state_identity, fingerprint
+ 
+ 
+ def validate_snapshot(s):
+@@ -57,8 +58,9 @@
+     return out
+ 
+ 
+-def collect(adapter,out,*,actions_per_state=6,max_states=384,group_sizes=(1,4),
+-            shortlist=16,seed=20,identity_every=16,checkpoint_every=16,noop_every=8):
++def collect(adapter,out,*,actions_per_state=16,max_states=384,group_sizes=(1,),
++            shortlist=16,seed=20,identity_every=16,checkpoint_every=16,noop_every=8,
++            candidate_limit=16):
+     out = Path(out); out.parent.mkdir(parents=True,exist_ok=True)
+     rows,labels,records,noop_records = [],[],[],[]; rng = np.random.default_rng(seed)
+     def save():
+@@ -73,6 +75,8 @@
+         for state_index,s in enumerate(adapter.snapshots()):
+             if state_index >= max_states: break
+             validate_snapshot(s); x=np.asarray(s['features']); selected=np.asarray(s['selected'],dtype=int)
++            if getattr(adapter,'kind','real')=='real' and s.get('feature_origin')!='prompt_only_pre_event':
++                raise ValueError('real backend must explicitly identify prompt-only pre-gather feature capture')
+             ids=np.asarray(s['patch_ids']); prefix=adapter.prefix_digest(s)
+             base=checked_branch(adapter,s,ids[selected],prefix)
+             noise=None
+@@ -89,15 +93,17 @@
+                 noop_records.append(rec)
+             candidates=[]
+             for g in group_sizes:
+-                d,i=proposals(s['scores'],selected,group_size=g,shortlist=shortlist)
++                d,i=proposals(s['scores'],selected,group_size=g,shortlist=shortlist,
++                              candidate_limit=candidate_limit)
+                 if len(d):
+-                    take=rng.choice(len(d),size=min(actions_per_state,len(d)),replace=False)
+-                    candidates.extend((d[j],i[j]) for j in take)
++                    # Fixed catalogue is the EXACT deployed search space. Full
++                    # enumeration enables maximum-selection calibration.
++                    candidates.extend((d[j],i[j],len(d),j) for j in range(len(d)))
+             if candidates:
+                 take=rng.choice(len(candidates),size=min(actions_per_state,len(candidates)),replace=False)
+             else: take=[]
+             for action_index,j in enumerate(take):
+-                donor,incoming=candidates[j]
++                donor,incoming,catalogue_size,catalogue_index=candidates[j]
+                 alt=np.setdiff1d(selected,donor); alt=np.sort(np.r_[alt,incoming])
+                 branch=checked_branch(adapter,s,ids[alt],prefix)
+                 if branch['answer_tokens_hash'] != base['answer_tokens_hash'] or branch['answer_token_count'] != base['answer_token_count']:
+@@ -111,7 +117,13 @@
+                               answer_tokens_hash=base['answer_tokens_hash'],answer_token_count=base['answer_token_count'],
+                               state_index=state_index,action_index=action_index,label_kind='policy',kind=getattr(adapter,'kind','real'))
+                 record.update(proposal_shortlist=shortlist,group_size=len(donor),
+-                              baseline_visual_count=len(selected),alternative_visual_count=len(alt))
++                              baseline_visual_count=len(selected),alternative_visual_count=len(alt),
++                              policy_schema=POLICY_SCHEMA,candidate_limit=candidate_limit,
++                              catalogue_size=catalogue_size,catalogue_index=int(catalogue_index),
++                              feature_origin=s.get('feature_origin','synthetic_test_fixture'),
++                              feature_availability=s.get('feature_availability',{}))
++                record['state_id']=state_identity(record)
++                record['pair_features_sha256']=fingerprint(inp.tolist())
+                 if noise is not None:record['same_state_noop_difference']=noise
+                 rows.append(inp); labels.append(base['answer_nll']-branch['answer_nll']); records.append(record)
+                 if 'correct' in base and 'correct' in branch:
+@@ -142,11 +154,16 @@
+ if __name__=='__main__':
+     ap=argparse.ArgumentParser();ap.add_argument('--adapter',required=True);ap.add_argument('--config',required=True)
+     ap.add_argument('--out',required=True);ap.add_argument('--states',type=int,default=384)
+-    ap.add_argument('--actions',type=int,default=6);ap.add_argument('--seed',type=int,default=20)
++    ap.add_argument('--actions',type=int,default=16);ap.add_argument('--seed',type=int,default=20)
++    ap.add_argument('--candidate-limit',type=int,default=16)
+     ap.add_argument('--shortlist',type=int,default=16);ap.add_argument('--noop-every',type=int,default=8)
+-    ap.add_argument('--group-sizes',default='1,4')
++    ap.add_argument('--group-sizes',default='1')
+     args=ap.parse_args();mod,fac=args.adapter.split(':')
+     adapter=getattr(importlib.import_module(mod),fac)(json.loads(Path(args.config).read_text()))
++    import signal
++    def interrupted(signum,frame):raise KeyboardInterrupt('owned collection deadline')
++    signal.signal(signal.SIGTERM,interrupted)
+     print(json.dumps(collect(adapter,args.out,max_states=args.states,actions_per_state=args.actions,seed=args.seed,
+                              shortlist=args.shortlist,noop_every=args.noop_every,
++                             candidate_limit=args.candidate_limit,
+                              group_sizes=tuple(map(int,args.group_sizes.split(','))))))
+--- /dev/null
++++ b/policy_calibration.py
+@@ -0,0 +1,84 @@
++"""Validation-only abstention calibration on COMPLETE deployed catalogues.
++
++The bootstrap lower bounds help choose a conservative development policy; they
++are not a significance claim after threshold search. Independent test/ACC is
++still required. No-op is always available, but predicted acceptance can hurt.
++"""
++from collections import defaultdict
++import numpy as np
++from policy_protocol import DEFAULT_POLICY, POLICY_SCHEMA, state_identity
++
++
++def complete_groups(records, eligible=None):
++    grouped=defaultdict(list)
++    for i,r in enumerate(records):
++        if eligible is not None and not eligible[i]:continue
++        if r.get('policy_schema')!=POLICY_SCHEMA:continue
++        if (r.get('group_size')!=1 or r.get('proposal_shortlist')!=16
++                or r.get('candidate_limit')!=16):continue
++        grouped[state_identity(r)].append(i)
++    complete={}
++    for key,ix in grouped.items():
++        sizes={records[i].get('catalogue_size') for i in ix}
++        index={records[i].get('catalogue_index') for i in ix}
++        if len(sizes)==1 and None not in sizes:
++            n=next(iter(sizes))
++            if len(ix)==n and index==set(range(n)):complete[key]=ix
++    return complete
++
++
++def state_policy(prediction, labels, records, groups, threshold, enabled=True):
++    rows=[]
++    for key,ix in groups.items():
++        # Candidate order is catalogue index, matching deployment tie-breaking.
++        ix=sorted(ix,key=lambda i:records[i]['catalogue_index'])
++        j=ix[int(np.argmax(prediction[ix]))]
++        accepted=bool(enabled and prediction[j]>threshold)
++        rows.append({'state_id':key,'image_id':str(records[j]['image_id']),
++                     'stage1':records[j]['stage1'],'schedule_name':records[j]['schedule_name'],
++                     'chosen_index':j if accepted else None,'accepted':accepted,
++                     'gain':float(labels[j]) if accepted else 0.,
++                     'oracle_gain':max(0.,float(np.max(labels[ix])))})
++    return rows
++
++
++def image_summary(rows,replicates=400,seed=20):
++    images=defaultdict(list)
++    for r in rows:images[r['image_id']].append(float(r['gain']))
++    values=np.asarray([np.mean(v) for _,v in sorted(images.items())])
++    if not len(values):return {'images':0,'mean_gain':None,'paired_image_95pct_interval':None}
++    rng=np.random.default_rng(seed)
++    boot=np.mean(values[rng.integers(len(values),size=(replicates,len(values)))],axis=1)
++    return {'images':len(values),'mean_gain':float(values.mean()),
++            'paired_image_95pct_interval':np.quantile(boot,[.025,.975]).tolist()}
++
++
++def calibrate(model,x,y,image_ids,records,validation,noise_values,*,min_images=12):
++    groups=complete_groups(records,validation)
++    images={str(records[ix[0]]['image_id']) for ix in groups.values()}
++    base={'status':'INSUFFICIENT_COMPLETE_VALIDATION','validation_images':len(images),
++          'validation_states':len(groups),'deployment_policy':DEFAULT_POLICY,
++          'selection_split':'validation_only','min_validation_images':min_images,
++          'decision_threshold':0.,'accept_enabled':False}
++    noise=np.asarray(noise_values,dtype=float)
++    if not len(noise):
++        base['status']='MISSING_GENUINE_NOOP';return base
++    if len(images)<min_images:return base
++    floor=float(np.max(np.abs(noise)))
++    p=model.predict(x)
++    maxima=np.asarray([p[ix].max() for ix in groups.values()])
++    thresholds=sorted(set([floor]+[max(floor,float(v)) for v in np.quantile(maxima,[.25,.5,.75,.9])]))
++    choices=[]
++    for threshold in thresholds:
++        rows=state_policy(p,y,records,groups,threshold)
++        summary=image_summary(rows)
++        accepted_images=len({r['image_id'] for r in rows if r['accepted']})
++        choices.append({'threshold':threshold,'accepted_images':accepted_images,
++                        'acceptance_fraction':float(np.mean([r['accepted'] for r in rows])),**summary})
++    valid=[r for r in choices if r['accepted_images']>=4 and r['paired_image_95pct_interval'][0]>0]
++    best=max(valid,key=lambda r:r['paired_image_95pct_interval'][0]) if valid else None
++    base.update(status='CALIBRATED_ACCEPT' if best else 'CALIBRATED_ABSTAIN',
++                decision_threshold=best['threshold'] if best else floor,
++                accept_enabled=bool(best),noop_absolute_max=floor,threshold_candidates=choices,
++                caveat='Validation threshold search is model selection, not a confirmatory confidence interval.')
++    return base
+--- /dev/null
++++ b/policy_protocol.py
+@@ -0,0 +1,62 @@
++"""Explicit one-step deployment contract and conditional decision identities.
++
++A prefix hash alone is not a policy state: the same prefix may feed different
++future schedules or baseline sets. No answer/loss is part of this identity.
++"""
++import hashlib
++import json
++import numpy as np
++
++POLICY_SCHEMA = 'e0201_one_step_catalogue_v1'
++DEFAULT_POLICY = {'rounds': 1, 'group_size': 1, 'shortlist': 16,
++                  'candidate_limit': 16, 'proposal_version': 'affine_rank_grid_v1'}
++
++
++def fingerprint(value):
++    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
++
++
++def catalogue_indices(total, limit=None):
++    """Data-independent subset of the rank-grid, identical in NumPy and Torch.
++
++    Fixed integer priorities avoid NumPy/CUDA RNG differences. Limiting the
++    catalogue is a compute choice, not a claim to cover all profitable swaps.
++    """
++    if limit is None or total <= limit:
++        return np.arange(total, dtype=np.int64)
++    if type(limit) is not int or limit < 1:
++        raise ValueError('candidate_limit must be a positive integer or None')
++    ix = np.arange(total, dtype=np.int64)
++    priority = (ix * 2654435761 + 1013904223) % 4294967296
++    return np.sort(np.argsort(priority, kind='stable')[:limit])
++
++
++def state_identity(record):
++    keys = ('source_hash', 'image_id', 'question_id', 'stage1', 'schedule_name',
++            'prefix_hash', 'after', 'depth', 'next_after', 'final_k',
++            'baseline_patch_ids')
++    identity = {k: record.get(k) for k in keys}
++    # A missing field is retained, never conflated with a different present one.
++    return fingerprint(identity)
++
++
++def action_identity(record):
++    return (state_identity(record), tuple(record['donor_patch_ids']),
++            tuple(record['incoming_patch_ids']))
++
++
++def validate_model_policy(metadata):
++    if metadata.get('policy_schema') != POLICY_SCHEMA:
++        raise ValueError('model lacks the revised deployment/calibration contract; refit from real pairs')
++    policy = metadata.get('deployment_policy')
++    if policy != DEFAULT_POLICY:
++        raise ValueError('checkpoint uses a different candidate/rollout contract')
++    calibration = metadata.get('calibration', {})
++    if calibration.get('status') not in ('CALIBRATED_ACCEPT', 'CALIBRATED_ABSTAIN'):
++        raise ValueError('complete validation catalogues required before real ACC')
++    threshold = metadata.get('decision_threshold')
++    if threshold is None or not np.isfinite(threshold):
++        raise ValueError('finite validation-only threshold required')
++    if type(metadata.get('accept_enabled')) is not bool:
++        raise ValueError('explicit calibrated acceptance state required')
++    return policy
+--- a/replay.example.json
++++ b/replay.example.json
+@@ -18,6 +18,6 @@
+     "FIRST_SHIFT",
+     "FIRST_NEXT_WMATCH"
+   ],
+-  "max_examples": 384,
+-  "note": "Copy the actual runtime.source object exactly. Backend is supplied by Cursor from the existing successful project runner."
+-}+  "max_examples": 256,
++  "note": "Use exact runtime.source after patching. Capture only prompt states. Export feature_availability.history; current-only features need no history attention extraction. See CURSOR_E020_1_R2_CN.md."
++}
+--- a/runtime.example.json
++++ b/runtime.example.json
+@@ -149,14 +149,16 @@
+     "MMBench": 120
+   },
+   "notes": [
+-    "Verify actual completed-block profiles against original runner before changing kind to real.",
+-    "ONE is intentionally null until exported from successful historical source.",
+-    "panels.screen are development; confirm independent where available, otherwise disclose tuning reuse.",
+-    "Explicitly preserve POPE F1 vs accuracy and MME paired questions.",
+-    "Pair snapshot source_hash must equal build_matrix.digest(runtime.source).",
+-    "E020.1: export actual FIRST_NEXT_WMATCH before kind real; close_core.py is the primary driver."
++    "E020.1 R2 main entry is close_core.py; do not execute the archived 72-arm workflow.",
++    "Export actual NEXT events, source hashes and official S0 config/per-block trace. No guessed S0 schedule.",
++    "R2 schema is e020_prompt_features_v2: recompute real features, labels and fit; never rename old npz weights.",
++    "Collector: --states 256 --actions 16 --candidate-limit 16 --group-sizes 1, from independent calibration images.",
++    "Current head is the only prerequisite; full history is optional, and missing history must be declared.",
++    "Use distinct training/validation/diagnostic-test/evaluation image identities and record any dev reuse.",
++    "End-to-end wall TTFT, official S0, EARLY, SHIFT, NEXT and selector total overhead remain required paper evidence."
+   ],
+   "trace_directory": "/ABSOLUTE/PROJECT/e020_traces",
+   "pair_shards": [],
+-  "timing_reference_config_id": "COVER__FIRST_NEXT_WMATCH__reference"
+-}+  "timing_reference_config_id": "COVER__FIRST_NEXT_WMATCH__reference",
++  "external_anchors": []
++}
+--- a/scorer_numpy.py
++++ b/scorer_numpy.py
+@@ -16,6 +16,12 @@
+         self.mean, self.std, self.mask = map(np.asarray, (mean, std, mask))
+         self.w, self.b, self.v = map(np.asarray, (w, b, v))
+         self.target_scale = float(target_scale)
++        if (self.mean.shape!=(INPUT_DIM,) or self.std.shape!=(INPUT_DIM,) or self.mask.shape!=(INPUT_DIM,)
++            or self.w.ndim!=2 or self.w.shape[0]!=INPUT_DIM or self.b.shape!=(self.w.shape[1],)
++            or self.v.shape!=self.b.shape or np.any(self.std<=0) or self.target_scale<=0
++            or not all(np.isfinite(a).all() for a in (self.mean,self.std,self.mask,self.w,self.b,self.v))
++            or not np.isfinite(self.target_scale)):
++            raise ValueError('invalid scorer dimensions, normalization or weights')
+ 
+     def predict(self, pairs):
+         pairs = np.asarray(pairs, dtype=float)
+--- a/selector_audit.py
++++ b/selector_audit.py
+@@ -48,11 +48,19 @@
+     return result
+ 
+ 
+-def matched_random_numpy(scores,baseline,patch_ids,target,request_key,shortlist=16,seed=20):
++def matched_random_numpy(scores,baseline,patch_ids,target,request_key,shortlist=16,seed=20,candidate_limit=None):
+     s=np.asarray(scores);selected=np.asarray(baseline,dtype=int);ids=np.asarray(patch_ids)
+     if target['request_key']!=str(request_key) or set(ids[selected].tolist())!=set(target['baseline_patch_ids']) or set(ids.tolist())!=set(target['eligible_patch_ids']):
+         raise ValueError('matched endpoint does not share the actual baseline prefix selection')
+     m=int(target['net_changes']);n=len(s);mask=np.zeros(n,dtype=bool);mask[selected]=True
++    if candidate_limit is not None:
++        if m not in (0,1):raise ValueError('one-step catalogue control can match zero or one exchange')
++        if not m:return np.sort(selected)
++        from exchange_numpy import proposals
++        d,i=proposals(s,selected,shortlist=shortlist,candidate_limit=candidate_limit)
++        rng=np.random.default_rng(sample_seed(request_key,seed));j=int(rng.integers(len(d)))
++        mask[d[j]]=False;mask[i[j]]=True
++        return np.flatnonzero(mask)
+     donors=selected[np.argsort(s[selected],kind='stable')[:shortlist]]
+     outsiders=np.flatnonzero(~mask);outsiders=outsiders[np.argsort(-s[outsiders],kind='stable')[:shortlist]]
+     if not 0<=m<=min(len(donors),len(outsiders)):raise ValueError('matched change count infeasible')
+@@ -63,8 +71,12 @@
+     return np.flatnonzero(mask)
+ 
+ 
+-def matched_random_torch(scores,baseline,patch_ids,target,request_key,shortlist=16,seed=20):
++def matched_random_torch(scores,baseline,patch_ids,target,request_key,shortlist=16,seed=20,candidate_limit=None):
+     import torch
++    if candidate_limit is not None:
++        selected=matched_random_numpy(scores.detach().cpu().numpy(),baseline.detach().cpu().numpy(),
++            patch_ids.detach().cpu().numpy(),target,request_key,shortlist,seed,candidate_limit)
++        return torch.as_tensor(selected,device=baseline.device,dtype=baseline.dtype)
+     # This is a diagnostic control with an offline trace dependency. The CPU
+     # identity check is included in its own timing; never attribute it to the
+     # deployed learned scorer, which does not read this trace.

@@ -1,0 +1,17 @@
+{
+  "working_directory": "/ABSOLUTE/PROJECT",
+  "commands": {
+    "ACC": null,
+    "TTFT": null,
+    "STRESS": null
+  },
+  "cache_index": null,
+  "template_example": [
+    "python",
+    "existing_runner_with_e020_hook.py",
+    "--e020-job",
+    "{job_json}",
+    "--out",
+    "{outdir}"
+  ]
+}

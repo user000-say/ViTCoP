@@ -10,7 +10,7 @@ TOKEN_DIM = 22
 CONTEXT_DIM = 28
 INPUT_DIM = TOKEN_DIM + CONTEXT_DIM
 HISTORY_COLUMNS = (6, 7, 8, 9, 10)
-FEATURE_SCHEMA = 'e020_prompt_features_v1'
+FEATURE_SCHEMA = 'e020_prompt_features_v2'
 
 
 def ranks(values):
@@ -103,11 +103,11 @@ def pair_inputs(x, selected, donor_groups, incoming_groups, *, after, depth,
 
 def feature_mask(mode):
     mask = np.ones(INPUT_DIM)
-    if mode == 'current':
+    if mode in ('current', 'no_context', 'shuffled'):
         mask[list(HISTORY_COLUMNS)] = 0
         mask[[TOKEN_DIM+i for i in HISTORY_COLUMNS]] = 0
-    elif mode == 'no_context':
+    if mode == 'no_context':
         mask[TOKEN_DIM:TOKEN_DIM+TOKEN_DIM] = 0
-    elif mode not in ('full', 'shuffled'):
+    elif mode not in ('full', 'current', 'shuffled'):
         raise ValueError('unknown capacity-matched feature control')
     return mask

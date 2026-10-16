@@ -1,0 +1,23 @@
+{
+  "backend": "project_e020_backend:make",
+  "backend_config": {},
+  "source": {
+    "checkpoint_hash": null,
+    "code_commit": null,
+    "prompt_hash": null,
+    "input_pipeline_hash": null,
+    "cache_policy": null,
+    "query_rule": null,
+    "feature_protocol_hash": null
+  },
+  "arms": [
+    "COVER",
+    "BASE"
+  ],
+  "schedules": [
+    "FIRST_SHIFT",
+    "FIRST_NEXT_WMATCH"
+  ],
+  "max_examples": 256,
+  "note": "Use exact runtime.source after patching. Capture only prompt states. Export feature_availability.history; current-only features need no history attention extraction. See CURSOR_E020_1_R2_CN.md."
+}
