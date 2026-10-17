@@ -503,17 +503,27 @@ def apply_arm_env(arm: str) -> dict:
             if body.endswith("32"):
                 body = body[:-2]
             parts = body.split("_")
+            # Kind keys may contain underscores (e.g. CFFULL_G1R4). Match longest
+            # suffix in _E020_KINDS; do not trust parts[-1] alone.
+            stage = parts[0]
+            rest = "_".join(parts[1:])
             kind_key = "REF"
-            if parts[-1] in _E020_KINDS:
-                kind_key = parts[-1]
-                sched_parts = parts[1:-1]
-            else:
-                sched_parts = parts[1:]
-            sched = "_".join(sched_parts)
+            sched = rest
+            for cand in sorted(_E020_KINDS.keys(), key=len, reverse=True):
+                if rest == cand:
+                    kind_key = cand
+                    sched = ""
+                    break
+                suffix = "_" + cand
+                if rest.endswith(suffix):
+                    kind_key = cand
+                    sched = rest[: -len(suffix)]
+                    break
             if sched not in _E020_EVENTS:
                 raise ValueError(f"Unknown E020 schedule in arm {arm}: {sched}")
             events = _E020_EVENTS[sched]
             e020_kind = dict(_E020_KINDS[kind_key])
+            _ = stage  # stage already encoded in ARMS[arm] variant/b
         elif arm.startswith("E019_"):
             # Parse E019_{COVER|BASE}_{SCHEDULE}_{SELECTOR}32 or legacy ..._{SCHEDULE}32
             body = arm[len("E019_"):]

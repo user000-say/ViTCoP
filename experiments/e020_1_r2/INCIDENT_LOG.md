@@ -123,3 +123,14 @@ ValueError: invalid branch NLL or mismatched actual prefix
 - **Fix:** Hash only prompt/checkpoint identity: image_id, question_id, schedule,
   stage1, patch_ids (pre-choice universe).
 - **Status:** fixed; restarting smoke
+
+## INC-005 — learned ACC arm parse failed on multi-underscore kinds
+- **When:** 2026-10-17T11:55–12:49
+- **Symptom:** `full_e020_learned` queue `COMPLETE_WITH_FAILURES done=0 failed=112`.
+  Every job: `Unknown E020 schedule in arm …: EARLY_CFFULL_G1R4` (etc.).
+- **Root cause:** `apply_arm_env` took `parts[-1]` as kind. Kind keys like
+  `CFFULL_G1R4` contain `_`, so schedule absorbed the kind tokens.
+- **Impact:** Collect/fit OK; learned ACC produced **no** metrics. Prior E019/E020
+  priority ACC unaffected (no CFFULL_* kinds).
+- **Fix:** Longest-suffix match of `_E020_KINDS` when parsing E020 arms.
+- **Status:** fixed; clearing attempts and relaunching `full_e020_learned`
