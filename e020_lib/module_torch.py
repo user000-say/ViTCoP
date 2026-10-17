@@ -64,6 +64,9 @@ class PairScorer(nn.Module):
                 self.register_buffer(key,torch.tensor(data[key].copy(),dtype=torch.float32))
 
     def forward(self,pairs):
+        # Buffers load on CPU; features live on the VLM device.
+        if self.mean.device != pairs.device or self.mean.dtype != pairs.dtype:
+            self.to(device=pairs.device, dtype=pairs.dtype)
         z = (pairs-self.mean)/self.std*self.mask
         value = torch.tanh(z@self.w+self.b)@self.v
         return (value[:,0]-value[:,1])*self.target_scale

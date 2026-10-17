@@ -145,3 +145,10 @@ ValueError: invalid branch NLL or mismatched actual prefix
 - **Fix:** Continuation kinds → `*_G1R1`; `apply_arm_env` freezes rounds/threshold/accept
   from npz; `_e020_from_env` passes `candidate_limit` + `accept_enabled`.
 - **Status:** fixed; relaunching `full_e020_learned` (new arm names)
+
+## INC-007 — PairScorer CPU buffers vs CUDA features
+- **When:** 2026-10-17T15:25
+- **Symptom:** After G1R1 policy fix, `RuntimeError: Expected all tensors to be on the same device, cuda:0 and cpu!` in `PairScorer.forward`.
+- **Root cause:** Checkpoint buffers registered on CPU; token features from LLaVA are CUDA.
+- **Fix:** `PairScorer.forward` moves module to `pairs.device/dtype` on first use.
+- **Status:** fixed; clearing attempts and relaunching
