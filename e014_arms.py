@@ -343,12 +343,24 @@ _E020_KINDS = {
     "RANDR4": {"kind": "random", "group_size": 1, "rounds": 4, "shortlist": 16, "seed": 20},
     "RANDG4R1": {"kind": "random", "group_size": 4, "rounds": 1, "shortlist": 16, "seed": 20},
     "RANDG4R2": {"kind": "random", "group_size": 4, "rounds": 2, "shortlist": 16, "seed": 20},
-    "CFFULL_G1R4": {"kind": "continuation", "model": "full", "group_size": 1, "rounds": 4, "shortlist": 16},
-    "CFFULL_G4R2": {"kind": "continuation", "model": "full", "group_size": 4, "rounds": 2, "shortlist": 16},
-    "CFCUR_G1R4": {"kind": "continuation", "model": "current", "group_size": 1, "rounds": 4, "shortlist": 16},
-    "CFCUR_G4R2": {"kind": "continuation", "model": "current", "group_size": 4, "rounds": 2, "shortlist": 16},
-    "CFNOCTX_G1R4": {"kind": "continuation", "model": "no_context", "group_size": 1, "rounds": 4, "shortlist": 16},
-    "CFSHUF_G1R4": {"kind": "continuation", "model": "shuffled", "group_size": 1, "rounds": 4, "shortlist": 16},
+    # R2 one-step catalogue only (DEFAULT_POLICY rounds=1, group_size=1).
+    # Do not deploy G1R4/G4R2 against g1r1-calibrated checkpoints.
+    "CFFULL_G1R1": {
+        "kind": "continuation", "model": "full",
+        "group_size": 1, "rounds": 1, "shortlist": 16, "candidate_limit": 16,
+    },
+    "CFCUR_G1R1": {
+        "kind": "continuation", "model": "current",
+        "group_size": 1, "rounds": 1, "shortlist": 16, "candidate_limit": 16,
+    },
+    "CFNOCTX_G1R1": {
+        "kind": "continuation", "model": "no_context",
+        "group_size": 1, "rounds": 1, "shortlist": 16, "candidate_limit": 16,
+    },
+    "CFSHUF_G1R1": {
+        "kind": "continuation", "model": "shuffled",
+        "group_size": 1, "rounds": 1, "shortlist": 16, "candidate_limit": 16,
+    },
 }
 
 
@@ -369,10 +381,9 @@ def _e020_register():
             if spec.get("kind") != "continuation":
                 continue
             arms[f"E020_{stage}_FIRST_SHIFT_{kind}32"] = (variant, b, 8, 8, 32)
-        # C transfer: full heads on EARLY/THREE/K±8
+        # C transfer: full head on EARLY/THREE/K±8 (same one-step policy)
         for sched in ("EARLY", "THREE_WMATCH", "FIRST_KMINUS8", "FIRST_KPLUS8"):
-            for kind in ("CFFULL_G1R4", "CFFULL_G4R2"):
-                arms[f"E020_{stage}_{sched}_{kind}32"] = (variant, b, 8, 8, 32)
+            arms[f"E020_{stage}_{sched}_CFFULL_G1R132"] = (variant, b, 8, 8, 32)
     return arms
 
 
@@ -390,11 +401,19 @@ FULL_E020_D_CONTROLS = sorted(
 )
 FULL_E020_B_LEARNED = sorted(
     a for a in ARMS if a.startswith("E020_") and "FIRST_SHIFT_" in a
-    and any(x in a for x in ("CFFULL", "CFCUR", "CFNOCTX", "CFSHUF"))
+    and any(x in a for x in ("CFFULL_G1R1", "CFCUR_G1R1", "CFNOCTX_G1R1", "CFSHUF_G1R1"))
 )
 FULL_E020_C_TRANSFER = sorted(
     a for a in ARMS if a.startswith("E020_")
-    and any(s in a for s in ("_EARLY_CFFULL", "_THREE_WMATCH_CFFULL", "_FIRST_KMINUS8_CFFULL", "_FIRST_KPLUS8_CFFULL"))
+    and any(
+        s in a
+        for s in (
+            "_EARLY_CFFULL_G1R1",
+            "_THREE_WMATCH_CFFULL_G1R1",
+            "_FIRST_KMINUS8_CFFULL_G1R1",
+            "_FIRST_KPLUS8_CFFULL_G1R1",
+        )
+    )
 )
 FULL_E020_NOLEARN = sorted(set(FULL_E020_A_ALL) | set(FULL_E020_D_CONTROLS))
 FULL_E020_PRIORITY = FULL_E020_A_NEIGHBOR + [
@@ -591,12 +610,29 @@ def apply_arm_env(arm: str) -> dict:
             last_layer = int(events.split(",")[-1].split(":")[0])
             model_name = str(e020_kind.get("model", "current"))
             model_path = ""
+            accept_enabled = e020_kind.get("accept_enabled", True)
+            candidate_limit = e020_kind.get("candidate_limit", 16)
+            threshold = e020_kind.get("threshold", 0)
             if kind == "continuation":
+                import json
+                import numpy as np
+
                 cand = E020_MODELS_DIR / f"{model_name}.npz"
                 if not cand.is_file():
                     raise FileNotFoundError(
                         f"E020 continuation arm {arm} needs fitted model at {cand}")
                 model_path = str(cand)
+                # Freeze deployment + abstention from the fitted checkpoint
+                # (R2 rejects g1r1 weights run with a different rounds/group).
+                with np.load(cand, allow_pickle=False) as data:
+                    meta = json.loads(str(data["metadata"]))
+                pol = meta.get("deployment_policy") or {}
+                for key in ("rounds", "group_size", "shortlist", "candidate_limit"):
+                    if key in pol:
+                        e020_kind[key] = pol[key]
+                threshold = meta["decision_threshold"]
+                accept_enabled = bool(meta["accept_enabled"])
+                candidate_limit = int(e020_kind.get("candidate_limit", 16))
             os.environ.update(
                 E019_ENABLE="False",
                 E020_ENABLE="True" if enable else "False",
@@ -604,9 +640,11 @@ def apply_arm_env(arm: str) -> dict:
                 E020_MODEL=model_name,
                 E020_MODEL_PATH=model_path,
                 E020_GROUP_SIZE=str(e020_kind.get("group_size", 1)),
-                E020_ROUNDS=str(e020_kind.get("rounds", e020_kind.get("swaps", 2))),
+                E020_ROUNDS=str(e020_kind.get("rounds", e020_kind.get("swaps", 1))),
                 E020_SHORTLIST=str(e020_kind.get("shortlist", 16)),
-                E020_THRESHOLD=str(e020_kind.get("threshold", 0)),
+                E020_CANDIDATE_LIMIT=str(candidate_limit),
+                E020_THRESHOLD=str(threshold),
+                E020_ACCEPT_ENABLED="True" if accept_enabled else "False",
                 E020_ALPHA=str(e020_kind.get("alpha", 0)),
                 E020_LAMBDA=str(e020_kind.get("lambda", 0.15)),
                 E020_CURRENT_WEIGHT=str(e020_kind.get("current_weight", 0.6)),

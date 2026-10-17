@@ -134,3 +134,14 @@ ValueError: invalid branch NLL or mismatched actual prefix
   priority ACC unaffected (no CFFULL_* kinds).
 - **Fix:** Longest-suffix match of `_E020_KINDS` when parsing E020 arms.
 - **Status:** fixed; clearing attempts and relaunching `full_e020_learned`
+
+## INC-006 — learned ACC rejected G1R4 vs calibrated G1R1 policy
+- **When:** 2026-10-17T15:21
+- **Symptom:** `deployment differs from calibrated policy: rounds` (then same for all 112).
+- **Root cause:** R2 fit stores `DEFAULT_POLICY` rounds=1/group_size=1; arms still named
+  `CFFULL_G1R4` / `G4R2` and env set rounds=4. Dispatch correctly refuses mismatch.
+  Also `accept_enabled`/`threshold` were not copied from checkpoint into the hook spec.
+- **Impact:** Collect/fit unchanged and valid. Learned ACC still 0 metrics.
+- **Fix:** Continuation kinds → `*_G1R1`; `apply_arm_env` freezes rounds/threshold/accept
+  from npz; `_e020_from_env` passes `candidate_limit` + `accept_enabled`.
+- **Status:** fixed; relaunching `full_e020_learned` (new arm names)
