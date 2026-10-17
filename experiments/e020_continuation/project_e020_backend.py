@@ -41,13 +41,13 @@ class ProjectE020Backend:
         self.device = config.get("device", "cuda:0")
         self.conv_template = config.get("conv_template", "llava_v1")
         self._examples = None
+        # Constructor-time caches (use_vitcop, STAGE3_POLICY, …) — apply a REF arm before load.
+        apply_arm_env("E020_COVER_FIRST_SHIFT_REF32")
         print(f"[e020_backend] loading {self.model_id} on {self.device}", flush=True)
         self.tokenizer, self.model, self.image_processor, _ = load_pretrained_model(
             self.model_id, None, "llava", device_map=self.device
         )
         self.model.eval()
-        # Ensure e018 path is active via env from apply_arm_env.
-        os.environ.setdefault("E006_ENABLE", "True")
 
     def examples(self):
         if self._examples is None:
@@ -176,6 +176,15 @@ class ProjectE020Backend:
             # Clear prior runtime so new observer is installed.
             if hasattr(core, "_e018_runtime"):
                 delattr(core, "_e018_runtime")
+            # generate() normally zeros this; teacher-forced decode needs it for
+            # vitcop_prepare early-return when images is None / seq_len==1.
+            core.generate_process_count = 0
+            if not hasattr(self.model, "image_shape"):
+                self.model.image_shape = 576
+            if not hasattr(self.model, "token_length_list"):
+                self.model.token_length_list = []
+            if not hasattr(self.model, "pre_prompt_length_list"):
+                self.model.pre_prompt_length_list = []
             out = self.model(
                 input_ids=input_ids,
                 images=image_tensor.unsqueeze(0) if image_tensor.ndim == 3 else image_tensor,
@@ -259,14 +268,15 @@ class ProjectE020Backend:
             "final_k": final_k,
             "uses_gold_features": False,
         }
-        # Prefix hash: patch ids + schedule + stage + forced keep
+        # Prefix identity is the prompt/checkpoint before the first-keep choice.
+        # Must NOT include selected/force — paired branches and force_recompute
+        # no-ops share the same prefix_hash by contract (pairdata.checked_branch).
         prefix_payload = {
             "image_id": snapshot["image_id"],
+            "question_id": snapshot["question_id"],
             "schedule": schedule_name,
             "stage1": stage1,
             "patch_ids": patch_ids.tolist(),
-            "selected": selected.tolist(),
-            "force": None if first_keep_patch_ids is None else list(map(int, first_keep_patch_ids)),
         }
         prefix_hash = hashlib.sha256(
             json.dumps(prefix_payload, sort_keys=True).encode()

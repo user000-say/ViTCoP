@@ -11,7 +11,8 @@ LOG=$PKG/logs/orchestrate_e019_r2.log
 mkdir -p "$PKG/logs" "$PKG/state" "$PKG/data" "$PKG/models"
 echo $$ > "$PKG/state/orchestrate_e019_r2.pid"
 
-log(){ echo "[$(date -Is)] $*" | tee -a "$LOG"; }
+# Log only to file+stderr so command substitutions never capture log lines.
+log(){ echo "[$(date -Is)] $*" | tee -a "$LOG" >&2; }
 
 wait_e019() {
   log "wait E019 remaining ACC until 144/144 markers"
@@ -75,7 +76,6 @@ wait_gpus_free() {
   while true; do
     g=$(pick_gpu)
     if [[ "$g" -ge 0 ]]; then
-      # require at least 2 free among 0/2/4/6 for collect; prefer 1 for collect
       n=$("$PY" - <<'PY'
 import subprocess
 want={0,2,4,6}
@@ -83,8 +83,11 @@ text=subprocess.check_output(["nvidia-smi","--query-gpu=index,memory.used","--fo
 print(sum(1 for line in text.strip().splitlines() if int(line.split(",")[0]) in want and int(line.split(",")[1])<2000))
 PY
 )
-      log "free_gpus_count=$n"
-      if [[ "$n" -ge 1 ]]; then echo "$g"; return 0; fi
+      log "free_gpus_count=$n pick=$g"
+      if [[ "$n" -ge 1 && "$g" =~ ^[0-9]+$ ]]; then
+        printf '%s\n' "$g"
+        return 0
+      fi
     fi
     sleep 60
   done
