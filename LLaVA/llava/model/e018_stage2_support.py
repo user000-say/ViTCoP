@@ -260,6 +260,8 @@ class Runtime:
         # E020 first-event refine disables E019 final refine on the same request.
         if self.e020 is not None:
             self.e019_hook = None
+        self.e020_3_state = None
+        self._e020_3_pending = None  # (recycled_visual, audit) after compress, inject post-gather
 
     def _read(self, q, k, value, mask):
         s = self.state
@@ -470,7 +472,47 @@ class Runtime:
         if continue_it:
             s.pending.append((endpoint, dropped))
             return hidden
-        return self._drop_ids(hidden, cache, dropped)
+        # E020.3: old selector keep first; recycle active visual rows; inject after gather.
+        recycled = None
+        audit = None
+        if self.e020_3_state is not None and self.cfg.events:
+            first_l = int(self.cfg.events[0][0])
+            last_l = int(self.cfg.events[-1][0])
+            event_tag = "first" if layer == first_l else ("final" if layer == last_l else None)
+            if event_tag is not None:
+                v0, n = s.visual_start, s.visual_ids.numel()
+                active = hidden[0, v0 : v0 + n]
+                qmass = None
+                if self.e020_3_state.config.get("weights") == "existing_question_mass":
+                    qmass = side.get("q_attn")
+                    if qmass is None:
+                        raise RuntimeError("E020.3 query_weights requires q_attn")
+                recycled, _ids, audit = self.e020_3_state.compress(
+                    event_tag, active, keep, existing_question_mass=qmass)
+                if os.environ.get("E020_3_DEBUG", "False") == "True":
+                    row["e020_3"] = {
+                        "event": event_tag,
+                        "off": bool(audit.get("off", True)),
+                        "assigned": int(audit["assigned"].item()) if torch.is_tensor(audit.get("assigned")) else audit.get("assigned"),
+                    }
+        hidden = self._drop_ids(hidden, cache, dropped)
+        if recycled is not None and audit is not None and not audit.get("off", True):
+            import sys
+            from pathlib import Path
+            root = Path("/home/xiangyue/ViTCoP/experiments")
+            if str(root) not in sys.path:
+                sys.path.insert(0, str(root))
+            from e020_3.torch_backend import inject_visual
+            # After gather the image block stays contiguous at visual_start;
+            # visual_positions are original RoPE ids, not compacted row indices.
+            n_keep = int(recycled.shape[0])
+            if s.visual_ids.numel() != n_keep:
+                raise RuntimeError("E020.3 recycled rows disagree with retained visual count")
+            row_pos = torch.arange(
+                s.visual_start, s.visual_start + n_keep,
+                device=hidden.device, dtype=torch.long)
+            hidden = inject_visual(hidden, row_pos, recycled, inplace=True)
+        return hidden
 
     def _tail(self, hidden, cache, start=0, output_hidden_states=False):
         s, history = self.state, () if output_hidden_states else None
@@ -645,6 +687,28 @@ class Runtime:
                     [int(x) for x in force.split(",") if x.strip() != ""],
                     device=ids.device, dtype=ids.dtype)
                 self.state.forced_keeps[int(self.cfg.events[0][0])] = force_ids
+            # E020.3 RecyclingState: entry features = stage1 visual rows at prefill.
+            self.e020_3_state = None
+            if os.environ.get("E020_3_ENABLE", "False") == "True":
+                import json
+                import sys
+                from pathlib import Path
+                root = Path("/home/xiangyue/ViTCoP/experiments")
+                if str(root) not in sys.path:
+                    sys.path.insert(0, str(root))
+                from e020_3.runtime_torch import RecyclingState
+                op = json.loads(os.environ.get("E020_3_OPERATOR", '{"events":[]}'))
+                seed = int(os.environ.get("E020_3_SEED", "0"))
+                source_id = os.environ.get(
+                    "E020_3_SOURCE_ID",
+                    f"{os.environ.get('E014_ARM','arm')}:{int(ids.sum().item()) % 1000003}",
+                )
+                entry = hidden[0, v0 : v0 + n].detach()
+                coords = torch.stack((ids // 24, ids % 24), dim=-1)
+                self.e020_3_state = RecyclingState(
+                    source_id, entry, coords, ids.long(), op, seed=seed,
+                    debug=os.environ.get("E020_3_DEBUG", "False") == "True",
+                )
             hidden, cache, history = self._tail(hidden, cache, output_hidden_states=output_hidden_states)
             # Compatibility counters for the existing lmms-eval audit path.
             m.e001_last_stage1_visual_tokens = int(n)

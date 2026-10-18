@@ -1,0 +1,42 @@
+{
+  "synthetic_only": true,
+  "shapes": [
+    [
+      172,
+      128
+    ],
+    [
+      116,
+      128
+    ],
+    [
+      32,
+      128
+    ]
+  ],
+  "first_audit": {
+    "assigned": 34,
+    "positive_weight_donors": 34,
+    "off": false,
+    "uniform_weight_fallback": false,
+    "changed_anchors": 27,
+    "max_displacement": 5.280622324241061
+  },
+  "final_audit": {
+    "assigned": 29,
+    "positive_weight_donors": 29,
+    "off": false,
+    "uniform_weight_fallback": false,
+    "changed_anchors": 20,
+    "max_displacement": 4.990042641643705
+  },
+  "off_is_bit_exact": true,
+  "work": {
+    "SHIFT": 2284,
+    "SHIFT_K108": 2204,
+    "SHIFT_K100": 2124,
+    "SHIFT_K132": 2444,
+    "FINAL11": 2116,
+    "FINAL15_WMATCH": 2284
+  }
+}

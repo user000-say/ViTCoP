@@ -424,8 +424,55 @@ FULL_E020_LEARNED = sorted(set(FULL_E020_B_LEARNED) | set(FULL_E020_C_TRANSFER))
 E020_MODELS_DIR = Path(__file__).resolve().parent / "experiments" / "e020_continuation" / "models"
 
 
+def _e0203_register():
+    """E020.3 matrix arms: Stage1 BASE/COVER + Stage2 recycle via env overlay."""
+    import json
+
+    matrix_path = Path(__file__).resolve().parent / "experiments" / "e020_3" / "matrix.json"
+    rows = json.loads(matrix_path.read_text())["configs"]
+    arms = {}
+    for cfg in rows:
+        variant = "FIXED_COVER" if cfg["entry"] == "COVER" else "BASE"
+        b = 32 if cfg["entry"] == "COVER" else 0
+        arms[f"E0203_{cfg['id']}"] = (variant, b, 8, 8, 32)
+    return arms
+
+
+ARMS.update(_e0203_register())
+
+
+def _e0203_wave1_arms() -> list[str]:
+    import sys
+
+    exp = Path(__file__).resolve().parent / "experiments"
+    if str(exp) not in sys.path:
+        sys.path.insert(0, str(exp))
+    from e020_3.apply_matrix_arm import wave1_arms
+
+    return wave1_arms()
+
+
+FULL_E0203_WAVE1 = _e0203_wave1_arms()
+FULL_E0203_ALL = sorted(a for a in ARMS if a.startswith("E0203_"))
+
+
 def apply_arm_env(arm: str) -> dict:
     import os
+
+    # Clear prior E020.3 overlay unless this arm re-applies it.
+    if not arm.startswith("E0203_"):
+        for key in list(os.environ):
+            if key.startswith("E020_3_"):
+                os.environ.pop(key, None)
+    else:
+        import sys
+
+        exp = Path(__file__).resolve().parent / "experiments"
+        if str(exp) not in sys.path:
+            sys.path.insert(0, str(exp))
+        from e020_3.apply_matrix_arm import apply_arm as _apply_e0203
+
+        return _apply_e0203(arm)
 
     variant, b, s, d, target_k = ARMS[arm]
     os.environ.update(
@@ -497,7 +544,6 @@ def apply_arm_env(arm: str) -> dict:
     if variant.startswith("E015_") and variant.endswith("_DYNAMIC"):
         if "E015_THRESHOLDS" not in os.environ or not os.environ["E015_THRESHOLDS"].strip():
             import json
-            from pathlib import Path
             p = Path(thr_path)
             if not p.is_file():
                 raise RuntimeError(

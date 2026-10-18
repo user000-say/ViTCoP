@@ -1,0 +1,46 @@
+test_algebraic_first_moment_not_future_attention (test_modules.Modules.test_algebraic_first_moment_not_future_attention) ... ok
+test_all_profile_costs_and_inverse (test_modules.Modules.test_all_profile_costs_and_inverse) ... ok
+test_amdahl_labels_hypothesis_and_accounts_overhead (test_modules.Modules.test_amdahl_labels_hypothesis_and_accounts_overhead) ... ok
+test_bounded_perturbation_formula (test_modules.Modules.test_bounded_perturbation_formula) ... ok
+test_budget_shuffle_is_order_independent (test_modules.Modules.test_budget_shuffle_is_order_independent) ... ok
+test_cache_mapping_and_cross_input_rejection (test_modules.Modules.test_cache_mapping_and_cross_input_rejection) ... ok
+test_capacity_cli_runs_and_labels_diagnostic (test_modules.Modules.test_capacity_cli_runs_and_labels_diagnostic) ... ok
+test_capacity_dp_matches_full_enumeration (test_modules.Modules.test_capacity_dp_matches_full_enumeration) ... ok
+test_capacity_includes_all_middle_option (test_modules.Modules.test_capacity_includes_all_middle_option) ... ok
+test_convex_bounds_random_stress (test_modules.Modules.test_convex_bounds_random_stress) ... ok
+test_disabled_is_bit_exact_and_preserves_keep_order (test_modules.Modules.test_disabled_is_bit_exact_and_preserves_keep_order) ... ok
+test_dtype_preserved_and_source_immutable (test_modules.Modules.test_dtype_preserved_and_source_immutable) ... ok
+test_group_gate_blocks_cross_image_merge (test_modules.Modules.test_group_gate_blocks_cross_image_merge) ... ok
+test_input_seed_is_stable_and_sample_specific (test_modules.Modules.test_input_seed_is_stable_and_sample_specific) ... ok
+test_invalid_inputs (test_modules.Modules.test_invalid_inputs) ... ok
+test_key_energy_is_norm_ordering (test_modules.Modules.test_key_energy_is_norm_ordering) ... ok
+test_known_weighted_cluster_mean (test_modules.Modules.test_known_weighted_cluster_mean) ... ok
+test_matrix_has_unique_meaningful_configurations (test_modules.Modules.test_matrix_has_unique_meaningful_configurations) ... ok
+test_no_donor_returns_exact_gather (test_modules.Modules.test_no_donor_returns_exact_gather) ... ok
+test_norm_restore_and_cancellation_safe (test_modules.Modules.test_norm_restore_and_cancellation_safe) ... ok
+test_off_runtime_requires_no_feature_cache (test_modules.Modules.test_off_runtime_requires_no_feature_cache) ... ok
+test_pareto_requires_real_matching_conditions (test_modules.Modules.test_pareto_requires_real_matching_conditions) ... ok
+test_pooled_qk_matches_explicit_raw_logit_mean (test_modules.Modules.test_pooled_qk_matches_explicit_raw_logit_mean) ... ok
+test_pooled_qk_rejects_unverified_or_future_reader (test_modules.Modules.test_pooled_qk_rejects_unverified_or_future_reader) ... ok
+test_public_package_import (test_modules.Modules.test_public_package_import) ... ok
+test_query_feature_failure_does_not_consume_event (test_modules.Modules.test_query_feature_failure_does_not_consume_event) ... ok
+test_r4_named_metrics_and_inverse (test_modules.Modules.test_r4_named_metrics_and_inverse) ... ok
+test_random_and_semantic_have_same_acceptance_set (test_modules.Modules.test_random_and_semantic_have_same_acceptance_set) ... ok
+test_random_cardinality_identity_and_seed (test_modules.Modules.test_random_cardinality_identity_and_seed) ... ok
+test_random_recipient_supports_no_geometry (test_modules.Modules.test_random_recipient_supports_no_geometry) ... ok
+test_same_cardinality_every_strength (test_modules.Modules.test_same_cardinality_every_strength) ... ok
+test_semantic_gate_rejects_unrelated_state (test_modules.Modules.test_semantic_gate_rejects_unrelated_state) ... ok
+test_spatial_gate_blocks_far_similar_features (test_modules.Modules.test_spatial_gate_blocks_far_similar_features) ... ok
+test_topk_optimal_and_stable (test_modules.Modules.test_topk_optimal_and_stable) ... ok
+test_torch_parity_when_available (test_modules.Modules.test_torch_parity_when_available) ... skipped 'PyTorch absent locally; real CPU/CUDA parity is required on server'
+test_trace_does_not_confuse_layer_indices (test_modules.Modules.test_trace_does_not_confuse_layer_indices) ... ok
+test_two_event_identity_tracking (test_modules.Modules.test_two_event_identity_tracking) ... ok
+test_weight_scale_invariance (test_modules.Modules.test_weight_scale_invariance) ... ok
+test_zero_features_have_finite_affinity_and_no_default_merge (test_modules.Modules.test_zero_features_have_finite_affinity_and_no_default_merge) ... ok
+test_zero_mass_cluster_has_no_update (test_modules.Modules.test_zero_mass_cluster_has_no_update) ... ok
+test_zero_query_weights_are_logged (test_modules.Modules.test_zero_query_weights_are_logged) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 0.236s
+
+OK (skipped=1)

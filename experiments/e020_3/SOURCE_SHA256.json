@@ -1,0 +1,23 @@
+{
+  "CURSOR_HANDOFF_CN.md": "419a071ba39412a0879dc6a73f2913ee04226c5773c326364caefe1cf9f6cd3b",
+  "README_CN.md": "ec8c32b32c9d79c3c3d05a28a8a974de111c61781b9b036b759447a74b6ad44e",
+  "RESEARCH_DECISION_CN.md": "d839aeb11c853e480471c2500c564b9da0cf16bbd3c690b1de7daf082b37d03d",
+  "VALIDATION_CN.md": "fbd250d10ffc6f47b15999b472dc3646b68ba9be7deddab959f116388f614ca4",
+  "__init__.py": "3728aef3513b7ae4bed21822dc9d84ea6985b738e08c50124ca73536e69fc452",
+  "benchmark_cuda.py": "a06c5aaab6d895a35150f8011d0ce853c1e42aaaae7192d101257effc107a78c",
+  "capacity_response.py": "998740438d0a35de8d4080431678ee144f2c2ad4eab45f679c088bd4ecaebc94",
+  "costs.py": "323481168918ec463b29eea070fedd0a83b2b4cf9948ee935435bf523801f349",
+  "demo.py": "4053b71b04334df26b9d4f2ea2b8d64723dfb5fe6562b500f780c642e997094f",
+  "expected_work_profiles.json": "c78f5449f2959f95bb5c328f3dcd277bbe2ff0da8bea546db5c6a4235cbc415f",
+  "fast_selectors.py": "50872f62d816a41b9542f6db31e3db8dd1c3ac49a3426bc36cc1c0040ec6f6b2",
+  "make_matrix.py": "82c62d9a75abccc3b2458445c14be21511eca2370b0a57b5bb17a63fe3e7ee0a",
+  "matrix.json": "697fbb90fa95b6bba90ae4405bda089134046af84a8671b58f9f3818fad48c33",
+  "recycle.py": "94c8e1cb361046b56b9cb2ada237d238f6cb9ecb9ea70c98b69acca9559427af",
+  "runtime.py": "b680ae707030227641e31884d0800445061704430514df504265b7c761d9db39",
+  "runtime_torch.py": "d96d779e935c0d090c46eb0e305c865b5483b0c0c56687f160fad0021f6ccb42",
+  "server_preflight.py": "3e37069a151bb8da425f38f2a16e551efdf0d8b4ad178eb99843d2a2c425b559",
+  "synthetic_pipeline_check.json": "85253453068cff9d3f95d9741ef53cd9e654d59036b6165b69cdba67918e9f86",
+  "test_results.txt": "2a2adfe819b18c0f0b1f318a7ba631aeb8410dd6b41176d1987ffd8e0c9fd0e3",
+  "tests/test_modules.py": "6b04a5b5f2f983d63191047f6ea210af5c8a1d6eac1e2fb6608c44345e377b91",
+  "torch_backend.py": "50ff3f4cd046c3d2d8d03282e379d21029179710e864dea575a68b4e4f56fb7f"
+}

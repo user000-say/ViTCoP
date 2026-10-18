@@ -32,6 +32,8 @@ from e014_arms import (
     FULL_E020_D_CONTROLS,
     FULL_E020_PRIORITY,
     FULL_E020_LEARNED,
+    FULL_E0203_WAVE1,
+    FULL_E0203_ALL,
     FULL_K32,
     FULL_K32_L10,
     FULL_K32_L12,
@@ -83,6 +85,9 @@ PHASE_ARMS = {
     "full_e020_d_controls": FULL_E020_D_CONTROLS,
     "full_e020_priority": FULL_E020_PRIORITY,
     "full_e020_learned": FULL_E020_LEARNED,
+    "full_e0203_wave1": FULL_E0203_WAVE1,
+    "full_e0203_all": FULL_E0203_ALL,
+    "smoke_e0203_wave1": FULL_E0203_WAVE1[:4],
 }
 
 
@@ -136,7 +141,7 @@ def tasks(phase: str, arms: list[str], limit: int, task_names: tuple[str, ...] |
                 "marker": str(output / "metrics.json"),
                 "cmd": (
                     f"export CUDA_VISIBLE_DEVICES=GPU "
-                    f"PYTHONPATH={REPO}:{REPO / 'e020_lib'}:{REPO / 'logs' / 'e014_aee' / 'code_runtime' / 'e020_lib'} "
+                    f"PYTHONPATH={REPO}:{REPO / 'experiments'}:{REPO / 'e020_lib'}:{REPO / 'logs' / 'e014_aee' / 'code_runtime' / 'e020_lib'} "
                     f"PYTHONUNBUFFERED=1 "
                     f"HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false "
                     f"E014_ARM={arm}; "
