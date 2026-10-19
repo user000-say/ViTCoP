@@ -1,0 +1,11 @@
+{
+  "python_files": 38,
+  "python_lines": 4499,
+  "source_expansion_roundtrip": true,
+  "two_budgets_only": true,
+  "core_configs": 10,
+  "optional_configs": 16,
+  "temporary_or_cache_files_included": false,
+  "real_vlm_accuracy_measured": false,
+  "real_gpu_ttft_measured": false
+}

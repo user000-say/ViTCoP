@@ -1,0 +1,10 @@
+---
+description: Fixed experiment GPUs are 0, 2, 4, and 7
+alwaysApply: true
+---
+
+# Experiment GPUs
+
+Use physical GPUs **0, 2, 4, and 7** for this project's jobs. Do not switch the set to 0/2/4/6 or any other quartet.
+
+Before launch, check that those four cards are free. Do not kill processes that belong to someone else. If one of 0/2/4/7 is busy, wait or use only the free cards from this same set. Never place a job on 1, 3, 5, or 6 to replace a busy card from this set.

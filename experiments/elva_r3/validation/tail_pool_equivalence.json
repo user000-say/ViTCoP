@@ -1,0 +1,11 @@
+{
+  "exhaustive_small_cases": 241920,
+  "legacy_pool_size": 172,
+  "tail_capacity": 32,
+  "protected_prefix": 140,
+  "requested": 60,
+  "requested_inside_protected_prefix": true,
+  "condition": "COVER only removes from the bottom b of score TopK and inserts lower-score outside candidates",
+  "conclusion": "same-score top60 after that pool equals plain top60; inspect native code before applying this condition",
+  "pretrained_vlm_claim": false
+}

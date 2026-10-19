@@ -1,0 +1,38 @@
+{
+  "id": "R3_W1024_V3_98c2817407",
+  "phase": "stage1_core",
+  "config_hash": "98c28174078294bcf3482335182dd59c2f706b5db9d5a3b654ee191df9666c72",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "none",
+      "cover": false,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

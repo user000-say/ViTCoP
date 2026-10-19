@@ -1,0 +1,40 @@
+{
+  "id": "R3_W1024_GEO_ONLY_74acae4796",
+  "phase": "stage1_optional",
+  "config_hash": "74acae4796458e9d2ac5e71a494e8d9cf5056cacd4c3af7c1af3a5d8b3c5a0b5",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "protected_coverage",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "pen",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "coverage_slots": 12,
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "R3_W1024_PCOV_pen_B6_e66bf35078",
+  "phase": "stage1_optional",
+  "config_hash": "e66bf35078b0245822868141910a1a25dd942741f44d4d24764e90c4462de142",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "protected_coverage",
+      "cover": true,
+      "beta": null,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "coverage_slots": 6,
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

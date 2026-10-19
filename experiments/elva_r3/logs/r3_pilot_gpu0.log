@@ -1,0 +1,15 @@
+/home/xiangyue/envs/vitcopreback/vitcopreback/lib/python3.10/site-packages/huggingface_hub/file_download.py:949: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+/home/xiangyue/envs/vitcopreback/vitcopreback/lib/python3.10/site-packages/torch/_utils.py:831: UserWarning: TypedStorage is deprecated. It will be removed in the future and UntypedStorage will be the only storage class. This should only matter to you if you are using storages directly.  To access UntypedStorage directly, use tensor.untyped_storage() instead of tensor.storage()
+  return self.fget.__get__(instance, owner)()
+{'id': 'R3_W1024_V1_9d67352508', 'budget': 1024, 'guide': 'pen', 'cover_family': 'none', 'k': 60, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W1024_V2_5cf4017835', 'budget': 1024, 'guide': 'l9', 'cover_family': 'none', 'k': 60, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W1024_V3_98c2817407', 'budget': 1024, 'guide': 'dual', 'cover_family': 'none', 'k': 60, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W1024_V4_PCOV60_B12_08205a4243', 'budget': 1024, 'guide': 'pen', 'cover_family': 'protected_coverage', 'k': 60, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W1024_V5_PCOV60_B12_7b8a41a849', 'budget': 1024, 'guide': 'dual', 'cover_family': 'protected_coverage', 'k': 60, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W2048_V1_a1b13cd438', 'budget': 2048, 'guide': 'pen', 'cover_family': 'none', 'k': 172, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W2048_V2_1e8a47bfcf', 'budget': 2048, 'guide': 'l9', 'cover_family': 'none', 'k': 172, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W2048_V3_ce8b32a841', 'budget': 2048, 'guide': 'dual', 'cover_family': 'none', 'k': 172, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W2048_V4_9523d5cd5b', 'budget': 2048, 'guide': 'pen', 'cover_family': 'legacy_native', 'k': 172, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+{'id': 'R3_W2048_V5_a5a7f59fc3', 'budget': 2048, 'guide': 'dual', 'cover_family': 'legacy_native', 'k': 172, 'n': 16, 'keep_ok': True, 'payload_is_pen_rows': True}
+WROTE /home/xiangyue/ViTCoP/experiments/elva_r3/results/r3_pilot_gpu0.json

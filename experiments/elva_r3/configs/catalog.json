@@ -1,0 +1,1022 @@
+{
+  "schema": "elva_r3_two_budget",
+  "configs": [
+    {
+      "id": "R3_W2048_V1_a1b13cd438",
+      "phase": "stage1_core",
+      "config_hash": "a1b13cd438cd720d99fbf5385cfc4d83148c205046419b98dc3a4d051c5a9c75",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "none",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_V2_1e8a47bfcf",
+      "phase": "stage1_core",
+      "config_hash": "1e8a47bfcf5358964394a2813b09c5c7c3ab1dda16a8f2e707a0732b935e2bb4",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover_family": "none",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_V3_ce8b32a841",
+      "phase": "stage1_core",
+      "config_hash": "ce8b32a8414b184327ab590592165fc52a0c1d1c7b705dd46a63964e50bda1a9",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "none",
+          "cover": false,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_V4_9523d5cd5b",
+      "phase": "stage1_core",
+      "config_hash": "9523d5cd5bb31d26c8be8203f6d8f419632ec0e780b91777b0fbcd38530c96ab",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_V5_a5a7f59fc3",
+      "phase": "stage1_core",
+      "config_hash": "a5a7f59fc376c3e8b7d2b954a5d8deeee5c40367b850ba5f96e29ea16b09a5fd",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_B025_f3b7435fb2",
+      "phase": "stage1_optional",
+      "config_hash": "f3b7435fb2ddb0824cdca95eab7a7e6be77937b19fe535959fc884a89542a0a0",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": 0.25,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_B075_0fd593d82b",
+      "phase": "stage1_optional",
+      "config_hash": "0fd593d82b19f8df70324a42f33a4dd30a6f1eb0f973a6c1dbbf4fd1a10a184a",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": 0.75,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_L9_COVER_2c992e7604",
+      "phase": "stage1_optional",
+      "config_hash": "2c992e76043635cf523ff17555fcb9aa866d688929f1eb85810d5061205753fa",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_GEO_ONLY_8237edb015",
+      "phase": "stage1_optional",
+      "config_hash": "8237edb015b2ec0e85f7900983278e36bdc07f4bb091ae0d0d507f8657c6bae1",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "pen",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W2048_SCORE_ONLY_84c11957a2",
+      "phase": "stage1_optional",
+      "config_hash": "84c11957a2460b407a66fe82415f36099014f7ccd6da82cdac8518841cbb62b5",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 2048,
+        "schedule": {
+          "counts": [
+            172,
+            90,
+            32
+          ],
+          "lengths": [
+            4,
+            8,
+            20
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "legacy_native",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "dual",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_V1_9d67352508",
+      "phase": "stage1_core",
+      "config_hash": "9d673525081e706a9c1863f00c798e9f913ecc31ddd92a9a3af355b5d30f2bd7",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "none",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_V2_5cf4017835",
+      "phase": "stage1_core",
+      "config_hash": "5cf401783531360b7a712ead77a9252008a283fbecf33a765920deec18c013d6",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover_family": "none",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_V3_98c2817407",
+      "phase": "stage1_core",
+      "config_hash": "98c28174078294bcf3482335182dd59c2f706b5db9d5a3b654ee191df9666c72",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "none",
+          "cover": false,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_V4_PCOV60_B12_08205a4243",
+      "phase": "stage1_core",
+      "config_hash": "08205a4243b966a7ec6f44661310c7294072cf966df1cafc89ba910b2c0cdc6b",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_V5_PCOV60_B12_7b8a41a849",
+      "phase": "stage1_core",
+      "config_hash": "7b8a41a8490e78ac8c54278a17786d53b2d660cfa9cd847fd5fb0bf47040e19e",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_B025_a9a0169f58",
+      "phase": "stage1_optional",
+      "config_hash": "a9a0169f58e3568171d6d5ef1701b8c3444a77d534952dfe37cf72e996fc750f",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.25,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_B075_92dd7eed73",
+      "phase": "stage1_optional",
+      "config_hash": "92dd7eed731da7e06da962082db1c6990900511df7674fa6a02b69f7971e8f9e",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.75,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_L9_COVER_e800323b44",
+      "phase": "stage1_optional",
+      "config_hash": "e800323b44fdc4225a2710ac8ff00c5f1fd1cdbaea1966aed38cfda9e99f9fca",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_GEO_ONLY_74acae4796",
+      "phase": "stage1_optional",
+      "config_hash": "74acae4796458e9d2ac5e71a494e8d9cf5056cacd4c3af7c1af3a5d8b3c5a0b5",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "pen",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_SCORE_ONLY_cc4a6c89eb",
+      "phase": "stage1_optional",
+      "config_hash": "cc4a6c89eb7585a1045ae98b760d9f4d50620695a27700fce452eea082692f7c",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "dual",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 12,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_PCOV_pen_B6_e66bf35078",
+      "phase": "stage1_optional",
+      "config_hash": "e66bf35078b0245822868141910a1a25dd942741f44d4d24764e90c4462de142",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 6,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_PCOV_pen_B18_7e650abbc8",
+      "phase": "stage1_optional",
+      "config_hash": "7e650abbc832fdceca0cab40aba700e42c5483a7c03ecdd3c5faa11afa3e3336",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 18,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_COVER_PORT60_pen_B11_00103ac260",
+      "phase": "stage1_optional",
+      "config_hash": "00103ac260332c7f5d1e339cc3c713f6f40eb4a28f59991b142a060b5139ef90",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover_family": "parameterized_native",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_PCOV_dual_B6_bfb88205bd",
+      "phase": "stage1_optional",
+      "config_hash": "bfb88205bdcff5139d80e671ab59efe07a2350f85dfb1c33b3e77195c5983d83",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 6,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_PCOV_dual_B18_6033753924",
+      "phase": "stage1_optional",
+      "config_hash": "6033753924811e588714674bb952b5a4cff7f3c30a52d7a3bdae7a90833d6d25",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "protected_coverage",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE",
+          "coverage_slots": 18,
+          "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    },
+    {
+      "id": "R3_W1024_COVER_PORT60_dual_B11_de1e6d08ff",
+      "phase": "stage1_optional",
+      "config_hash": "de1e6d08ff265f6a8f38f7129040cb12113db2297d8dc627964bb8dc6dcbb8a6",
+      "method": {
+        "original_tokens": 576,
+        "depth": 32,
+        "budget": 1024,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover_family": "parameterized_native",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN"
+        },
+        "cache_mode": "native",
+        "merge": false,
+        "learned": false
+      }
+    }
+  ],
+  "budgets": [
+    2048,
+    1024
+  ],
+  "default_phase": "stage1_core",
+  "low_cover": "protected_coverage",
+  "include_pool_diagnostic": false
+}

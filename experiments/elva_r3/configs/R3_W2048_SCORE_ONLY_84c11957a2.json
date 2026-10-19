@@ -1,0 +1,38 @@
+{
+  "id": "R3_W2048_SCORE_ONLY_84c11957a2",
+  "phase": "stage1_optional",
+  "config_hash": "84c11957a2460b407a66fe82415f36099014f7ccd6da82cdac8518841cbb62b5",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        90,
+        32
+      ],
+      "lengths": [
+        4,
+        8,
+        20
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "dual",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

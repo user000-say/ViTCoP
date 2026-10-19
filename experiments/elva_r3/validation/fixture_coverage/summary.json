@@ -1,0 +1,49 @@
+{
+  "fixture": true,
+  "rows": [
+    {
+      "slots": 0,
+      "images": 2,
+      "saliency_mass": 0.1957860067486763,
+      "saliency_mass_loss_vs_topk": 7.450580596923828e-09,
+      "weighted_coverage": 0.9279058575630188,
+      "coverage_gain_vs_topk": 0.0,
+      "uniform_coverage": 0.9237423837184906,
+      "actual_changed": 0.0,
+      "zero_change_images": 2
+    },
+    {
+      "slots": 6,
+      "images": 2,
+      "saliency_mass": 0.1873701885342598,
+      "saliency_mass_loss_vs_topk": 0.0084158256649971,
+      "weighted_coverage": 0.9390144646167755,
+      "coverage_gain_vs_topk": 0.011108607053756714,
+      "uniform_coverage": 0.9361121356487274,
+      "actual_changed": 6.0,
+      "zero_change_images": 0
+    },
+    {
+      "slots": 12,
+      "images": 2,
+      "saliency_mass": 0.17924056947231293,
+      "saliency_mass_loss_vs_topk": 0.01654544472694397,
+      "weighted_coverage": 0.9440374374389648,
+      "coverage_gain_vs_topk": 0.016131579875946045,
+      "uniform_coverage": 0.9413841068744659,
+      "actual_changed": 12.0,
+      "zero_change_images": 0
+    },
+    {
+      "slots": 18,
+      "images": 2,
+      "saliency_mass": 0.1722043752670288,
+      "saliency_mass_loss_vs_topk": 0.02358163893222809,
+      "weighted_coverage": 0.9470826089382172,
+      "coverage_gain_vs_topk": 0.019176751375198364,
+      "uniform_coverage": 0.9446806311607361,
+      "actual_changed": 16.0,
+      "zero_change_images": 0
+    }
+  ]
+}

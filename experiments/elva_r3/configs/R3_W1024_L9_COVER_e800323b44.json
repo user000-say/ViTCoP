@@ -1,0 +1,40 @@
+{
+  "id": "R3_W1024_L9_COVER_e800323b44",
+  "phase": "stage1_optional",
+  "config_hash": "e800323b44fdc4225a2710ac8ff00c5f1fd1cdbaea1966aed38cfda9e99f9fca",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "l9",
+      "cover_family": "protected_coverage",
+      "cover": true,
+      "beta": null,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "coverage_slots": 12,
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

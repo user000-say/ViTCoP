@@ -1,0 +1,23 @@
+{
+  "r3_tests": 48,
+  "r3_passed": 48,
+  "r3_failures": 0,
+  "r3_errors": 0,
+  "r3_skipped": 0,
+  "r2_regression_exit": 0,
+  "core_configs": 10,
+  "core_four_task_jobs": 40,
+  "r2_tests": 48,
+  "r2_skipped": 0,
+  "r2_passed": 48,
+  "optional_configs": 16,
+  "budgets": [
+    2048,
+    1024
+  ],
+  "high_entry": 172,
+  "low_entry": 60,
+  "fixture_jobs_only": true,
+  "pretrained_vlm_accuracy_run": false,
+  "gpu_ttft_run": false
+}

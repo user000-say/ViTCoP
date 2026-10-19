@@ -1,0 +1,38 @@
+{
+  "id": "R3_W1024_COVER_PORT60_pen_B11_00103ac260",
+  "phase": "stage1_optional",
+  "config_hash": "00103ac260332c7f5d1e339cc3c713f6f40eb4a28f59991b142a060b5139ef90",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "parameterized_native",
+      "cover": true,
+      "beta": null,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

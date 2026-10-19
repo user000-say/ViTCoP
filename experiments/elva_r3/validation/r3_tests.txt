@@ -1,0 +1,53 @@
+test_hooks_removed_on_forward_failure_and_training_rejected (test_clip_stage1.CLIPHookTests) ... ok
+test_pen_only_has_no_early_capture_and_bad_payload_is_rejected (test_clip_stage1.CLIPHookTests) ... ok
+test_single_forward_source_scores_raw_payload_and_real_projector (test_clip_stage1.CLIPHookTests) ... ok
+test_invalid_actual_change_and_nonfinite_values_rejected (test_coverage_report.ReportTests) ... ok
+test_mismatched_panel_source_or_guide_and_duplicate_images_rejected (test_coverage_report.ReportTests) ... ok
+test_paired_summaries_and_fixture_guard (test_coverage_report.ReportTests) ... ok
+test_budget_extremes_and_determinism (test_low_budget_cover.CoverageTests) ... ok
+test_full_pool_can_select_low_rank_evidence (test_low_budget_cover.CoverageTests) ... ok
+test_invalid_inputs_fail (test_low_budget_cover.CoverageTests) ... ok
+test_only_one_bounded_coverage_knob_and_explicit_optional_controls (test_low_budget_cover.CoverageTests) ... ok
+test_protected_core_and_actual_additions_reach_output (test_low_budget_cover.CoverageTests) ... ok
+test_real_callback_raw_pen_ids_and_not_original_cover_audit (test_low_budget_cover.CoverageTests) ... ok
+test_refinement_keeps_winning_beta_and_preserves_winner_in_stage2 (test_low_budget_cover.CoverageTests) ... ok
+test_zero_affinity_ties_are_stable_topk_and_no_forced_change (test_low_budget_cover.CoverageTests) ... ok
+test_numpy_parity_and_no_payload_change (test_low_budget_cover.CoverageTorchTests) ... ok
+test_no_unconditional_stage2_or_learning_and_explicit_pool_identity (test_r3.BudgetTests) ... ok
+test_only_two_budgets_and_exact_inverse (test_r3.BudgetTests) ... ok
+test_changed_native_source_is_blocked (test_r3.CoverTests) ... ok
+test_cover_can_legitimately_return_same_ids_as_topk (test_r3.CoverTests) ... ok
+test_explicit_pool_route_calls172_then_returns60 (test_r3.CoverTests) ... ok
+test_fixed172_cannot_claim_direct_k60 (test_r3.CoverTests) ... ok
+test_missing_cover_is_an_error_not_topk (test_r3.CoverTests) ... ok
+test_native172_calls_source_and_preserves_raw_pen_payload (test_r3.CoverTests) ... ok
+test_tail_replacement_then_trim_can_be_identically_topk60 (test_r3.CoverTests) ... ok
+test_complete_core_freeze_and_changed_results_invalidate (test_r3.GPUAndWorkflowTests) ... ok
+test_completed_optional_beta_can_be_frozen_after_core (test_r3.GPUAndWorkflowTests) ... ok
+test_fake_cover_fallback_is_rejected (test_r3.GPUAndWorkflowTests) ... ok
+test_fixture_and_missing_native_capacity_are_blocked (test_r3.GPUAndWorkflowTests) ... ok
+test_global_limit_precedes_sharding_and_image_dedup (test_r3.GPUAndWorkflowTests) ... ok
+test_gpu_mapping_unknown_or_na_is_not_assumed_free (test_r3.GPUAndWorkflowTests) ... ok
+test_inherited_gpu_allocation_is_respected (test_r3.GPUAndWorkflowTests) ... ok
+test_lease_is_exclusive_and_released (test_r3.GPUAndWorkflowTests) ... ok
+test_per_sample_result_proof_rejects_clip_pilot_and_wrong_trace (test_r3.GPUAndWorkflowTests) ... ok
+test_queue_runs_resumes_and_rejects_stage2_before_freeze (test_r3.GPUAndWorkflowTests) ... ok
+test_zero_utilization_is_not_an_empty_gpu (test_r3.GPUAndWorkflowTests) ... ok
+test_native_and_pooled_wrapper_preserve_torch_payload_and_ids (test_r3.TorchCoverTests) ... ok
+test_all_and_disjoint_selected_sets (test_visual_audit.VisualAuditTests) ... ok
+test_annotated_region_geometry_is_not_attention_coverage (test_visual_audit.VisualAuditTests) ... ok
+test_duplicate_unknown_ids_mismatched_k_and_nan_rejected (test_visual_audit.VisualAuditTests) ... ok
+test_fixture_source_binding_and_repeated_question_guard (test_visual_audit.VisualAuditTests) ... ok
+test_heatmaps_have_actual_scalar_mapped_faces (test_visual_audit.VisualAuditTests) ... ok
+test_image_coordinates_and_cross_crop_overlap_rejected (test_visual_audit.VisualAuditTests) ... ok
+test_original_ids_are_not_row_indices (test_visual_audit.VisualAuditTests) ... ok
+test_random_supplement_cannot_resurrect_ids_or_change_k (test_visual_audit.VisualAuditTests) ... ok
+test_random_supplement_matches_changed_count_and_common_support (test_visual_audit.VisualAuditTests) ... ok
+test_random_supplement_no_change_and_full_keep (test_visual_audit.VisualAuditTests) ... ok
+test_real_layout_shared_scale_and_sweep_gate (test_visual_audit.VisualAuditTests) ... ok
+test_zero_mass_and_uniform_scores_render_without_division (test_visual_audit.VisualAuditTests) ... ok
+
+----------------------------------------------------------------------
+Ran 48 tests in 7.914s
+
+OK

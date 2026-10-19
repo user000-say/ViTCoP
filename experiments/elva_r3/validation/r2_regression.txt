@@ -1,0 +1,53 @@
+test_invalid_schedules (test_elva.BudgetTests) ... ok
+test_naive_request_is_over_budget (test_elva.BudgetTests) ... ok
+test_requested_plateau_and_inverse (test_elva.BudgetTests) ... ok
+test_square_cost_is_not_work (test_elva.BudgetTests) ... ok
+test_suffix_choice_abstains_and_rejects_cost_mismatch (test_elva.BudgetTests) ... ok
+test_suffix_solver_against_exhaustive_integer_enumeration (test_elva.BudgetTests) ... ok
+test_trace_records_before_block (test_elva.BudgetTests) ... ok
+test_trace_rejects_resurrection_and_shortfall (test_elva.BudgetTests) ... ok
+test_actual_causal_decoder_branches_and_work (test_elva.CounterfactualTests) ... ok
+test_aliasing_fork_is_rejected (test_elva.CounterfactualTests) ... ok
+test_answer_nll_shift_not_same_position (test_elva.CounterfactualTests) ... ok
+test_invalid_sets_and_unknown_group (test_elva.CounterfactualTests) ... ok
+test_repeated_noop_actual_forwards_are_identical (test_elva.CounterfactualTests) ... ok
+test_shared_prefix_immutable (test_elva.CounterfactualTests) ... ok
+test_support_alignment_changes_cache_estimuand (test_elva.CounterfactualTests) ... ok
+test_swap_sign_reverses (test_elva.CounterfactualTests) ... ok
+test_alignment_nonfinite_and_duplicate_keep_rejected (test_elva.EvidenceTests) ... ok
+test_attention_mask_padding_extremes (test_elva.EvidenceTests) ... ok
+test_causal_normalization_all_visible_keys (test_elva.EvidenceTests) ... ok
+test_compaction_keeps_text_and_original_positions (test_elva.EvidenceTests) ... ok
+test_dual_endpoints_match_single_layer (test_elva.EvidenceTests) ... ok
+test_dual_kernel_is_weighted_cosine (test_elva.EvidenceTests) ... ok
+test_geometry_and_score_factor_ablation (test_elva.EvidenceTests) ... ok
+test_mutating_callback_cannot_change_original_payload (test_elva.EvidenceTests) ... ok
+test_original_cover_required (test_elva.EvidenceTests) ... ok
+test_payload_and_projector_width_protected (test_elva.EvidenceTests) ... ok
+test_rank_ties_and_history_original_id_alignment (test_elva.EvidenceTests) ... ok
+test_tiny_normalization_matches_documented_epsilon (test_elva.EvidenceTests) ... ok
+test_zero_vector_finite_and_frozen_ids (test_elva.EvidenceTests) ... ok
+test_capture_completed_block_indices_and_removal (test_elva.IntegrationAndCatalogTests) ... ok
+test_capture_invalid_layer_rejected (test_elva.IntegrationAndCatalogTests) ... ok
+test_catalog_distinct_and_all_budgets_exact (test_elva.IntegrationAndCatalogTests) ... ok
+test_conditional_queue_requires_new_real_evidence (test_elva.IntegrationAndCatalogTests) ... ok
+test_first_token_callback_timing_and_missing_token (test_elva.IntegrationAndCatalogTests) ... ok
+test_native_runtime_callbacks_and_positions (test_elva.IntegrationAndCatalogTests) ... ok
+test_queue_runs_resumes_and_recovers_bad_result (test_elva.IntegrationAndCatalogTests) ... ok
+test_result_reuse_requires_trace_and_provenance (test_elva.IntegrationAndCatalogTests) ... ok
+test_runtime_rejects_backend_change (test_elva.IntegrationAndCatalogTests) ... ok
+test_timeout_process_group_cleanup (test_elva.IntegrationAndCatalogTests) ... ok
+test_candidate_max_calibration_and_all_noop (test_elva.LearningTests) ... ok
+test_fit_save_load_and_prediction (test_elva.LearningTests) ... ok
+test_grouped_split_stable (test_elva.LearningTests) ... ok
+test_old_schema_future_features_and_fixture_rejected (test_elva.LearningTests) ... ok
+test_pair_features_context_and_antisymmetry (test_elva.LearningTests) ... ok
+test_policy_collects_real_fixture_forwards_and_blocks_training (test_elva.LearningTests) ... ok
+test_shared_policy_catalog_no_resurrection_and_limit (test_elva.LearningTests) ... ok
+test_validation_images_cannot_enter_fit (test_elva.LearningTests) ... ok
+test_numpy_parity_and_payload_protection (test_torch_parity.TorchParityTests) ... ok
+
+----------------------------------------------------------------------
+Ran 48 tests in 3.003s
+
+OK

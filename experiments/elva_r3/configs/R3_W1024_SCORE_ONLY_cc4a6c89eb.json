@@ -1,0 +1,40 @@
+{
+  "id": "R3_W1024_SCORE_ONLY_cc4a6c89eb",
+  "phase": "stage1_optional",
+  "config_hash": "cc4a6c89eb7585a1045ae98b760d9f4d50620695a27700fce452eea082692f7c",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        60,
+        28,
+        12
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "protected_coverage",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "dual",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "coverage_slots": 12,
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

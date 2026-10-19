@@ -1,0 +1,1 @@
+["python", "bound_task_runner.py", "--config", "{config}", "--binding", "{binding}", "--task", "{task}", "--out", "{out}", "--run-key", "{run_key}"]

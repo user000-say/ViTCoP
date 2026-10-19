@@ -1,0 +1,98 @@
+{
+  "fixture": false,
+  "project_root": "",
+  "source_commit": "",
+  "model_sha": "",
+  "processor_sha": "",
+  "tokenizer_sha": "",
+  "prompt_sha": "",
+  "dataset_sha": "",
+  "scorer_sha": "",
+  "backend": "",
+  "cache_mode": "native",
+  "original_tokens": 576,
+  "depth": 32,
+  "task_entrypoint": "",
+  "task_source_files": {},
+  "task_samples": {
+    "GQA": 0,
+    "POPE": 0,
+    "MME": 0,
+    "MMBench": 0
+  },
+  "native_selectors": {
+    "Q_ATTN": null,
+    "RDRIFT_NATIVE": null,
+    "QED_NATIVE": null,
+    "ATTN_COVER_NATIVE": null
+  },
+  "preflight": {
+    "off_path_equal": false,
+    "clip_layers_checked": false,
+    "pen_payload_equal": false,
+    "positions_and_kv_checked": false,
+    "trace_verified": {
+      "2048": false,
+      "1024": false
+    }
+  },
+  "native_cover": {
+    "legacy_native": {
+      "family": "legacy_native",
+      "entrypoint": "",
+      "supported_k": [
+        172
+      ],
+      "replacement_slots": {
+        "172": 32
+      },
+      "source_files": {},
+      "legacy172_parity_verified": false
+    },
+    "parameterized_native": {
+      "family": "parameterized_native",
+      "entrypoint": "",
+      "supported_k": [
+        60,
+        172
+      ],
+      "replacement_slots": {
+        "172": 32,
+        "60": 11
+      },
+      "source_files": {},
+      "legacy172_parity_verified": false
+    },
+    "legacy_pool172_then_topk": {
+      "family": "legacy_pool172_then_topk",
+      "entrypoint": "",
+      "supported_k": [
+        60
+      ],
+      "replacement_slots": {
+        "172": 32
+      },
+      "source_files": {},
+      "legacy172_parity_verified": false
+    },
+    "protected_coverage": {
+      "family": "protected_coverage",
+      "entrypoint": "elva.low_budget_cover:callback",
+      "supported_k": [
+        60
+      ],
+      "replacement_slots": {
+        "60": 12
+      },
+      "allowed_slots": [
+        6,
+        12,
+        18
+      ],
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1",
+      "source_files": {},
+      "implementation_parity_verified": false
+    }
+  },
+  "normalized_metric_reference": {}
+}

@@ -1,0 +1,38 @@
+{
+  "id": "R3_W2048_GEO_ONLY_8237edb015",
+  "phase": "stage1_optional",
+  "config_hash": "8237edb015b2ec0e85f7900983278e36bdc07f4bb091ae0d0d507f8657c6bae1",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        90,
+        32
+      ],
+      "lengths": [
+        4,
+        8,
+        20
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "pen",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
