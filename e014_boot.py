@@ -56,6 +56,14 @@ def apply_profile(*args, **kwargs):
     _ORIG(*args, **kwargs)
     arm = os.environ["E014_ARM"]
     meta = apply_arm_env(arm)
+    if os.environ.get("ELVA_R3_CONFIG"):
+        import sys
+        from pathlib import Path as _ElvaPath
+        _elva = str(_ElvaPath("/home/xiangyue/ViTCoP/experiments/elva_r3"))
+        if _elva not in sys.path:
+            sys.path.insert(0, _elva)
+        from apply_llava import overlay
+        meta = overlay(meta)
     import e006_span
 
     e006_span.STAGE1_VISUAL = meta["visual"]

@@ -726,7 +726,18 @@ class Runtime:
                 "e018_events": list(self.cfg.events),
                 "e018_final_k": int(self.state.visual_ids.numel()),
                 "e018_token_work": int(sum(self.state.per_layer_n)),
+                "e018_pre_block_counts": [int(x) for x in self.state.per_layer_n],
             }
+            audit_dir = os.environ.get("ELVA_R3_AUDIT_DIR", "")
+            if os.environ.get("ELVA_R3_ENABLE") == "True" and audit_dir:
+                os.makedirs(audit_dir, exist_ok=True)
+                counts = ",".join(str(int(x)) for x in m.e006_last["e018_pre_block_counts"])
+                events = ",".join("%d:%d" % (int(a), int(b)) for a, b in m.e006_last["e018_events"])
+                with open(os.path.join(audit_dir, "trace.jsonl"), "a", encoding="utf-8") as handle:
+                    handle.write(
+                        '{"counts":[%s],"final_k":%d,"events":"%s"}\n'
+                        % (counts, int(m.e006_last["e018_final_k"]), events)
+                    )
         else:
             s = self.state
             if s is None or hidden.shape[1] != 1:

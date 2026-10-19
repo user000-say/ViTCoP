@@ -1499,6 +1499,11 @@ class LlamaModel(LlamaPreTrainedModel):
                 e014_registered_budget_point = (
                     self.e014_enable and self.e006_target_k in {64, 32}
                 )
+                elva_registered_budget_point = (
+                    os.environ.get("ELVA_R3_ENABLE") == "True"
+                    and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
+                    and self.e006_target_k in {12, 32}
+                )
                 # E016: final K may be 16 when an explicit decreasing cascade is set.
                 e016_registered_budget_point = (
                     bool(self.e016_cascade)
@@ -1510,6 +1515,7 @@ class LlamaModel(LlamaPreTrainedModel):
                     e006_registered_fallback or e007_registered_budget_point
                     or e014_registered_budget_point
                     or e016_registered_budget_point
+                    or elva_registered_budget_point
                 ):
                     raise ValueError(
                         f"[E006/E007] E006_TARGET_K must be 96, or 64 as either "
@@ -1545,6 +1551,9 @@ class LlamaModel(LlamaPreTrainedModel):
             allowed_k = {96, 64, 32} if self.e014_enable else {96, 64}
             if self.e016_cascade:
                 allowed_k = allowed_k | {16, 32, 64, 96}
+            if (os.environ.get("ELVA_R3_ENABLE") == "True"
+                    and int(os.environ.get("ELVA_R3_FINAL_K", "-1")) in {12, 32}):
+                allowed_k = allowed_k | {12, 32}
             if self.e006_target_k not in allowed_k:
                 raise ValueError(
                     f"[E007] target K invalid for this registered experiment: "
@@ -1670,7 +1679,12 @@ class LlamaModel(LlamaPreTrainedModel):
                 self.e014_allow_qattn and self.e006_selector == 'Q_ATTN'
             ):
                 raise ValueError('[E014] E006_SELECTOR must be QED; Q_ATTN requires E014_ALLOW_QATTN=True')
-            if self.e006_target_k not in {96, 64, 32} and not (
+            elva_final = (
+                os.environ.get("ELVA_R3_ENABLE") == "True"
+                and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
+                and self.e006_target_k in {12, 32}
+            )
+            if self.e006_target_k not in {96, 64, 32} and not elva_final and not (
                 self.e016_cascade and self.e006_target_k == int(self.e016_cascade[-1][1])
                 and self.e006_target_k in {16, 32, 64, 96}
             ):
@@ -1720,9 +1734,14 @@ class LlamaModel(LlamaPreTrainedModel):
             if self.e008_enable or self.e009_enable:
                 errors.append("E008/E009 context variants are unsupported")
             # E014-AEE-BEGIN: scoped E012 K64/K32 extension; E016 adds cascade finals
+            elva_final = (
+                os.environ.get("ELVA_R3_ENABLE") == "True"
+                and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
+                and self.e006_target_k in {12, 32}
+            )
             if self.e006_target_k != 96 and not (
                 self.e014_enable and self.e006_target_k in {64, 32}
-            ) and not (
+            ) and not elva_final and not (
                 self.e016_cascade and self.e006_target_k == int(self.e016_cascade[-1][1])
             ):
                 errors.append("E012 frozen K96; only E014 additionally permits K64/K32")

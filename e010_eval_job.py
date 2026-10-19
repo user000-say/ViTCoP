@@ -134,6 +134,10 @@ def _audit(raw_model) -> None:
     patch._JOB_AUDIT["attention_backend"] = "sdpa"
     patch._JOB_AUDIT["stage3_policy"] = str(core.stage3_policy)
     patch._JOB_AUDIT["e010_qed_layer"] = qed_layer
+    if last.get("e018_pre_block_counts"):
+        patch._JOB_AUDIT["e018_pre_block_counts"] = list(last["e018_pre_block_counts"])
+        patch._JOB_AUDIT["e018_events"] = last.get("e018_events")
+        patch._JOB_AUDIT["e018_final_k"] = last.get("e018_final_k")
 
 
 patch._audit = _audit

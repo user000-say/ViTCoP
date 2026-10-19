@@ -1260,6 +1260,26 @@ class CLIPVisionTower(nn.Module):
         if self.e010.enabled and self.e010.analysis_full576:
             hidden_states_filtered = tokens_0.unsqueeze(0)
             K = int(tokens_0.shape[0])
+        elif self.e014_enable and os.environ.get("ELVA_R3_ENABLE") == "True":
+            import sys
+            from pathlib import Path as _ElvaPath
+            _elva_root = str(_ElvaPath("/home/xiangyue/ViTCoP/experiments/elva_r3"))
+            if _elva_root not in sys.path:
+                sys.path.insert(0, _elva_root)
+            from llava_stage1 import select_existing_forward
+            selected, _elva_audit = select_existing_forward(image_forward_outs, tokens_0)
+            hidden_states_filtered = tokens_0.index_select(0, selected).unsqueeze(0)
+            final_idx = selected
+            K = int(hidden_states_filtered.shape[1])
+            if K != int(os.environ["ELVA_R3_ENTRY_K"]):
+                raise RuntimeError(f"[ELVA_R3] Stage1 returned {K}, expected entry K")
+            self.e014_last = {
+                "selected_ids": selected.detach(),
+                "original_core_ids": selected.detach(),
+                "added_ids": selected.new_empty(0),
+                "removed_ids": selected.new_empty(0),
+                "stats": {"budget": int(os.environ.get("ELVA_R3_SLOTS", "0"))},
+            }
         elif self.e014_enable:
             # E014-AEE-BEGIN: 172 eligible patches, exchange in CLIP coordinates
             # E014: no transient tokens. Every selected patch is QED-eligible.
