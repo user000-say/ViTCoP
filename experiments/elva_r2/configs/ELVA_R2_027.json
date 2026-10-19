@@ -1,0 +1,40 @@
+{
+  "id": "ELVA_R2_027",
+  "block": "A_stage1",
+  "priority": 0,
+  "config_hash": "89b5542c8f8f54eb3bd29fa434ca6e3c8af496eec58e96a7143dd1dba672eaf8",
+  "method": {
+    "budget": 1536,
+    "original_tokens": 576,
+    "depth": 32,
+    "schedule": {
+      "counts": [
+        90,
+        42,
+        18
+      ],
+      "lengths": [
+        10,
+        10,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover": false,
+      "beta": null,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN",
+      "needs_l9_features": false,
+      "seed": null
+    },
+    "merge": false,
+    "cache_mode": "native",
+    "conditional": false
+  }
+}

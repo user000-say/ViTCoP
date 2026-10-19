@@ -1,0 +1,40 @@
+{
+  "id": "ELVA_R2_043",
+  "block": "H_stage1_transfer",
+  "priority": 2,
+  "config_hash": "a74fb3d11a6ad51e57277f855a7041f2a7495919d82fc13e5413cc6b317df1ab",
+  "method": {
+    "budget": 1536,
+    "original_tokens": 576,
+    "depth": 32,
+    "schedule": {
+      "counts": [
+        96,
+        64,
+        32
+      ],
+      "lengths": [
+        3,
+        10,
+        19
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT_NATIVE",
+      "later_selector": "Q_ATTN",
+      "needs_l9_features": false,
+      "seed": null
+    },
+    "merge": false,
+    "cache_mode": "native",
+    "conditional": false
+  }
+}

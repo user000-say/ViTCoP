@@ -1,0 +1,458 @@
+{
+  "CHANGELOG_CN.md": {
+    "sha256": "cab9c7410d1e0cd7c0c2f7d09552a778cdcde4941e48c96f5b35d6bbf7d5a78f",
+    "bytes": 1962
+  },
+  "CURSOR_HANDOFF_CN.md": {
+    "sha256": "991183d9161301737779a35383b578952c9066cdecd0806710bc30501ba16ee1",
+    "bytes": 16388
+  },
+  "ENVIRONMENT_LOCAL.json": {
+    "sha256": "f8637aab6911abdbe6a8597863572d08e902ab655d7f5dc41f50f8fd1eb535e2",
+    "bytes": 104
+  },
+  "FULL_SOURCE.md": {
+    "sha256": "6f0fbce972873059ef533e9c06de0347d4cacd0e0d2d7b5fc3dcc1f24dc409b2",
+    "bytes": 100214
+  },
+  "HISTORICAL_RESULTS.csv": {
+    "sha256": "4f7392fdab1a68715b8b73040a96ddbf4d4b56f16fa255bafc3cfbf9edc1291a",
+    "bytes": 8506
+  },
+  "README.md": {
+    "sha256": "4aa8ccb683bc21dac4ccc885600c7f7928c0e0acda46c55ea73795caad149f48",
+    "bytes": 3083
+  },
+  "RECOVERY_NOTE_CN.md": {
+    "sha256": "f666636f2ce1309365e53370c10fde0bc795a8d5c9955add34e70da47fd4da50",
+    "bytes": 3592
+  },
+  "RESEARCH_DECISION_CN.md": {
+    "sha256": "bb84ffcba5ad73e20f8b5d016e7a859bd30bef1e47aa0fae5e565f8e2e666ee3",
+    "bytes": 8978
+  },
+  "SOURCE_SHA256.json": {
+    "sha256": "62405f8afd513ffe6054f3d173b97a2d4497424495a4d03657a444589767ebfd",
+    "bytes": 1452
+  },
+  "configs/ELVA_R2_000.json": {
+    "sha256": "0f95474a12b6fc2fbf5ec2cec7912791c1b5a59260a8250442ca8cbd10635c86",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_001.json": {
+    "sha256": "ce5002924945cd54ef67f809b63b0d588cf2a78449e4791eb54c704850faa0a0",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_002.json": {
+    "sha256": "635680c0480eb90993d63270e40580fba121b90577d5a26a2502f2856979cabd",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_003.json": {
+    "sha256": "175c3ce78a12248a779d10503976eaca65a75b09442045816d4dec8ba337cddd",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_004.json": {
+    "sha256": "2b6e2fdf960824bb2e49f83e89517b4f74eacb387c7b9092394d069fb46a7ae9",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_005.json": {
+    "sha256": "fda5a61324d1e37dd497e70fccd563f12e1921a72ceb09436039557ad2d875fb",
+    "bytes": 793
+  },
+  "configs/ELVA_R2_006.json": {
+    "sha256": "c32a87fdad3f4596ed13d0ef8f7d9b249728ed6e988531011f952ee198ea2d04",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_007.json": {
+    "sha256": "b730ce45d676fc73e5cdf953e50cab02edacbd9799f9c454c7a3b0589a213439",
+    "bytes": 791
+  },
+  "configs/ELVA_R2_008.json": {
+    "sha256": "7b3aa6ab027b1d46d28e498133d9d5acdfac08ca083fa82af6e6e1b39124f2fd",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_009.json": {
+    "sha256": "b87f30ee28e43dd89e118b4b15ee5f52a64e36e757bab5fb9811d3935fea83e4",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_010.json": {
+    "sha256": "7b0eaff860a03342a8690d028af96abe718a0a9d453eb3148ffe69b8081e2353",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_011.json": {
+    "sha256": "e01d3e8e927a0be1337956bd834c0e508a83a9eb94e0b91e08748c076074453b",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_012.json": {
+    "sha256": "4cd40a6b8a338f26198b224a0a02b69bab02b3a87f60e250c6e722003ffd5613",
+    "bytes": 805
+  },
+  "configs/ELVA_R2_013.json": {
+    "sha256": "168975a191cbde6191a053e63d1fd76a4e347e9ee15f0cf3fd5a138fbe40a40b",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_014.json": {
+    "sha256": "38cbfdca7ddaf4c8a2ab30f61247fa7f289ffb144e2ea7c6d0d49d0177afe14e",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_015.json": {
+    "sha256": "5205d6a826ce90b2b33896535717d6af866f4b1ed534d2eaf54ddf95464fdd14",
+    "bytes": 797
+  },
+  "configs/ELVA_R2_016.json": {
+    "sha256": "1b10d3a5ab2d8a8041ca255b47d9f7dfe310204c508305ca58dbb031c37b1445",
+    "bytes": 799
+  },
+  "configs/ELVA_R2_017.json": {
+    "sha256": "a13ff358c337c32a46c9130fdda9bccffc55804dd1b20cf7fd1d82c180b5ec25",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_018.json": {
+    "sha256": "7ea6516cf1e879ad911d3e56400e1db9b38789b2c90ec0363ce1dca106231d3a",
+    "bytes": 797
+  },
+  "configs/ELVA_R2_019.json": {
+    "sha256": "c9b93adf94f6ff971622f94c187eb56de9f4104085be91ea7334042ab97a3c97",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_020.json": {
+    "sha256": "498482b1906f3b03b6152c11eb8743a14900c3cae705bf3b1926fbc3dc49084a",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_021.json": {
+    "sha256": "624ce0fbc099312e4ef8a99feb78cf1a9d5e81db3595700ec433884fee18244d",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_022.json": {
+    "sha256": "7632eb0872485541b42c74b2369ee83f5530e977aa536a08b2d06f8a94cc7a4d",
+    "bytes": 783
+  },
+  "configs/ELVA_R2_023.json": {
+    "sha256": "9c0d47c2a824df51994f74ee80af90d2bb0e66d195eb5733c254ed9f52d84eea",
+    "bytes": 783
+  },
+  "configs/ELVA_R2_024.json": {
+    "sha256": "d98535bbee9389181c092b52e625aa99128092a20439c1eebf359d082e1a8752",
+    "bytes": 801
+  },
+  "configs/ELVA_R2_025.json": {
+    "sha256": "ad715b153320dedcb2f747816b427d33283e7f90ca59a6665d9c9e0231c6c93d",
+    "bytes": 804
+  },
+  "configs/ELVA_R2_026.json": {
+    "sha256": "08b5759a2b5efba1c80d0bbafa86965d710b66613974e41d3a8d89873bc639eb",
+    "bytes": 803
+  },
+  "configs/ELVA_R2_027.json": {
+    "sha256": "d1a9b9f00672513585babe523cf751f78b331aba3d028bb6c2c7fbdf2033c1d2",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_028.json": {
+    "sha256": "0a3f8fa7d08e7ed6227e85e0fcddcf4a94139885174d52a7debac5a6834b93e0",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_029.json": {
+    "sha256": "ed9fa08a94cb7e851701cfe5efc4be10f63d5350f6f9955ed5af885987e7b281",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_030.json": {
+    "sha256": "a9e20be9e51fc87224bc776b900e2743c8e9e42a70d25b2abb520a60c0dc8d9c",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_031.json": {
+    "sha256": "ce4920fa538eecec13be1bde47891cfce8a55aee090cfbb6155161d6c9ddc481",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_032.json": {
+    "sha256": "7bbc25a125461e8c61b637fc9ea18751263a423df96ee165768e6ea6667970ea",
+    "bytes": 793
+  },
+  "configs/ELVA_R2_033.json": {
+    "sha256": "e09f19126f576478c239098f3b0423f22be1c4e360dfd3931923cd5d4c386cb4",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_034.json": {
+    "sha256": "8a01934383f7ed4f5c071283fe2181c2711c48b78b2f4f58799eb269e0c16d71",
+    "bytes": 791
+  },
+  "configs/ELVA_R2_035.json": {
+    "sha256": "da5a8b408bbe881e6b962b466f4555c655a3e6160182fd070e0e57cd88dab290",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_036.json": {
+    "sha256": "1f7274d407d9f90a695f553bd5b50541dcdae8fcfeb13da5914d65a54a35c8f2",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_037.json": {
+    "sha256": "f649665ce227bf373e2c39b45164163e96096ddb4fca0b90f4cae772cea8ce24",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_038.json": {
+    "sha256": "6c0a015af71eec7b0126efb68717f569db498c2ed54402e35a95a9a124e21d2c",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_039.json": {
+    "sha256": "402b3caf1b375ebffd57909fbf888f2825304faa24f00de771106b3221d1c274",
+    "bytes": 805
+  },
+  "configs/ELVA_R2_040.json": {
+    "sha256": "411756b8aa1e8a492575d1ee6129d513e776b15f738eb84b9a4e60e45a9dbcc1",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_041.json": {
+    "sha256": "4d2c021efb42c070770236dc1681c257e9bb00623504058d3fb260929ea92656",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_042.json": {
+    "sha256": "a43869c59f83bb02156d6565739081add7588178fa0b6747c8cd5094143e4b51",
+    "bytes": 797
+  },
+  "configs/ELVA_R2_043.json": {
+    "sha256": "3869ee83a1bb1e6c339dee2ec063d46b0eb4afa67e4c0d79e495b557c77ac7b4",
+    "bytes": 799
+  },
+  "configs/ELVA_R2_044.json": {
+    "sha256": "1522a88003cbbd3f6df829e2b7369c4ac40f4c7dbc849291d3fd962cfeeb9b96",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_045.json": {
+    "sha256": "ec96d254faabe22aa592d76db50e2d482a136ee753b4725328f15b91b94905da",
+    "bytes": 797
+  },
+  "configs/ELVA_R2_046.json": {
+    "sha256": "adab4778f80a6570aaae2c682f810e5158c672bf02070e75c14737010f84ccca",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_047.json": {
+    "sha256": "9c184b455a179148ab8318808bd1321c12ae7901ed8f8555e053b99f315d7904",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_048.json": {
+    "sha256": "4938250716d83d37f324a150bf8e0b544fe9fd6348604bcbfc692b3c5be849e2",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_049.json": {
+    "sha256": "98dd0eda86d848839d751ae7b272a67a9432c67d1ad72ae544398ae30babdebd",
+    "bytes": 783
+  },
+  "configs/ELVA_R2_050.json": {
+    "sha256": "9f4d70fe3a9ab0a03850b67c1e674095c4b3a2a65dad9ae50a00898d3b0937c3",
+    "bytes": 783
+  },
+  "configs/ELVA_R2_051.json": {
+    "sha256": "85d6e898886ed5f06fac4fb6a4cdaff37f512968874381f547a230b1c9985db1",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_052.json": {
+    "sha256": "04899fa2c4c64b4c20f73115c7146da4d0f85d96fcc9f2664b98427e317e4a3f",
+    "bytes": 790
+  },
+  "configs/ELVA_R2_053.json": {
+    "sha256": "049b29e60cfa4a039ba656b9456b8db1f7cb4927b7110df5f4f4d9257be5a7b6",
+    "bytes": 801
+  },
+  "configs/ELVA_R2_054.json": {
+    "sha256": "1983411017664548d998f2bb7d4ede3e048f6022cc26c3fbdfc17022cd43be30",
+    "bytes": 804
+  },
+  "configs/ELVA_R2_055.json": {
+    "sha256": "aa128dadd97ae6a1aeff86b2684ae46575f7073af2658e2591603300db81a48c",
+    "bytes": 803
+  },
+  "configs/ELVA_R2_056.json": {
+    "sha256": "9e8766d02e8a1dab21d0e59c812129ff4e89fd5248007d4a79e55cb816debbeb",
+    "bytes": 786
+  },
+  "configs/ELVA_R2_057.json": {
+    "sha256": "14794db84572fe5f42cbb9814520d35f76a984925e409f6cf6422f21b3f47cce",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_058.json": {
+    "sha256": "ed64a04090eedd063f96050539702332b7f8378fb0ebfebd2ef0604488f063c8",
+    "bytes": 786
+  },
+  "configs/ELVA_R2_059.json": {
+    "sha256": "efca9f5698b1f019f650053ddf1ce2468caec98802d33c6da4a64d75e6fa8774",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_060.json": {
+    "sha256": "4de33b0b211d60228f00a48604cb64aa56fc7ce2ff3cc9629486a27ca7bbe9f7",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_061.json": {
+    "sha256": "967649650c7fe7c5192d8c0cdfe69413fadb2df56323eb951d61633499470b12",
+    "bytes": 794
+  },
+  "configs/ELVA_R2_062.json": {
+    "sha256": "d6a7db57560feb2bf865298494eb4d5764575b761086cb661b579564411e48d4",
+    "bytes": 785
+  },
+  "configs/ELVA_R2_063.json": {
+    "sha256": "bac30b0bd1975372d81c9a0af555f2af0277c657dd6b45594d02eea0b94cafb5",
+    "bytes": 792
+  },
+  "configs/ELVA_R2_064.json": {
+    "sha256": "a434c1534aff9ca30cce7e73d0a2ad4afa557faaa0bd3f1ec0c081f0bf41b74e",
+    "bytes": 786
+  },
+  "configs/ELVA_R2_065.json": {
+    "sha256": "1d29a1153f0733f496f622138a44a6285efcbbb4fb30868f888c08c097946488",
+    "bytes": 793
+  },
+  "configs/ELVA_R2_066.json": {
+    "sha256": "e34d5cd66205b2a6ae5e2154cb45f269c5c865709075c9630c467eda668db2d4",
+    "bytes": 786
+  },
+  "configs/ELVA_R2_067.json": {
+    "sha256": "576b214c57ff5e4accfa1fb98e2c24d93f1b9c16b4ebd5c1210f9c2e123d3864",
+    "bytes": 793
+  },
+  "configs/ELVA_R2_068.json": {
+    "sha256": "33efcdcefc90f6fba313624f853a3312f00953011d596929ae86caaa481c4779",
+    "bytes": 806
+  },
+  "configs/ELVA_R2_069.json": {
+    "sha256": "5d0241012f692cfc29bde760308f7acb3e0f13675e9467b5bffb2d311612cade",
+    "bytes": 791
+  },
+  "configs/ELVA_R2_070.json": {
+    "sha256": "319d724b267d1bf902e6417998ea59d6e7c592325564ca61cbf9849ccf231a99",
+    "bytes": 793
+  },
+  "configs/ELVA_R2_071.json": {
+    "sha256": "1ebf0e0dffe6e448790d5102360a206abfb383955a02c3e377f5ccf2cde519c7",
+    "bytes": 798
+  },
+  "configs/ELVA_R2_072.json": {
+    "sha256": "6d7007f7217cdeda5164f427fd9c6906424bc738b51ced8756a3779f6c3b7e4d",
+    "bytes": 800
+  },
+  "configs/ELVA_R2_073.json": {
+    "sha256": "195f9aeddf1715228042276da5836ca0dbe751de450337e1723cded5cf51b647",
+    "bytes": 791
+  },
+  "configs/ELVA_R2_074.json": {
+    "sha256": "d04353bf8af666249118121a1681722ad8cfc2d07df4bae4c64db686a7357879",
+    "bytes": 798
+  },
+  "configs/ELVA_R2_075.json": {
+    "sha256": "8d43929765b8ecb140812a786fcabaf7ad31d7dcb1fcb5b2d9ab8f9d2121c639",
+    "bytes": 795
+  },
+  "configs/ELVA_R2_076.json": {
+    "sha256": "03a1d3d15a49fc62a897c85f38a21528cf64a39c93660adb8158d5ee7a0ad694",
+    "bytes": 795
+  },
+  "configs/ELVA_R2_077.json": {
+    "sha256": "b744c8277d5cebc4939b7f55cbb8f5eff8f8fa87fbbf33a6c1ff2820d15a3be2",
+    "bytes": 795
+  },
+  "configs/ELVA_R2_078.json": {
+    "sha256": "7a4a8bd0e698a30d9f252ef2fe1cf181d01a37d3f3d8902444acd11e985b7ef9",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_079.json": {
+    "sha256": "ff7f2b89129bdd2e3ee8b5d87bccc4b9b15b8430d03a7440a88037acb3ff2472",
+    "bytes": 784
+  },
+  "configs/ELVA_R2_080.json": {
+    "sha256": "f2377a51d5da96ecaa918f5dafbed2eb3cdfced88717ab8338d5df2bab559630",
+    "bytes": 802
+  },
+  "configs/ELVA_R2_081.json": {
+    "sha256": "2a6ffeb3f1b591d28a1f98934a83eeb73572d64e495324a0565ba80c20a13396",
+    "bytes": 805
+  },
+  "configs/ELVA_R2_082.json": {
+    "sha256": "2235a5c30a7a2869ef21400610bd4fd1a0d4b4601feddc365030e21e06d5100b",
+    "bytes": 804
+  },
+  "configs/catalog.json": {
+    "sha256": "ef58101add9680b6995a99f24230d1c15e14e6c6146fa90282a24c22f8f5f5a4",
+    "bytes": 79605
+  },
+  "elva/__init__.py": {
+    "sha256": "c18d728828c9de01c9f23b1bd4e4e60cbb3a6a6aa5a3b1271e9e13db3fd2a56c",
+    "bytes": 144
+  },
+  "elva/benchmark.py": {
+    "sha256": "ffb01483d54f9dffa0a19f53383c6275df819d78aa6206b2aa2fc3a44f68cd81",
+    "bytes": 2268
+  },
+  "elva/budget.py": {
+    "sha256": "ff2831cf2bd68ceec1899d83f87812cf9f5027233e7b3324e9b5394073536f83",
+    "bytes": 5995
+  },
+  "elva/capture.py": {
+    "sha256": "aa7991ac4f6b6b6dab1bbfb13a6036545270c8990589942024e5a67e6751cf22",
+    "bytes": 2025
+  },
+  "elva/counterfactual.py": {
+    "sha256": "1f6d092a57593cf909f3a41db8ce2e8345e70ff4f585933f9866bc5cdce62fc6",
+    "bytes": 7228
+  },
+  "elva/evidence.py": {
+    "sha256": "4383f02f50063cf7466c3cd19fa20d5d3b83e0a712218acfcd89df7f97d978d4",
+    "bytes": 7244
+  },
+  "elva/integration.py": {
+    "sha256": "e6face2184924c96dd4e4d5b003c911f82610abeaa0844bb4de58bb6c720d053",
+    "bytes": 2776
+  },
+  "elva/learning.py": {
+    "sha256": "c399b0aca041c9b4683996be80641fd9657ab858799f8c31ac13553a5ee254a1",
+    "bytes": 7473
+  },
+  "elva/policy.py": {
+    "sha256": "82611baf96ca01c0d17da639d278a0870aea43cd301274ea29fe2324b3d91758",
+    "bytes": 7132
+  },
+  "elva/torch_ops.py": {
+    "sha256": "c0b20e07f681453834361c49265d8fb984d0afe4be496925a90eda88136bb99a",
+    "bytes": 5131
+  },
+  "elva/toy_adapter.py": {
+    "sha256": "2bc97d9dcf0470895ca0afc143a484e89654a1eb35cbb00fd39935bd3c9fdadd",
+    "bytes": 5087
+  },
+  "make_catalog.py": {
+    "sha256": "794b740ccef988182525f5763e8be911f2477f988252f169ec238b6f7c062fee",
+    "bytes": 4710
+  },
+  "run_queue.py": {
+    "sha256": "d5ee86916388976bb5ebf40dd6ccbdceb05d7382037d98bddeaa36079cdeaa18",
+    "bytes": 8370
+  },
+  "tests/test_elva.py": {
+    "sha256": "1b242201f6b9837f33f8dd10caae9e8d24f6804e683a51ce92de46f6d400ad53",
+    "bytes": 26675
+  },
+  "tests/test_torch_parity.py": {
+    "sha256": "b0378a536b44edbdc63dfa47f41ba12993f646a8090612f675f4e5f3f7bd171d",
+    "bytes": 1725
+  },
+  "validation/budgets.json": {
+    "sha256": "7aab88e0294f1b896251453bf85a2117536385d458af82fee9bb69ace975a52e",
+    "bytes": 60471
+  },
+  "validation/feasible_suffixes.json": {
+    "sha256": "a8807b9fb3b1fe200a1ebc9fbb46ba258d9e47e6544c1e6bd08b8c2b5b477902",
+    "bytes": 432
+  },
+  "validation/summary.json": {
+    "sha256": "281bcb9b306f67a08e527d8422e60e1696dc01f00132593af8ee62a1fa74a289",
+    "bytes": 1081
+  },
+  "validation/tests.txt": {
+    "sha256": "cd8b14fb5dd58bd46c19145a7205674996c1274b82c9e51e0659e34021e42c93",
+    "bytes": 5939
+  },
+  "validation/toy_swaps_FIXTURE_ONLY.json": {
+    "sha256": "3f2f5ea039d2dff7f4a815f80db9ed40aea26be8c19eb7ea07d3a92de069f012",
+    "bytes": 8756
+  },
+  "verify.py": {
+    "sha256": "0a21d1ef87a945a596725bf3240fb299fe49832ee9b914cc2ffa532ad8781605",
+    "bytes": 4126
+  }
+}

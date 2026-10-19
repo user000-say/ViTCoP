@@ -1,0 +1,6 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "torch_installed": false,
+  "cpu_reference_only": true
+}

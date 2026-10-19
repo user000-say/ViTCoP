@@ -1,0 +1,33 @@
+{
+  "python": "3.10.20",
+  "tests": 48,
+  "passed": 48,
+  "skipped": [],
+  "failures": 0,
+  "errors": 0,
+  "exhaustive_suffix_catalog_cases": 1000,
+  "config_count": 83,
+  "blocks": {
+    "A_stage1": 15,
+    "B_schedule": 21,
+    "C_legacy_recipe": 6,
+    "D_selector": 6,
+    "J_stage1_stage2_bridge": 3,
+    "H_stage1_transfer": 6,
+    "E_random_final": 9,
+    "F_beta": 6,
+    "I_stage1_factor": 2,
+    "G_conditional": 9
+  },
+  "unconditional": 74,
+  "conditional": 9,
+  "four_task_capacity": 332,
+  "formal_two_methods_three_budgets_nine_tasks": 54,
+  "dense_nine_tasks_separate": 9,
+  "old_shift_work": 2284,
+  "old_shift_compression_percent": 87.60850694444444,
+  "pretrained_vlm_accuracy_run": false,
+  "gpu_ttft_run": false,
+  "torch_path_runtime_verified": false,
+  "note": "CPU reference, finite catalog and random causal decoder only; no pretrained-model claims"
+}

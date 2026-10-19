@@ -1,0 +1,38 @@
+[
+  {
+    "counts": [
+      32,
+      12
+    ],
+    "lengths": [
+      8,
+      14
+    ],
+    "remaining_work": 424,
+    "total_work": 1024
+  },
+  {
+    "counts": [
+      28,
+      12
+    ],
+    "lengths": [
+      10,
+      12
+    ],
+    "remaining_work": 424,
+    "total_work": 1024
+  },
+  {
+    "counts": [
+      22,
+      12
+    ],
+    "lengths": [
+      16,
+      6
+    ],
+    "remaining_work": 424,
+    "total_work": 1024
+  }
+]

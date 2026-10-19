@@ -1,0 +1,24 @@
+{
+  "tower": "openai/clip-vit-large-patch14-336",
+  "num_hidden_layers": 24,
+  "l9_hidden_index": 9,
+  "pen_hidden_index": 23,
+  "tokens": 576,
+  "k": 90,
+  "image": "/home/xiangyue/ViTCoP/experiments/e014_latency_fair_256/panel/images/GQA/0000_201030233.jpg",
+  "payload_is_pen": {
+    "V1_pen": true,
+    "V2_l9": true,
+    "V3_dual": true,
+    "V4_pen_cover_proxy": true,
+    "V5_dual_cover_proxy": true
+  },
+  "overlap_vs_V1": {
+    "V1_pen": 1.0,
+    "V2_l9": 0.25555555555555554,
+    "V3_dual": 0.7888888888888889,
+    "V4_pen_cover_proxy": 1.0,
+    "V5_dual_cover_proxy": 0.7888888888888889
+  },
+  "note": "V4/V5 here are score geometry only; original COVER callback is not yet bound."
+}

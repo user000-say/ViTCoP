@@ -1,0 +1,18 @@
+{
+  "elva/__init__.py": "c18d728828c9de01c9f23b1bd4e4e60cbb3a6a6aa5a3b1271e9e13db3fd2a56c",
+  "elva/benchmark.py": "ffb01483d54f9dffa0a19f53383c6275df819d78aa6206b2aa2fc3a44f68cd81",
+  "elva/budget.py": "ff2831cf2bd68ceec1899d83f87812cf9f5027233e7b3324e9b5394073536f83",
+  "elva/capture.py": "aa7991ac4f6b6b6dab1bbfb13a6036545270c8990589942024e5a67e6751cf22",
+  "elva/counterfactual.py": "1f6d092a57593cf909f3a41db8ce2e8345e70ff4f585933f9866bc5cdce62fc6",
+  "elva/evidence.py": "4383f02f50063cf7466c3cd19fa20d5d3b83e0a712218acfcd89df7f97d978d4",
+  "elva/integration.py": "e6face2184924c96dd4e4d5b003c911f82610abeaa0844bb4de58bb6c720d053",
+  "elva/learning.py": "c399b0aca041c9b4683996be80641fd9657ab858799f8c31ac13553a5ee254a1",
+  "elva/policy.py": "82611baf96ca01c0d17da639d278a0870aea43cd301274ea29fe2324b3d91758",
+  "elva/torch_ops.py": "c0b20e07f681453834361c49265d8fb984d0afe4be496925a90eda88136bb99a",
+  "elva/toy_adapter.py": "2bc97d9dcf0470895ca0afc143a484e89654a1eb35cbb00fd39935bd3c9fdadd",
+  "make_catalog.py": "794b740ccef988182525f5763e8be911f2477f988252f169ec238b6f7c062fee",
+  "run_queue.py": "d5ee86916388976bb5ebf40dd6ccbdceb05d7382037d98bddeaa36079cdeaa18",
+  "tests/test_elva.py": "1b242201f6b9837f33f8dd10caae9e8d24f6804e683a51ce92de46f6d400ad53",
+  "tests/test_torch_parity.py": "b0378a536b44edbdc63dfa47f41ba12993f646a8090612f675f4e5f3f7bd171d",
+  "verify.py": "0a21d1ef87a945a596725bf3240fb299fe49832ee9b914cc2ffa532ad8781605"
+}

@@ -1,0 +1,3343 @@
+{
+  "summary": {
+    "configs": 83,
+    "blocks": {
+      "A_stage1": 15,
+      "B_schedule": 21,
+      "C_legacy_recipe": 6,
+      "D_selector": 6,
+      "J_stage1_stage2_bridge": 3,
+      "H_stage1_transfer": 6,
+      "E_random_final": 9,
+      "F_beta": 6,
+      "I_stage1_factor": 2,
+      "G_conditional": 9
+    },
+    "unconditional": 74,
+    "conditional": 9,
+    "four_task_jobs": 332,
+    "note": "development capacity, not completed experiments; native source aliases must be deduplicated"
+  },
+  "configs": [
+    {
+      "id": "ELVA_R2_027",
+      "block": "A_stage1",
+      "priority": 0,
+      "config_hash": "89b5542c8f8f54eb3bd29fa434ca6e3c8af496eec58e96a7143dd1dba672eaf8",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_028",
+      "block": "A_stage1",
+      "priority": 0,
+      "config_hash": "60b8d3b39a7c889ae465b9d93611be2879b27204f8af5ce9ea39076af4f36e8f",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_029",
+      "block": "A_stage1",
+      "priority": 0,
+      "config_hash": "f2afb2f444e1a484daf4e661581a89db5578afc4f9e7808164c1229780489b43",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": false,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_030",
+      "block": "A_stage1",
+      "priority": 0,
+      "config_hash": "a6426c9c80b4b0250d93be3453dc6de24c9df738c0af85aa078645841356b03f",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_031",
+      "block": "A_stage1",
+      "priority": 0,
+      "config_hash": "744389ccd1566cc8c72e724fd26c99ece7d525a695688c346721d2ab4947417a",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_000",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "9791715f40324b8d77ff8bc1eeb492e230db8c03b015b648deaf8ea891bcc42b",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_001",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "9c9656cce6fe8144b067a5220229950784e3a4cc65ca54f7ef79f70b6f2d6147",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_002",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "d886873d728e1372609e4295e02259ba61dcb692cea5d0821705ce76305d151a",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": false,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_003",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "8a2e506ff4cbf761e6afc3c4339fe92129a2ff4c9ddfadc8968753fa04e0e795",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_004",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "53afff2bb64f71dad86b63755847c9232cd52f291c76b40d687b96bafdce791c",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_005",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "320adc440505e38bf5df945beb2c87ebd78442fe1ae587bafab849b014bcf8b0",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_006",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "b9e0565c8b8a61dd14e127a2afde56194ed4423e8863dcb9c7d8b684a349bccf",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_007",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "24f3a82d23370a462017dede2818ea22723d397151c69a04606375035b932f8f",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_008",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "8290bf8b62773452a7d5853e7e758c12f6749b1be16bfd90c717ecffdd2f9dcf",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            32,
+            12
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_009",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "1ae47f537a4dc4e612bd31ae5fda9ace016633701db5dd7e7a3ca6e7f3775014",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            32,
+            12
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_010",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "d384c000d3e76de0446199f51b35995f4dd27af0536aa93dc7e6e906f3c6aaf3",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            20,
+            12
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_011",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "e1498fb74e547482523db47ee1fc30e8653800268f579dfa7107ed33cf170e4c",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            20,
+            12
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_013",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "77fdb0611faf369f5bf7743578be3cb7f7ab0e0d2ff73a08c973f21546547a19",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            80,
+            48,
+            16
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_015",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "c6e1ac3f4c8934af36498a754fb8b441de936cf63b434619e554f204bc5eb7c8",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            80,
+            48,
+            16
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_017",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "600bcdc298dfe9c0f7cc24dfa74a715c08fc5ab54e9e419670bf46ffd9c9da40",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "QED_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_018",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "de0b21d7f1a982acae63e5caa7808df1a252a4950fe29793afa9d132cb7d1951",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "ATTN_COVER_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_032",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "563d21109902df2547ced894c6d16a48cb7bd1f2be9e0347e64b807934bf3e54",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_033",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "c4693af50c249ae799499a1597e04f0c2157a66402acbc008d3b78d49b9efff5",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_034",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "80abb467a7e8e406a767d0cc0cea0f7085907998eb9eee443923c85da1a42f9f",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_035",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "ff1c71b949ada33e47b6d5ab575a1e2ce332a1ee4c98908e99b6d28c4fcc98a8",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            48,
+            18
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_036",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "616ff67688fcf799b9794e5ff5a22e87834957fb05e41863bbfad3124c05f63a",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            48,
+            18
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_037",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "f0489ef7abcc28f53dcafa105c740a99167a148de89f4964ca33418100aae8e3",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            30,
+            18
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_038",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "0d1feef7ce602919e135adcd1214d21a22bafa7a2074e7ea01677862350cf3a2",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            30,
+            18
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_040",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "aa097f79eb1d659f5267885fbe78ba45cc09bc1b49dbe9d6334d3d269ae861c3",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            96,
+            64,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_042",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "e55ae31c7ed436afb56bc0cb4001bb4b91022c9174f23e49990f5d74d33f49ff",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            96,
+            64,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_044",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "71f362048206dcf7b62b226d6292086aa8937c96d9e8351bfac819615392a7b8",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "QED_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_045",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "c3d4329681194716978b79710c2101effaa23841fa9430d95cc69f563988efe5",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "ATTN_COVER_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_056",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "abeed146b2c1632754fca802bd1ae06cca046ea52f36ff79b0d4dfedfa258bbe",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_057",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "cb02000e511753329820f9cfe82291409aa55547008617fc5457bd03be9c68c3",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "l9",
+          "cover": false,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_058",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "6f9cfe8fb7e337266650d855574239e9afeb0d18a5e78b160e26cb3ec8a25d7b",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": false,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_059",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "1c01494faa1c2648bf91a1a99887d72890178da2989983eaa16fb65600d8794c",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_060",
+      "block": "A_stage1",
+      "priority": 1,
+      "config_hash": "9a1ad9059c9f21c4605e9d41be83c2c1d28157346b78a83504a1c06cdb33a72d",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_061",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "0373b65c2579ef681a6bc568bb052314735e78e7028ddcd07278ae11a34e664f",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_062",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "2d0aed1baa51b21bf985cd00d51d802455d1d80ff985157c5f3585a2eb363168",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_063",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "ee43502adc31b38daf14e76cfbad82420a0e0734003c42bdcdbfe5b489e41ad3",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            8,
+            16,
+            8
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_064",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "087255a21d3e167eae63111ddb1b4ac83f12935ff245026fa756a76e6e3eb04b",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            64,
+            24
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_065",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "e9ab7efb15b7b7b6d8a1448b1b34ecdc553795576517f8ca8e2ea0cd171ae695",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            64,
+            24
+          ],
+          "lengths": [
+            10,
+            8,
+            14
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_066",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "bae1c95f63822fcf393d783451f099be52a7146614acc357c606efe39dac6261",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            40,
+            24
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_067",
+      "block": "B_schedule",
+      "priority": 1,
+      "config_hash": "6a3c0583a2f29e6e71da32cc0e0f08bee1383acff2a60317f208c5c55b2e31af",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            40,
+            24
+          ],
+          "lengths": [
+            12,
+            8,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_069",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "0eb14373f10af2734b7d699c6904bb1b4e66bf18ef020ddeb9c1463db21b00eb",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            160,
+            96,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_071",
+      "block": "C_legacy_recipe",
+      "priority": 1,
+      "config_hash": "abbcf5986dc45f32f85e046de6b54bcff7d2d3023d1852a45c90eb78da173bb1",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            160,
+            96,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_073",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "448397a41c8becf55295eb88c7671a2ac3a79160a3c63758f2a0ef763273bddc",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "QED_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_074",
+      "block": "D_selector",
+      "priority": 1,
+      "config_hash": "553ac0a9f44f7a71e50672ca550e8e1af30e50b013db022e1b04da4caef49999",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "ATTN_COVER_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_012",
+      "block": "J_stage1_stage2_bridge",
+      "priority": 2,
+      "config_hash": "67b531aeb0c872c8c937f825bc2583c026cfa1417a4f5b45a052721463a951d5",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_014",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "644d42d3c89354792063d2d7a674dff30d3c3710708fd03443642b2957e459ea",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            80,
+            48,
+            16
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_016",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "362d553aa4ca18ebe914370da357acd387d85122e7b8f5d338b6b716e9082e45",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            80,
+            48,
+            16
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_019",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "53e324d8fb90b052e1918a8f251a235d8a388ec1524314e6f6b1df807f0caf6d",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 11
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_020",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "c40b7d4d8acfbf1742a7518c29605b71c0616d2491e7052e4bd72087a3a65909",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 23
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_021",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "73495c66a7118278bc900fedd2a9e10e3ecb1c4e1bf0a34ba6f98b5a22d1c889",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 47
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_022",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "fa3c85b24ca2c3f349b73e6c1f2cea8b5ef85669fa2a68037bdfe7f8c1609dd4",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.25,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_023",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "d38de79af380070d4b9d16cff79171a07d6703a8501143439c3f877d7f6123f8",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.75,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_039",
+      "block": "J_stage1_stage2_bridge",
+      "priority": 2,
+      "config_hash": "c67306dd05acaa2bc668f209bbfad7b2c6d23cdefb0035b4a93bb7c5c0ba4796",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_041",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "42fa0f1bd1c5ec845137e3b4d25ae10ba672315bb862869b72c807d764076ddd",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            96,
+            64,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_043",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "a74fb3d11a6ad51e57277f855a7041f2a7495919d82fc13e5413cc6b317df1ab",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            96,
+            64,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_046",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "1f1f35a4e8adfff04ae69e690a069d0ca4e66f0814c09a935fcd4c1345a9aac9",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 11
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_047",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "81c0aca1d2dfe45023525812ba7392e5d36a7945dc77607a1d14432dc57c6b0e",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 23
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_048",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "424eea4abd24a0f350a3547b5ab3bcb7c08ef3e2d8a1d9a9b4469efbf480d9ac",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 47
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_049",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "f2d41eeaf107ae6ffd6415e55ffd1bfdfe972c2d9bf7593920cbb8d832f17044",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.25,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_050",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "91a8c136712ed1234159cf56ecc6cf9e9d594d692a260add8d75f9f68024af4d",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.75,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_051",
+      "block": "I_stage1_factor",
+      "priority": 2,
+      "config_hash": "641e3a0f8d6c74d9277eeca5b63d84007e1cbc8bafeda989874253127c3b96da",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "pen",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_052",
+      "block": "I_stage1_factor",
+      "priority": 2,
+      "config_hash": "e4a73c9375084b4c1819a164f48440ff05b55caa7b72b581ff483889cb1cf446",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "dual",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_068",
+      "block": "J_stage1_stage2_bridge",
+      "priority": 2,
+      "config_hash": "7eb7e4c4fc2119b06aeff393ae7ca7f60b70d27d51f9010ca63077523224b293",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_070",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "646a62e886e8102eb41410e55e4dcf6596170a3e2341aaf2930d0a1fa31c0aff",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            160,
+            96,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_072",
+      "block": "H_stage1_transfer",
+      "priority": 2,
+      "config_hash": "980110de25166ceab959ab8c32733f0624c2a3caa9f3bf51d74a100f2abdacba",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            160,
+            96,
+            32
+          ],
+          "lengths": [
+            3,
+            10,
+            19
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.5,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "RDRIFT_NATIVE",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_075",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "435e25ba047bad10de591f19b1d23141fb0449e325c65e652f45f3b15b2bed4b",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 11
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_076",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "97f2f9b08fba823f5c1c023e0fc570ceacd2b9775a6ba47c78abf9b27f9e44d8",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 23
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_077",
+      "block": "E_random_final",
+      "priority": 2,
+      "config_hash": "4a9bd69fcb02b22df4731bbd2f05a4543883a66c604f38b136054da92fe11693",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "RANDOM_FINAL",
+          "needs_l9_features": false,
+          "seed": 47
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_078",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "05a22ab3fc574ef8f1e10ed04fd08b877e553957121b5247e5566f27b3713b0b",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.25,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_079",
+      "block": "F_beta",
+      "priority": 2,
+      "config_hash": "c166e81b67871e080421ab4aaaf503b363ac33e3edb1bdb36db1673d448da521",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "dual",
+          "cover": true,
+          "beta": 0.75,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "Q_ATTN",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": false
+      }
+    },
+    {
+      "id": "ELVA_R2_024",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "69b8fe0db5169871d7e4b4ccb5793227befe9ff7af030da01237a05afffb28da",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "FROZEN_FINAL_ANCHOR",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_025",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "16f9b39a70287686b1f975464e97adfc50a0649da4d50d40e529648bdb3fb669",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_CURRENT",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_026",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "94dc8af779de9b40b7000f2e7d6b5b9380798a2ef83c1d32a40d347120be33d8",
+      "method": {
+        "budget": 1024,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            60,
+            28,
+            12
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_PLUS_L9",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": true,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_053",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "2dc0249bc77e007f366eaa6f352173fcacba1093ff598477a5180978a97095bb",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "FROZEN_FINAL_ANCHOR",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_054",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "b10a43be72759c730969c621e28f6e5ecee49bcfd68c3303fc77d0502637f976",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_CURRENT",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_055",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "c739b41e42bc5caea85511bfcab267f4aea900743c84d19aeccb5b05dfda7783",
+      "method": {
+        "budget": 1536,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            90,
+            42,
+            18
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_PLUS_L9",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": true,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_080",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "956100ac2872b805a9d00b8ff805701d3eeb8888733b36d8ccf113d950deb06f",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "FROZEN_FINAL_ANCHOR",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_081",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "04fad82c568d4617ddc3de91b980e671fa11a1a36213cca367f9ef46f9fa36ae",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_CURRENT",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": false,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    },
+    {
+      "id": "ELVA_R2_082",
+      "block": "G_conditional",
+      "priority": 3,
+      "config_hash": "c9df7ed873f67235c577d0c5512b45349a6736814da3b92f6dd4d656bdd53e0b",
+      "method": {
+        "budget": 2048,
+        "original_tokens": 576,
+        "depth": 32,
+        "schedule": {
+          "counts": [
+            120,
+            56,
+            24
+          ],
+          "lengths": [
+            10,
+            10,
+            12
+          ]
+        },
+        "stage1": {
+          "guide": "pen",
+          "cover": true,
+          "beta": null,
+          "score_guide": "same",
+          "payload": "pen",
+          "saliency": "BIND_ORIGINAL_SAME_RULE"
+        },
+        "stage2": {
+          "first_selector": "TRANSIENT_PAIR_PLUS_L9",
+          "later_selector": "Q_ATTN",
+          "needs_l9_features": true,
+          "seed": null
+        },
+        "merge": false,
+        "cache_mode": "native",
+        "conditional": true
+      }
+    }
+  ]
+}

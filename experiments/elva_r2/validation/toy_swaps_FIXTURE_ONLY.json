@@ -1,0 +1,440 @@
+[
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "native",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      17,
+      20,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      44,
+      41
+    ],
+    "group_b": [
+      11,
+      14
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.3772644779165533,
+    "nll_b": 2.4919978163001812,
+    "delta": 0.11473333838362798,
+    "generated_a": [
+      3,
+      7,
+      1
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "dea0bc91321455d8d60a8ad6c59b8466aab64ff5bc0aeb7f3d85e81b61fc5039",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 1,
+    "x": [
+      0.8333333333333334,
+      -3.0357660829594124e-18,
+      0.27777777777777785,
+      0.3125
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  },
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "native",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      11,
+      14,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      44,
+      41
+    ],
+    "group_b": [
+      17,
+      20
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.5139500612264274,
+    "nll_b": 2.4919978163001812,
+    "delta": -0.021952244926246145,
+    "generated_a": [
+      3,
+      8,
+      4
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "dea0bc91321455d8d60a8ad6c59b8466aab64ff5bc0aeb7f3d85e81b61fc5039",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 2,
+    "x": [
+      0.6666666666666667,
+      -3.469446951953614e-18,
+      0.17777777777777778,
+      0.25
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  },
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "native",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      17,
+      20,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      38,
+      35
+    ],
+    "group_b": [
+      11,
+      14
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.3867077854753247,
+    "nll_b": 2.4919978163001812,
+    "delta": 0.10529003082485655,
+    "generated_a": [
+      3,
+      7,
+      1
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "dea0bc91321455d8d60a8ad6c59b8466aab64ff5bc0aeb7f3d85e81b61fc5039",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 3,
+    "x": [
+      0.6666666666666666,
+      1.734723475976807e-18,
+      0.22222222222222224,
+      0.25
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  },
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "aligned_support",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      17,
+      20,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      44,
+      41
+    ],
+    "group_b": [
+      11,
+      14
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.435169879371242,
+    "nll_b": 2.5065314126929796,
+    "delta": 0.07136153332173745,
+    "generated_a": [
+      3,
+      8,
+      4
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "0158707a187e24d919e31b30cb10fd929743799a4372cc52e16ef22fc40cb089",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 1,
+    "x": [
+      0.8333333333333334,
+      -3.0357660829594124e-18,
+      0.27777777777777785,
+      0.3125
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  },
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "aligned_support",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      11,
+      14,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      44,
+      41
+    ],
+    "group_b": [
+      17,
+      20
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.5006090680290494,
+    "nll_b": 2.5065314126929796,
+    "delta": 0.005922344663930268,
+    "generated_a": [
+      3,
+      8,
+      4
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "0158707a187e24d919e31b30cb10fd929743799a4372cc52e16ef22fc40cb089",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 2,
+    "x": [
+      0.6666666666666667,
+      -3.469446951953614e-18,
+      0.17777777777777778,
+      0.25
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  },
+  {
+    "schema": "transient_survival_swap_v1",
+    "image_key": "FIXTURE_IMAGE",
+    "question_key": "FIXTURE_QUESTION",
+    "cache_mode": "aligned_support",
+    "prefix_fingerprint": "c579d56a9289499b5e61bb5450b8c8a08434db46933f357faba8101a11daa054",
+    "begin": 2,
+    "end": 5,
+    "final_ids": [
+      26,
+      29
+    ],
+    "common": [
+      17,
+      20,
+      23,
+      26,
+      29
+    ],
+    "group_a": [
+      38,
+      35
+    ],
+    "group_b": [
+      11,
+      14
+    ],
+    "work": 51,
+    "trace": [
+      12,
+      12,
+      7,
+      7,
+      7,
+      2,
+      2,
+      2
+    ],
+    "nll_a": 2.473279511195748,
+    "nll_b": 2.5065314126929796,
+    "delta": 0.03325190149723145,
+    "generated_a": [
+      3,
+      8,
+      4
+    ],
+    "generated_b": [
+      3,
+      8,
+      4
+    ],
+    "backend": "numpy_causal_fixture",
+    "note": "positive delta favors group_a; offline label, not online input",
+    "state_key": "0158707a187e24d919e31b30cb10fd929743799a4372cc52e16ef22fc40cb089",
+    "catalog_hash": "82bd9f4a476db55a2478ed909acb844059e89b0d8a2bccce8f031c93aa59a6b9",
+    "action_hash": "85f19e8a4f59106df92b487ad85edd59e5a9ea97a415b0af4b01c2225eac8849",
+    "catalog_size": 4,
+    "action_index": 3,
+    "x": [
+      0.6666666666666666,
+      1.734723475976807e-18,
+      0.22222222222222224,
+      0.25
+    ],
+    "feature_names": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "feature_cutoff": 2,
+    "fixture": true
+  }
+]
