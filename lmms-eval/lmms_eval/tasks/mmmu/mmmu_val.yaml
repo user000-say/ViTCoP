@@ -1,4 +1,6 @@
-dataset_path: lmms-lab/MMMU
+dataset_path: /home/xiangyue/ViTCoP/datasets_local/mmmu_val
+dataset_kwargs:
+  load_from_disk: true
 task: "mmmu_val"
 test_split: validation
 output_type: generate_until
