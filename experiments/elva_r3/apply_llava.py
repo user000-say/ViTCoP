@@ -33,6 +33,17 @@ def overlay(meta: dict | None = None) -> dict:
         slots = int(stage["coverage_slots"])
     events = e018_events(config)
     first = config["method"]["stage2"].get("first_selector", "Q_ATTN")
+    later = config["method"]["stage2"].get("later_selector", "Q_ATTN")
+    # E018 uses one score family for every progressive event.
+    # QED is a native E018 selector; RDRIFT refines the first event on top of Q_ATTN.
+    if first == "QED" or later == "QED":
+        e018_selector = "QED"
+    elif first in {"Q_ATTN", "RANDOM"}:
+        e018_selector = first
+    else:
+        e018_selector = "Q_ATTN"
+    if e018_selector not in {"Q_ATTN", "QED", "RANDOM"}:
+        raise ValueError(f"unsupported E018_SELECTOR from stage2: {first}/{later}")
     last_layer = int(events.split(",")[-1].split(":")[0])
     os.environ.update(
         ELVA_R3_ENABLE="True",
@@ -43,7 +54,7 @@ def overlay(meta: dict | None = None) -> dict:
         E018_ENABLE="True",
         E018_MODE="STATIC",
         E018_EVENTS=events,
-        E018_SELECTOR="Q_ATTN",
+        E018_SELECTOR=e018_selector,
         E018_CACHE_POLICY="layer_local",
         E020_3_ENABLE="False",
         E006_TARGET_K=str(counts[-1]),
@@ -52,6 +63,8 @@ def overlay(meta: dict | None = None) -> dict:
     )
     if first == "RDRIFT":
         # Original E020 rank_drift on FIRST only; FINAL stays Q_ATTN. No merge.
+        if e018_selector != "Q_ATTN":
+            raise ValueError("RDRIFT first_selector requires E018_SELECTOR=Q_ATTN baseline")
         os.environ.update(
             E020_ENABLE="True",
             E020_KIND="rank_drift",
@@ -76,4 +89,6 @@ def overlay(meta: dict | None = None) -> dict:
     meta["elva_id"] = config["id"]
     meta["e018_events"] = events
     meta["first_selector"] = first
+    meta["later_selector"] = later
+    meta["e018_selector"] = e018_selector
     return meta

@@ -1,0 +1,31 @@
+{
+  "id": "H2_W2048_V5_COVER_QED",
+  "phase": "cvpr_p0_selector_ablation",
+  "schedule_name": "E88_R3_ANCHOR",
+  "config_hash": "h2_w2048_v5_cover_qed_20261020",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [172, 90, 32],
+      "lengths": [4, 8, 20]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "QED",
+      "later_selector": "QED"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
