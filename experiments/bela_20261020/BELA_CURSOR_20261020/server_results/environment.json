@@ -1,0 +1,33 @@
+{
+  "note": "Captured at Gate1 launch; refresh after jobs finish if needed.",
+  "repo": "/home/xiangyue/ViTCoP",
+  "python": "/home/xiangyue/envs/vitcopreback/vitcopreback/bin/python",
+  "acc_gpus": [
+    0,
+    2,
+    4
+  ],
+  "ttft_gpu": 7,
+  "acc_tasks": [
+    "gqa",
+    "pope",
+    "mme",
+    "mmbench_en_dev",
+    "scienceqa_img",
+    "mmmu_val",
+    "ai2d",
+    "textvqa_val_ocr"
+  ],
+  "r4_formula": "25*(GQA/61.9+POPE_F1/85.8+MME/1852+MMBench/64.1)",
+  "latency_protocol": "model.generate wall+CUDA Event; warmup>=12; Fixed32 separate; peak mem; SparseVLM-style model-level not service E2E",
+  "flops_protocol": "visual token-layer W + O(d^2*W) proxy; fused kernels not counted",
+  "arms": [
+    "W2048_V5_COVER_QATTN",
+    "W2048_V5_COVER_RDRIFT",
+    "W1024_V4_PCOV_QATTN"
+  ],
+  "bela_lifetime_state_model_hook": "NOT_INTEGRATED_IN_THIS_ZIP",
+  "git_head": "141281d088ebe22fb0bc19fa33e3e7a96e2100ec",
+  "torch": "2.1.2",
+  "cuda_available": true
+}

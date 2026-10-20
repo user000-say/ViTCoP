@@ -1,0 +1,21 @@
+{
+  "local_status": "15 unittest cases passed; CPU PyTorch sequence adapter test included",
+  "model_integration": "NOT TESTED: no verified production model forward or GPU checkpoint",
+  "actual_quality": "NOT MEASURED",
+  "TTFT": "NOT MEASURED",
+  "FLOPs": "NOT MEASURED",
+  "checked_cases": [
+    "W2284 historical example",
+    "W2048 exact schedule",
+    "W1024 exact schedule",
+    "duplicate prune events",
+    "NaN input",
+    "noncontiguous vision positions",
+    "same-budget swap"
+  ],
+  "sources": "Past conversation + uploaded E020.3/E020.4 and handoff archives",
+  "submission_goals_not_results": {
+    "W2048_R4": 97,
+    "W1024_R4": 94
+  }
+}

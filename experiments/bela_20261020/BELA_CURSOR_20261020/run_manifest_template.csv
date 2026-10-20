@@ -1,0 +1,1 @@
+run_id,git_commit,model_checkpoint,task,image_group,seed,stage1,selector,entry,events,target_W,observed_W,score_GQA,score_POPE_F1,score_MME,score_MMB,TTFT_ms_p50,TTFT_ms_p90,CUDA_latency_ms,FLOPs,peak_mem_mb,scorer_commit,notes
