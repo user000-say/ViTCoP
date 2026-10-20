@@ -12,6 +12,8 @@ from typing import Any, List, Optional, Sequence, Tuple
 STAGE1_VISUAL = 172
 MME_SUFFIX = " Please answer yes or no."
 POST_PROMPTS = (
+    # longest first (VizWiz nests the short VQA post-prompt)
+    "\nWhen the provided information is insufficient, respond with 'Unanswerable'.\nAnswer the question using a single word or phrase.",
     "\nAnswer the question using a single word or phrase.",
     "\nAnswer with the option's letter from the given choices directly.",
     "\nAnswer the question with Yes or No.",
@@ -32,13 +34,19 @@ def question_candidates(doc: Any, context: str) -> List[Tuple[str, str]]:
     if hasattr(doc, "get"):
         raw = str(doc.get("question") or "")
     if raw:
-        add("doc_question", raw.strip())
+        stripped = raw.strip()
+        add("doc_question", stripped)
+        # VizWiz lmms-eval capitalizes the question in doc_to_text.
+        add("doc_question_capitalized", stripped.capitalize())
         if MME_SUFFIX in raw:
             add("mme_question_without_yesno_suffix", raw.replace(MME_SUFFIX, "").strip())
     ctx = str(context)
     for post in POST_PROMPTS:
         if ctx.endswith(post):
-            add("context_without_post_prompt", ctx[: -len(post)])
+            body = ctx[: -len(post)]
+            add("context_without_post_prompt", body)
+            add("context_without_post_prompt_stripped", body.strip())
+            break  # longest matching suffix wins
     return found
 
 
