@@ -1,26 +1,132 @@
 {
   "schema": "elva_cvpr_run_manifest_v1",
   "created": "2026-10-20T15:16:00+08:00",
-  "current_r3_commit": "ff5d0ee",
+  "current_r3_commit": "ea93932d7e4d058c5c177ae76bdf42a4ff655ad4",
   "note": "Working tree continues from R3 LLaVA wiring; CVPR P0 adds RDRIFT FIRST and K80 equal-W schedules on the same host path.",
   "model": "liuhaotian/llava-v1.5-7b",
   "vision": "openai/clip-vit-large-patch14-336",
-  "clip_layers": {"pen_completed": 23, "l9_completed": 9, "score_rule": "sum_heads_cls_to_patch"},
-  "stage1_gold": ["pen", "l9", "dual_beta0.5", "legacy_COVER_k172_b32", "PCOV_k60_b12", "PCOV_k80_b12"],
+  "clip_layers": {
+    "pen_completed": 23,
+    "l9_completed": 9,
+    "score_rule": "sum_heads_cls_to_patch"
+  },
+  "stage1_gold": [
+    "pen",
+    "l9",
+    "dual_beta0.5",
+    "legacy_COVER_k172_b32",
+    "PCOV_k60_b12",
+    "PCOV_k80_b12"
+  ],
   "rdrift": {
     "source": "e020_lib/dispatch.py rank_drift",
     "kind": "rank_drift",
     "current_weight": 0.6,
     "approx_forbidden": true
   },
-  "r4_denoms": {"gqa": 61.9, "pope": 85.8, "mme": 1852.0, "mmbench_en_dev": 64.1},
-  "gpus": {"acc": [0, 2, 4], "ttft": [7], "forbidden": [1, 3, 5, 6]},
-  "exact_r3_w1024_token_trace": [60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-  "exact_r3_w2048_token_trace": [172, 172, 172, 172, 90, 90, 90, 90, 90, 90, 90, 90, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
+  "r4_denoms": {
+    "gqa": 61.9,
+    "pope": 85.8,
+    "mme": 1852.0,
+    "mmbench_en_dev": 64.1
+  },
+  "gpus": {
+    "acc": [
+      0,
+      2,
+      4
+    ],
+    "ttft": [
+      7
+    ],
+    "forbidden": [
+      1,
+      3,
+      5,
+      6
+    ]
+  },
+  "exact_r3_w1024_token_trace": [
+    60,
+    60,
+    60,
+    60,
+    60,
+    60,
+    60,
+    60,
+    60,
+    60,
+    28,
+    28,
+    28,
+    28,
+    28,
+    28,
+    28,
+    28,
+    28,
+    28,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12
+  ],
+  "exact_r3_w2048_token_trace": [
+    172,
+    172,
+    172,
+    172,
+    90,
+    90,
+    90,
+    90,
+    90,
+    90,
+    90,
+    90,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32,
+    32
+  ],
   "r3_baselines": {
-    "W2048_V5_dual_COVER_QATTN": {"r4": 95.90, "ttft_cuda_mean_ms": 128.18},
-    "W2048_V4_pen_COVER_QATTN": {"r4": 95.37, "ttft_cuda_mean_ms": 127.59},
-    "W1024_V4_pen_PCOV60_B12_QATTN": {"r4": 92.71, "ttft_cuda_mean_ms": 123.88}
+    "W2048_V5_dual_COVER_QATTN": {
+      "r4": 95.9,
+      "ttft_cuda_mean_ms": 128.18
+    },
+    "W2048_V4_pen_COVER_QATTN": {
+      "r4": 95.37,
+      "ttft_cuda_mean_ms": 127.59
+    },
+    "W1024_V4_pen_PCOV60_B12_QATTN": {
+      "r4": 92.71,
+      "ttft_cuda_mean_ms": 123.88
+    }
   },
   "p0_configs": [
     "H1_W2048_V4_COVER_RDRIFT",
@@ -32,13 +138,31 @@
     "H1_W2048_V4_COVER_RDRIFT": {
       "task": "gqa_limit2",
       "trace_w": 2048,
-      "events": [[3, 90], [11, 32]],
+      "events": [
+        [
+          3,
+          90
+        ],
+        [
+          11,
+          32
+        ]
+      ],
       "status": "pass"
     },
     "E94_K80_48_16_PEN_PCOV_B12": {
       "task": "gqa_limit2",
       "trace_w": 1024,
-      "events": [[1, 48], [13, 16]],
+      "events": [
+        [
+          1,
+          48
+        ],
+        [
+          13,
+          16
+        ]
+      ],
       "status": "pass"
     }
   },
