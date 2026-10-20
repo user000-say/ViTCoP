@@ -214,6 +214,7 @@ required = {
     "vqav2_val_lite": ("exact_match",),
     "mmmu_val": ("mmmu_acc",),
     "ai2d": ("exact_match",),
+    "vizwiz_vqa_val": ("exact_match",),
 }[args.task]
 if any(metrics[name] is None for name in required):
     print(f"ENGINEERING_FAIL missing metrics {metrics}", flush=True)

@@ -1,5 +1,8 @@
 task: vizwiz_vqa_val
 test_split: val
+dataset_path: /home/xiangyue/ViTCoP/datasets_local/vizwiz_vqa_val
+dataset_kwargs:
+  load_from_disk: true
 include: _default_template_vqa_yaml
 metric_list:
   - metric: exact_match

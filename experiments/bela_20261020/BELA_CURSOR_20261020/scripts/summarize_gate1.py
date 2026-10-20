@@ -9,7 +9,7 @@ PKG = REPO / "experiments/bela_20261020/BELA_CURSOR_20261020"
 ACC = REPO / "logs/e014_aee/full/bela_gate1_8task"
 TIMING = PKG / "server_results" / "timing"
 R4_TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
-EXTRA = ("scienceqa_img", "mmmu_val", "ai2d", "textvqa_val_ocr")
+EXTRA = ("scienceqa_img", "mmmu_val", "ai2d", "textvqa_val_ocr", "vizwiz_vqa_val")
 ARMS = ("W2048_V5_COVER_QATTN", "W2048_V5_COVER_RDRIFT", "W1024_V4_PCOV_QATTN")
 
 

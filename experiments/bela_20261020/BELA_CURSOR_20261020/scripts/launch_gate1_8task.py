@@ -1,7 +1,8 @@
-"""BELA Gate1: frozen Stage1 + Q_ATTN/RDRIFT baselines, 8-task ACC.
+"""BELA Gate1: frozen Stage1 + Q_ATTN/RDRIFT baselines, ACC via ACC_TASKS (R4+extras).
 
 Does NOT claim BELA LifetimeState model integration (missing from zip).
 GPUs 0/2/4/7 only. Reuses existing R4 metrics when present; queues the rest.
+VizWiz added after the first 8-task wave is launched via launch_vizwiz_backfill.py.
 """
 from __future__ import annotations
 
@@ -95,7 +96,7 @@ def run_acc():
                 continue
             out = root / task
             jobs.append((cfg_path, cfg, out_id, task, out))
-    print(f"ACC pending {len(jobs)} / total arms×8={len(ARMS)*len(ACC_TASKS)}", flush=True)
+    print(f"ACC pending {len(jobs)} / total arms×tasks={len(ARMS)*len(ACC_TASKS)}", flush=True)
     slots = list(ACC_GPUS)
     running = []
     while jobs or running:

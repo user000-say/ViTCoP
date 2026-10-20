@@ -1,13 +1,13 @@
 ---
-description: Full ACC must include R4 four plus sci-img/mmmu/ai2d/textvqa
+description: Full ACC must include R4 four plus sci-img/mmmu/ai2d/textvqa/vizwiz
 alwaysApply: true
 ---
 
 # ELVA ACC task set
 
-From 2026-10-20, every full accuracy campaign (not smoke/limit) must evaluate:
+From 2026-10-21, every full accuracy campaign (not smoke/limit) must evaluate:
 
 1. **R4 four** (unchanged): `gqa`, `pope`, `mme`, `mmbench_en_dev`
-2. **Extras** (report separately, do not fold into R4): `scienceqa_img`, `mmmu_val`, `ai2d`, `textvqa_val_ocr`
+2. **Extras** (report separately, do not fold into R4): `scienceqa_img`, `mmmu_val`, `ai2d`, `textvqa_val_ocr`, `vizwiz_vqa_val`
 
-Use `elva_acc_tasks.ACC_TASKS` in launch scripts. Do not treat TextVQA without OCR (`textvqa_val`) as the default vqa-text arm unless the user explicitly asks. R4 formula and denominators stay frozen; extras are absolute scores only.
+Use `elva_acc_tasks.ACC_TASKS` in launch scripts (9 tasks). Do not treat TextVQA without OCR (`textvqa_val`) as the default vqa-text arm unless the user explicitly asks. R4 formula and denominators stay frozen; extras are absolute scores only.
