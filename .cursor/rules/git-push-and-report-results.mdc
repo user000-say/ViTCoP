@@ -1,0 +1,10 @@
+---
+description: Push code updates to git; report experiment results when runs finish
+alwaysApply: true
+---
+
+# Git push and experiment reports
+
+1. After any substantive code or experiment-package change (wiring, configs, launch scripts, handoff install), stage the relevant files, commit with the usual author env vars, and `git push fork HEAD:main` (or the current tracking branch). Do not wait for the user to ask. Skip secrets, `__pycache__`, and unrelated dirty archives.
+2. When an ACC / TTFT / official eval queue you launched finishes (status COMPLETE, drained, or all expected `metrics.json` / `latency_summary.json` present), compute and send the user a concise results report: per-config R4 or official task scores, TTFT if available, comparison to the relevant baseline, and next step. Do not wait to be asked.
+3. If the queue is still running, a short progress note is enough; full tables wait until completion.
