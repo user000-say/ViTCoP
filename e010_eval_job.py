@@ -199,6 +199,7 @@ metrics = {
     "mme_perception_score": pick(block, "mme_perception_score"),
     "mme_cognition_score": pick(block, "mme_cognition_score"),
     "gpt_eval_score": pick(block, "gpt_eval_score"),
+    "mmmu_acc": pick(block, "mmmu_acc"),
 }
 required = {
     "gqa": ("exact_match",),
@@ -211,6 +212,8 @@ required = {
     "textvqa_val_ocr": ("exact_match",),
     "vqav2_val": ("exact_match",),
     "vqav2_val_lite": ("exact_match",),
+    "mmmu_val": ("mmmu_acc",),
+    "ai2d": ("exact_match",),
 }[args.task]
 if any(metrics[name] is None for name in required):
     print(f"ENGINEERING_FAIL missing metrics {metrics}", flush=True)

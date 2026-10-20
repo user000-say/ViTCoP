@@ -20,7 +20,10 @@ PANEL = REPO / "experiments/e014_latency_fair_256/panel/speed_256.jsonl"
 MODEL = REPO / "experiments/e014_latency_fair_256/models_llava"
 ACC_GPUS = (0, 2, 4)
 TTFT_GPU = 7
-TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
+import sys
+sys.path.insert(0, str(REPO))
+from elva_acc_tasks import ACC_TASKS
+TASKS = ACC_TASKS
 BASE_ARM = "E018_COVER_TWO32"
 CONFIGS = (
     "H1_W2048_V4_COVER_RDRIFT",

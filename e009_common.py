@@ -42,6 +42,8 @@ TASKS = (
     "textvqa_val_ocr",
     "vqav2_val",
     "vqav2_val_lite",
+    "mmmu_val",
+    "ai2d",
 )
 # Counts filled from local Arrow / lmms-eval splits; update if cache rebuilt.
 FULL_N = {
@@ -55,6 +57,8 @@ FULL_N = {
     "textvqa_val_ocr": 5000,
     "vqav2_val": 214354,
     "vqav2_val_lite": 500,
+    "mmmu_val": 900,
+    "ai2d": 3088,
 }
 # Frozen before any E009 full-accuracy metric was read.
 STRONG_MARGIN_PP = 0.25

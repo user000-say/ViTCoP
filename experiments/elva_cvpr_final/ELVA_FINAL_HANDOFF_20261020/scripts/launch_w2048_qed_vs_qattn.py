@@ -16,7 +16,10 @@ PKG = REPO / "experiments/elva_cvpr_final/ELVA_FINAL_HANDOFF_20261020"
 R3 = REPO / "experiments/elva_r3"
 PY = "/home/xiangyue/envs/vitcopreback/vitcopreback/bin/python"
 ACC_GPUS = (0, 2, 4, 7)
-TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
+import sys
+sys.path.insert(0, str(REPO))
+from elva_acc_tasks import ACC_TASKS
+TASKS = ACC_TASKS
 BASE_ARM = "E018_COVER_TWO32"
 # Q_ATTN baseline already complete under R3; only QED is queued unless missing.
 CONFIGS = (
