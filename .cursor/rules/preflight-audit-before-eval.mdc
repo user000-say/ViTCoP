@@ -1,0 +1,16 @@
+---
+description: Audit handoff vs host wiring before any ACC/TTFT launch
+alwaysApply: true
+---
+
+# Preflight audit before evaluation
+
+Before launching ACC, TTFT, or any official four-task / nine-task run from a new zip or experiment package:
+
+1. **Inventory**: list what the package provides (algorithms, configs, queue, binding contracts) versus what the current repo already owns (LLaVA forward, E014/E018/E020 host, scorer, TTFT bench).
+2. **Gap check**: name missing host patches explicitly (Stage1 hook, schedule env, K guards, question span, task_entrypoint, COVER/PCOV binding, RDRIFT). Do not start full eval if a required interface is only a stub or example binding.
+3. **Algorithm identity**: for each arm, state whether the final claimed operator is the original source function (path + entrypoint) or a substitute. Substitutes must be labeled and must not be reported as the historical method.
+4. **Smoke before full**: one real generate + official metric path (small limit) and one TTFT/path smoke when latency is in scope; verify entry K, event layers, pre-block token trace W, and payload=pen rows.
+5. **Report first**: tell the user the audit verdict (ready / blocked + gaps) before starting the full GPU queue. Only then launch on GPUs 0/2/4/7.
+
+This audit is mandatory even when the package claims to be complete or when unit tests in the package pass.
