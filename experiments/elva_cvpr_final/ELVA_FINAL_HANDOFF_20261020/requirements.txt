@@ -1,0 +1,5 @@
+# Core contracts and CLI use only the Python standard library (3.10+).
+# Optional: for real patch maps only (not for VLM model integration):
+numpy>=1.23
+matplotlib>=3.7
+# torch is provided by the existing server VLM environment; do not override.

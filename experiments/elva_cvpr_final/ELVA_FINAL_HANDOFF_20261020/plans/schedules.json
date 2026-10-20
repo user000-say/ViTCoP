@@ -1,0 +1,20 @@
+{
+  "comment": "Candidate configs, not model results. Event=(number of completed decoder blocks, keep for next block). W1024 R3 actual trace unavailable: do NOT assume the example schedule equals the server baseline.",
+  "budgets": {"1024": 1024, "2048": 2048, "2284": 2284, "1536": 1536},
+  "schedules": [
+    {"name":"E20_HIST_SHIFT_REFERENCE","entry":172,"events":[[3,116],[13,32]]},
+    {"name":"E88_R3_ANCHOR","entry":172,"events":[[4,90],[12,32]]},
+    {"name":"E88_ENTRANCE160","entry":160,"events":[[4,96],[12,32]]},
+    {"name":"E88_ENTRANCE144","entry":144,"events":[[4,104],[12,32]]},
+    {"name":"E88_ENTRANCE128","entry":128,"events":[[4,112],[12,32]]},
+    {"name":"E88_WIDE_SHORT","entry":172,"events":[[4,148],[8,32]]},
+    {"name":"E88_NARROW_LONG","entry":172,"events":[[4,61],[20,32]]},
+    {"name":"E94_K60_THEORETICAL","entry":60,"events":[[4,48],[12,20]]},
+    {"name":"E94_K80_48_16","entry":80,"events":[[2,48],[14,16]]},
+    {"name":"E94_K80_64_16","entry":80,"events":[[2,64],[10,16]]},
+    {"name":"E94_K128_48_16","entry":128,"events":[[2,48],[11,16]]},
+    {"name":"E94_K128_64_16","entry":128,"events":[[2,64],[8,16]]},
+    {"name":"E94_K96_40_16","entry":96,"events":[[4,40],[12,16]]},
+    {"name":"E91_CALIBRATION","entry":96,"events":[[3,64],[13,32]]}
+  ]
+}

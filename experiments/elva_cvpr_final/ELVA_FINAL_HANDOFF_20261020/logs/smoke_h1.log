@@ -1,0 +1,24 @@
+[eval] lmms_eval --model llava --model_args pretrained=liuhaotian/llava-v1.5-7b --tasks gqa --batch_size 1 --log_samples --output_path /home/xiangyue/ViTCoP/logs/e014_aee/smoke/cvpr_h1_gqa --limit 2
+[32m2026-10-20 15:15:49.834[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate[0m:[36m295[0m - [1mVerbosity set to INFO[0m
+[32m2026-10-20 15:15:52.655[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m378[0m - [1mEvaluation tracker args: {'output_path': '/home/xiangyue/ViTCoP/logs/e014_aee/smoke/cvpr_h1_gqa'}[0m
+[32m2026-10-20 15:15:52.655[0m | [33m[1mWARNING [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m400[0m - [33m[1m --limit SHOULD ONLY BE USED FOR TESTING.REAL METRICS SHOULD NOT BE COMPUTED USING LIMIT.[0m
+[32m2026-10-20 15:15:52.656[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m467[0m - [1mSelected Tasks: ['gqa'][0m
+[32m2026-10-20 15:15:52.656[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36msimple_evaluate[0m:[36m155[0m - [1mSetting random seed to 0 | Setting numpy seed to 1234 | Setting torch manual seed to 1234[0m
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:04<00:04,  4.38s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.71s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.96s/it]
+[32m2026-10-20 15:16:00.043[0m | [1mINFO    [0m | [36mlmms_eval.models.llava[0m:[36m__init__[0m:[36m142[0m - [1mUsing single device: cuda:0[0m
+[32m2026-10-20 15:16:00.049[0m | [1mINFO    [0m | [36mlmms_eval.evaluator_utils[0m:[36mfrom_taskdict[0m:[36m91[0m - [1mNo metadata found in task config for gqa, using default n_shot=0[0m
+[32m2026-10-20 15:16:00.049[0m | [1mINFO    [0m | [36mlmms_eval.api.task[0m:[36mbuild_all_requests[0m:[36m425[0m - [1mBuilding contexts for gqa on rank 0...[0m
+  0%|          | 0/2 [00:00<?, ?it/s]100%|██████████| 2/2 [00:00<00:00, 3103.44it/s]
+[32m2026-10-20 15:16:00.051[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36mevaluate[0m:[36m447[0m - [1mRunning generate_until requests[0m
+Model Responding:   0%|          | 0/2 [00:00<?, ?it/s]Model Responding:  50%|█████     | 1/2 [00:02<00:02,  2.18s/it]Model Responding: 100%|██████████| 2/2 [00:02<00:00,  1.00it/s]Model Responding: 100%|██████████| 2/2 [00:02<00:00,  1.17s/it]
+Postprocessing:   0%|          | 0/2 [00:00<?, ?it/s]Postprocessing: 100%|██████████| 2/2 [00:00<00:00, 1471.69it/s]
+[32m2026-10-20 15:16:02.425[0m | [1mINFO    [0m | [36mlmms_eval.loggers.evaluation_tracker[0m:[36msave_results_aggregated[0m:[36m188[0m - [1mSaving results aggregated[0m
+[32m2026-10-20 15:16:02.426[0m | [1mINFO    [0m | [36mlmms_eval.loggers.evaluation_tracker[0m:[36msave_results_samples[0m:[36m255[0m - [1mSaving per-sample results for: gqa[0m
+llava (pretrained=liuhaotian/llava-v1.5-7b), gen_kwargs: (), limit: 2.0, num_fewshot: None, batch_size: 1
+|Tasks|Version|Filter|n-shot|  Metric   |   |Value|   |Stderr|
+|-----|-------|------|-----:|-----------|---|----:|---|-----:|
+|gqa  |Yaml   |none  |     0|exact_match|↑  |  0.5|±  |   0.5|
+
+[eval done] {"profile": "ANCHOR_A", "layer": 8, "pretrained": "liuhaotian/llava-v1.5-7b", "task": "gqa", "effective": 2, "results_json": "/home/xiangyue/ViTCoP/logs/e014_aee/smoke/cvpr_h1_gqa/liuhaotian__llava-v1.5-7b/20261020_151552_results.json", "exact_match": 0.5, "pope_accuracy": null, "pope_f1_score": null, "pope_precision": null, "pope_recall": null, "mme_perception_score": null, "mme_cognition_score": null, "gpt_eval_score": null}

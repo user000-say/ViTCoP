@@ -37,7 +37,9 @@ def _covers():
             supported_k=[172], replacement_slots={"172": 32}, source_files=legacy_files)),
         "protected_coverage": NativeCover(pcov_callback, dict(
             family="protected_coverage", entrypoint="elva.low_budget_cover:callback",
-            supported_k=[60], replacement_slots={"60": 12}, allowed_slots=[6, 12, 18],
+            # B12 fixed; K80 is the CVPR W1024 equal-budget entrance candidate.
+            supported_k=[60, 80], replacement_slots={"60": 12, "80": 12},
+            allowed_slots=[6, 12, 18],
             coverage_policy=POLICY, source_files={str(pcov.resolve()): file_sha(pcov)})),
     }
     return _COVERS

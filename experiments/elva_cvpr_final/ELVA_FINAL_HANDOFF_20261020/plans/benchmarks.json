@@ -1,0 +1,19 @@
+{
+ "lock_date":"2026-10-20",
+ "primary_r4_denominators":{"GQA":61.9,"POPE_F1":85.8,"MME":1852.0,"MMBench_EN":64.1},
+ "policy":"Keep R4 fixed. Report expanded benchmark metrics individually and against the matched unpruned run. Do not change weights after seeing results.",
+ "nine_pre_registered": [
+  {"id":"GQA","part":"R4","metric":"official_accuracy","image_cluster":"image_id"},
+  {"id":"POPE","part":"R4","metric":"official_F1_split_locked","image_cluster":"image_id"},
+  {"id":"MME","part":"R4","metric":"official_combined_score","image_cluster":"image_id"},
+  {"id":"MMBench_EN","part":"R4","metric":"official_english_accuracy","image_cluster":"image_id"},
+  {"id":"ScienceQA_IMG","part":"extended","metric":"official_image_subset_accuracy","image_cluster":"image_id","must_filter":"image_only"},
+  {"id":"TextVQA","part":"extended","metric":"official_accuracy","image_cluster":"image_id"},
+  {"id":"VQAv2","part":"extended","metric":"official_accuracy","image_cluster":"image_id"},
+  {"id":"SEED_Bench_IMG","part":"extended","metric":"official_image_only_accuracy","image_cluster":"image_id"},
+  {"id":"MMVet","part":"extended","metric":"official_judged_score","image_cluster":"image_id","lock_judge":"must_record"}
+ ],
+ "optional_external":["VizWiz"],
+ "diagnostic_only":["OCRBench"],
+ "must_record":["source_url","download_hash","dataset_revision","split","question_prompt","scorer_commit","image_id","run_config_id"]
+}

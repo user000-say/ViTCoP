@@ -1,0 +1,33 @@
+{
+  "id": "E94_K80_48_16_PEN_PCOV_B12",
+  "phase": "cvpr_p0",
+  "schedule_name": "E94_K80_48_16",
+  "config_hash": "e94_k80_48_16_pen_pcov_b12_20261020",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [80, 48, 16],
+      "lengths": [2, 12, 18]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "protected_coverage",
+      "cover": true,
+      "beta": null,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "coverage_slots": 12,
+      "coverage_policy": "protected_positive_cosine_half_uniform_half_saliency_v1"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
