@@ -1,54 +1,48 @@
-"""Summarize Gate1 8-task ACC + TTFT/FLOPs into server_results/official_scores.json."""
+"""Summarize Gate1 9-task ACC + TTFT/FLOPs with R4/R8/R9 retention."""
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 REPO = Path("/home/xiangyue/ViTCoP")
+sys.path.insert(0, str(REPO))
+from elva_acc_tasks import ACC_TASKS, EXTRA_TASKS, R4_TASKS
+from elva_scores import score_task_from_metrics, summarize_arm
+
 PKG = REPO / "experiments/bela_20261020/BELA_CURSOR_20261020"
 ACC = REPO / "logs/e014_aee/full/bela_gate1_8task"
 TIMING = PKG / "server_results" / "timing"
-R4_TASKS = ("gqa", "pope", "mme", "mmbench_en_dev")
-EXTRA = ("scienceqa_img", "mmmu_val", "ai2d", "textvqa_val_ocr", "vizwiz_vqa_val")
 ARMS = ("W2048_V5_COVER_QATTN", "W2048_V5_COVER_RDRIFT", "W1024_V4_PCOV_QATTN")
 
 
-def score_task(m: dict, task: str):
-    if task == "gqa":
-        v = float(m["exact_match"]); return v * (100 if v <= 1.5 else 1)
-    if task == "pope":
-        v = float(m["pope_f1_score"]); return v * (100 if v <= 1.5 else 1)
-    if task == "mme":
-        return float(m["mme_perception_score"]) + float(m["mme_cognition_score"])
-    if task == "mmbench_en_dev":
-        v = m.get("gpt_eval_score"); v = float(v if v is not None else m["exact_match"])
-        return v * (100 if v <= 1.5 else 1)
-    if task == "mmmu_val":
-        return float(m["mmmu_acc"]) * (100 if float(m["mmmu_acc"]) <= 1.5 else 1)
-    v = float(m["exact_match"]); return v * (100 if v <= 1.5 else 1)
-
-
 def main():
-    out = {"status": "PARTIAL", "arms": {}}
+    out = {"status": "PARTIAL", "arms": {}, "score_protocol": "elva_scores_20261021"}
     complete = True
     for arm in ARMS:
         row = {"tasks": {}, "missing": []}
-        for t in R4_TASKS + EXTRA:
+        for t in ACC_TASKS:
             p = ACC / arm / t / "metrics.json"
             if not p.exists():
-                row["missing"].append(t); complete = False; continue
+                row["missing"].append(t)
+                complete = False
+                continue
             m = json.loads(p.read_text())
-            row["tasks"][t] = score_task(m, t)
+            row["tasks"][t] = score_task_from_metrics(m, t)
             a = m.get("audit") or {}
             row["entry_k"] = a.get("stage1_tokens")
             row["final_k"] = a.get("final_visual_tokens")
             row["e018_events"] = a.get("e018_events")
-            row["W_trace"] = sum(a["e018_pre_block_counts"]) if a.get("e018_pre_block_counts") else None
-        if all(t in row["tasks"] for t in R4_TASKS):
-            s = row["tasks"]
-            row["R4"] = 25 * (
-                s["gqa"] / 61.9 + s["pope"] / 85.8 + s["mme"] / 1852 + s["mmbench_en_dev"] / 64.1
+            row["W_trace"] = (
+                sum(a["e018_pre_block_counts"]) if a.get("e018_pre_block_counts") else None
             )
+        if all(t in row["tasks"] for t in R4_TASKS + EXTRA_TASKS):
+            row.update(summarize_arm(row["tasks"]))
+            # keep flat R4 for backward compat
+            row["R4"] = row["R4"]
+        elif all(t in row["tasks"] for t in R4_TASKS):
+            from elva_scores import compute_r4
+            row["R4"] = compute_r4(row["tasks"])
         lat = TIMING / arm / "latency_summary.json"
         flp = TIMING / arm / "flops_report.json"
         if lat.exists():
@@ -67,7 +61,12 @@ def main():
     dest = PKG / "server_results" / "official_scores.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=2) + "\n")
-    print(json.dumps(out, indent=2))
+    # Compact table for logs
+    print("arm | R4 | R8 | R9 | R5")
+    for arm, row in out["arms"].items():
+        print(
+            f"{arm} | {row.get('R4')} | {row.get('R8')} | {row.get('R9')} | {row.get('R5')}"
+        )
 
 
 if __name__ == "__main__":

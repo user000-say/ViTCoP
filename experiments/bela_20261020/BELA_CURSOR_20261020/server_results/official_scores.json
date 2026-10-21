@@ -1,0 +1,312 @@
+{
+  "status": "COMPLETE",
+  "arms": {
+    "W2048_V5_COVER_QATTN": {
+      "tasks": {
+        "gqa": 57.17920178088727,
+        "pope": 82.99302788844622,
+        "mme": 1765.1742697078832,
+        "mmbench_en_dev": 62.19931271477663,
+        "scienceqa_img": 69.16212196331185,
+        "mmmu_val": 36.1,
+        "ai2d": 54.37176165803109,
+        "textvqa_val_ocr": 56.3840000000001,
+        "vizwiz_vqa_val": 53.83190553368827
+      },
+      "missing": [],
+      "entry_k": 172,
+      "final_k": 32,
+      "e018_events": [
+        [
+          3,
+          90
+        ],
+        [
+          11,
+          32
+        ]
+      ],
+      "W_trace": 2048,
+      "tasks_abs": {
+        "gqa": 57.17920178088727,
+        "pope": 82.99302788844622,
+        "mme": 1765.1742697078832,
+        "mmbench_en_dev": 62.19931271477663,
+        "scienceqa_img": 69.16212196331185,
+        "mmmu_val": 36.1,
+        "ai2d": 54.37176165803109,
+        "textvqa_val_ocr": 56.3840000000001,
+        "vizwiz_vqa_val": 53.83190553368827
+      },
+      "dense_extra": {
+        "scienceqa_img": 69.51,
+        "mmmu_val": 35.6,
+        "ai2d": 55.18,
+        "textvqa_val_ocr": 58.2,
+        "vizwiz_vqa_val": 50.68
+      },
+      "dense_extra_source": {
+        "scienceqa_img": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "mmmu_val": "local_same_protocol_dense",
+        "ai2d": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "textvqa_val_ocr": "LLaVA_ModelZoo_TextVQA_58.2_OCR_prompt",
+        "vizwiz_vqa_val": "local_same_protocol_dense"
+      },
+      "R4": 95.36214352814294,
+      "retention_vs_dense": {
+        "scienceqa_img": 99.49952807266845,
+        "mmmu_val": 101.40449438202246,
+        "ai2d": 98.53526940563808,
+        "textvqa_val_ocr": 96.87972508591082,
+        "vizwiz_vqa_val": 106.21922954555696
+      },
+      "R5": 100.50764929835935,
+      "R8": 98.38838693980722,
+      "R9": 98.22075784492984,
+      "formulas": {
+        "R4": "25*(GQA/61.9 + POPE_F1/85.8 + MME/1852 + MMBench/64.1)",
+        "R8": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz)/8",
+        "R9": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz)/9",
+        "R5": "mean(r_SciQA, r_MMMU, r_AI2D, r_TextVQA, r_VizWiz)",
+        "r_task": "100 * abs / Dense_ref",
+        "note": "R8 exploratory (excludes TextVQA-OCR). Dense refs mixed local+literature until unified same-protocol Dense table."
+      },
+      "ttft_wall_median_ms": 124.86661458387971,
+      "ttft_cuda_median_ms": 124.76950073242188,
+      "fixed32_wall_median_ms": 1290.37242452614,
+      "peak_gpu_mb_median": 14698.40673828125,
+      "flops": {
+        "status": "ESTIMATE_NOT_FUSED_KERNEL_PROFILE",
+        "schedule_counts": [
+          172,
+          90,
+          32
+        ],
+        "schedule_lengths": [
+          4,
+          8,
+          20
+        ],
+        "actual_W_token_layers": 2048,
+        "full_visual_token_layers_576x32": 18432,
+        "visual_compression_proxy_1_minus_W_over_full": 0.8888888888888888,
+        "e018_events": "3:90,11:32",
+        "entry_k": 172,
+        "final_k": 32,
+        "visual_attn_proxy_flops": 68719476736.0,
+        "note": "W is visual token-layer budget, not whole-model FLOPs. visual_attn_proxy_flops is a transparent O(d^2 * W) estimate; FlashAttention/fused kernels are NOT counted here. TTFT wall/cuda already include selector+gather inside generate().",
+        "ttft_wall_median_ms": 124.86661458387971,
+        "ttft_cuda_median_ms": 124.76950073242188,
+        "fixed32_wall_median_ms": 1290.37242452614,
+        "peak_gpu_allocated_mb_median": 14698.40673828125,
+        "gpu_physical_id": "7",
+        "protocol": "warmup+panel; CUDA Event + wall; Fixed32 separate generate; SparseVLM-style model-level not service E2E"
+      }
+    },
+    "W2048_V5_COVER_RDRIFT": {
+      "tasks": {
+        "gqa": 57.83908411512164,
+        "pope": 83.31058443975678,
+        "mme": 1767.8339335734295,
+        "mmbench_en_dev": 62.19931271477663,
+        "scienceqa_img": 68.96380763510163,
+        "mmmu_val": 36.0,
+        "ai2d": 54.79274611398963,
+        "textvqa_val_ocr": 55.96600000000011,
+        "vizwiz_vqa_val": 53.43598055105336
+      },
+      "missing": [],
+      "entry_k": 172,
+      "final_k": 32,
+      "e018_events": [
+        [
+          3,
+          90
+        ],
+        [
+          11,
+          32
+        ]
+      ],
+      "W_trace": 2048,
+      "tasks_abs": {
+        "gqa": 57.83908411512164,
+        "pope": 83.31058443975678,
+        "mme": 1767.8339335734295,
+        "mmbench_en_dev": 62.19931271477663,
+        "scienceqa_img": 68.96380763510163,
+        "mmmu_val": 36.0,
+        "ai2d": 54.79274611398963,
+        "textvqa_val_ocr": 55.96600000000011,
+        "vizwiz_vqa_val": 53.43598055105336
+      },
+      "dense_extra": {
+        "scienceqa_img": 69.51,
+        "mmmu_val": 35.6,
+        "ai2d": 55.18,
+        "textvqa_val_ocr": 58.2,
+        "vizwiz_vqa_val": 50.68
+      },
+      "dense_extra_source": {
+        "scienceqa_img": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "mmmu_val": "local_same_protocol_dense",
+        "ai2d": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "textvqa_val_ocr": "LLaVA_ModelZoo_TextVQA_58.2_OCR_prompt",
+        "vizwiz_vqa_val": "local_same_protocol_dense"
+      },
+      "R4": 95.75708569433871,
+      "retention_vs_dense": {
+        "scienceqa_img": 99.21422476636688,
+        "mmmu_val": 101.12359550561797,
+        "ai2d": 99.29819882926719,
+        "textvqa_val_ocr": 96.16151202749158,
+        "vizwiz_vqa_val": 105.43800424438311
+      },
+      "R5": 100.24710707462535,
+      "R8": 98.51279576537375,
+      "R9": 98.25154201672018,
+      "formulas": {
+        "R4": "25*(GQA/61.9 + POPE_F1/85.8 + MME/1852 + MMBench/64.1)",
+        "R8": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz)/8",
+        "R9": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz)/9",
+        "R5": "mean(r_SciQA, r_MMMU, r_AI2D, r_TextVQA, r_VizWiz)",
+        "r_task": "100 * abs / Dense_ref",
+        "note": "R8 exploratory (excludes TextVQA-OCR). Dense refs mixed local+literature until unified same-protocol Dense table."
+      },
+      "ttft_wall_median_ms": 125.66293962299824,
+      "ttft_cuda_median_ms": 125.56201553344727,
+      "fixed32_wall_median_ms": 1285.8623370993882,
+      "peak_gpu_mb_median": 14698.4111328125,
+      "flops": {
+        "status": "ESTIMATE_NOT_FUSED_KERNEL_PROFILE",
+        "schedule_counts": [
+          172,
+          90,
+          32
+        ],
+        "schedule_lengths": [
+          4,
+          8,
+          20
+        ],
+        "actual_W_token_layers": 2048,
+        "full_visual_token_layers_576x32": 18432,
+        "visual_compression_proxy_1_minus_W_over_full": 0.8888888888888888,
+        "e018_events": "3:90,11:32",
+        "entry_k": 172,
+        "final_k": 32,
+        "visual_attn_proxy_flops": 68719476736.0,
+        "note": "W is visual token-layer budget, not whole-model FLOPs. visual_attn_proxy_flops is a transparent O(d^2 * W) estimate; FlashAttention/fused kernels are NOT counted here. TTFT wall/cuda already include selector+gather inside generate().",
+        "ttft_wall_median_ms": 125.66293962299824,
+        "ttft_cuda_median_ms": 125.56201553344727,
+        "fixed32_wall_median_ms": 1285.8623370993882,
+        "peak_gpu_allocated_mb_median": 14698.4111328125,
+        "gpu_physical_id": "7",
+        "protocol": "warmup+panel; CUDA Event + wall; Fixed32 separate generate; SparseVLM-style model-level not service E2E"
+      }
+    },
+    "W1024_V4_PCOV_QATTN": {
+      "tasks": {
+        "gqa": 55.41421529654953,
+        "pope": 78.76819126819127,
+        "mme": 1710.6490596238496,
+        "mmbench_en_dev": 59.965635738831615,
+        "scienceqa_img": 68.81507188894398,
+        "mmmu_val": 35.099999999999994,
+        "ai2d": 54.0479274611399,
+        "textvqa_val_ocr": 54.70600000000003,
+        "vizwiz_vqa_val": 54.725630933086265
+      },
+      "missing": [],
+      "entry_k": 60,
+      "final_k": 12,
+      "e018_events": [
+        [
+          9,
+          28
+        ],
+        [
+          19,
+          12
+        ]
+      ],
+      "W_trace": 1024,
+      "tasks_abs": {
+        "gqa": 55.41421529654953,
+        "pope": 78.76819126819127,
+        "mme": 1710.6490596238496,
+        "mmbench_en_dev": 59.965635738831615,
+        "scienceqa_img": 68.81507188894398,
+        "mmmu_val": 35.099999999999994,
+        "ai2d": 54.0479274611399,
+        "textvqa_val_ocr": 54.70600000000003,
+        "vizwiz_vqa_val": 54.725630933086265
+      },
+      "dense_extra": {
+        "scienceqa_img": 69.51,
+        "mmmu_val": 35.6,
+        "ai2d": 55.18,
+        "textvqa_val_ocr": 58.2,
+        "vizwiz_vqa_val": 50.68
+      },
+      "dense_extra_source": {
+        "scienceqa_img": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "mmmu_val": "local_same_protocol_dense",
+        "ai2d": "TopV_CVPR2025_Table1_LLaVA15_7B",
+        "textvqa_val_ocr": "LLaVA_ModelZoo_TextVQA_58.2_OCR_prompt",
+        "vizwiz_vqa_val": "local_same_protocol_dense"
+      },
+      "R4": 91.81109236894173,
+      "retention_vs_dense": {
+        "scienceqa_img": 99.00024728664073,
+        "mmmu_val": 98.59550561797751,
+        "ai2d": 97.94840061823106,
+        "textvqa_val_ocr": 93.99656357388321,
+        "vizwiz_vqa_val": 107.98269718446383
+      },
+      "R5": 99.50468285623927,
+      "R8": 96.346402522885,
+      "R9": 96.08530930632925,
+      "formulas": {
+        "R4": "25*(GQA/61.9 + POPE_F1/85.8 + MME/1852 + MMBench/64.1)",
+        "R8": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz)/8",
+        "R9": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz)/9",
+        "R5": "mean(r_SciQA, r_MMMU, r_AI2D, r_TextVQA, r_VizWiz)",
+        "r_task": "100 * abs / Dense_ref",
+        "note": "R8 exploratory (excludes TextVQA-OCR). Dense refs mixed local+literature until unified same-protocol Dense table."
+      },
+      "ttft_wall_median_ms": 118.9919151365757,
+      "ttft_cuda_median_ms": 118.84288024902344,
+      "fixed32_wall_median_ms": 1275.1920544542372,
+      "peak_gpu_mb_median": 14698.396484375,
+      "flops": {
+        "status": "ESTIMATE_NOT_FUSED_KERNEL_PROFILE",
+        "schedule_counts": [
+          60,
+          28,
+          12
+        ],
+        "schedule_lengths": [
+          10,
+          10,
+          12
+        ],
+        "actual_W_token_layers": 1024,
+        "full_visual_token_layers_576x32": 18432,
+        "visual_compression_proxy_1_minus_W_over_full": 0.9444444444444444,
+        "e018_events": "9:28,19:12",
+        "entry_k": 60,
+        "final_k": 12,
+        "visual_attn_proxy_flops": 34359738368.0,
+        "note": "W is visual token-layer budget, not whole-model FLOPs. visual_attn_proxy_flops is a transparent O(d^2 * W) estimate; FlashAttention/fused kernels are NOT counted here. TTFT wall/cuda already include selector+gather inside generate().",
+        "ttft_wall_median_ms": 118.9919151365757,
+        "ttft_cuda_median_ms": 118.84288024902344,
+        "fixed32_wall_median_ms": 1275.1920544542372,
+        "peak_gpu_allocated_mb_median": 14698.396484375,
+        "gpu_physical_id": "7",
+        "protocol": "warmup+panel; CUDA Event + wall; Fixed32 separate generate; SparseVLM-style model-level not service E2E"
+      }
+    }
+  },
+  "score_protocol": "elva_scores_20261021"
+}

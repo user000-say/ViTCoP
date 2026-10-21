@@ -1,7 +1,8 @@
 """Canonical ACC task sets for ELVA / CVPR / BELA runs.
 
-R4 stays the original four-task macro. Extras are reported separately and must
-be queued on every full ACC campaign.
+R4 stays the original four-task macro. Extras are queued on every full ACC
+campaign. Aggregate retention (R8/R9) uses `elva_scores.py` Dense refs —
+do not invent alternate denominators in launch scripts.
 """
 from __future__ import annotations
 
