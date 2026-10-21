@@ -1,0 +1,47 @@
+{
+  "id": "S2_W2048_QATTN_ICER",
+  "phase": "bela_stage2_icer",
+  "config_hash": "a5a7f59fc376c3e8b7d2b954a5d8deeee5c40367b850ba5f96e29ea16b09a5fd",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        90,
+        32
+      ],
+      "lengths": [
+        4,
+        8,
+        20
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "Q_ATTN",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  },
+  "bela_icer": {
+    "mode": "icer",
+    "description": "Q-Attn + ICER coverage repair",
+    "max_swaps": 3,
+    "donor_pool": 24,
+    "drop_pool": 16,
+    "min_qmass_ratio": 0.97,
+    "note_singleton": "singleton_proxy uses q_attn/(rho+0.05); not full CoRePrune attn-V diagnostic (SDPA has no attn weights)"
+  }
+}

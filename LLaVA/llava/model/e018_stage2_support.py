@@ -266,8 +266,108 @@ class Runtime:
     def _read(self, q, k, value, mask):
         s = self.state
         need = self.cfg.mode in {"COLLECT", "ONLINE"} or self.cfg.selector == "QED" or self.observer is not None
+        # ICER / singleton_proxy need signatures+rho even on STATIC Q_ATTN path.
+        if os.environ.get("BELA_ICER_MODE", "off").strip().lower() not in ("", "off", "none"):
+            need = True
         self._side = question_response(q, k, mask, s.question_indices,
                                        s.visual_start, s.visual_ids.numel(), need)
+
+    def _bela_stage2_refine(self, side, keep, count, layer, base_score):
+        """Optional BELA Stage2 ICER / CoRePrune-proxy / random-swap on top of Top-K.
+
+        Env:
+          BELA_ICER_MODE: off|icer|icer_drift|singleton_proxy|random_swap
+          BELA_ICER_MAX_SWAPS / DONOR_POOL / DROP_POOL / MIN_QMASS
+        Keeps K unchanged; uses existing gather path via returned slots.
+        """
+        mode = os.environ.get("BELA_ICER_MODE", "off").strip().lower()
+        if mode in ("", "off", "none"):
+            return keep
+        s = self.state
+        q = side["q_attn"].float()
+        ids = s.visual_ids.long()
+        desc = side.get("signatures")
+        if desc is None:
+            raise RuntimeError("BELA ICER requires side signatures as descriptors")
+        final_boundary = bool(self.cfg.events) and layer == self.cfg.events[-1][0]
+        max_swaps = int(os.environ.get("BELA_ICER_MAX_SWAPS", "3"))
+        donor_pool = int(os.environ.get("BELA_ICER_DONOR_POOL", "24"))
+        drop_pool = int(os.environ.get("BELA_ICER_DROP_POOL", "16"))
+        min_qmass = float(os.environ.get("BELA_ICER_MIN_QMASS", "0.97"))
+
+        if mode == "singleton_proxy":
+            # CoRePrune-inspired importance without SDPA attn/V tensors:
+            # keep high query mass with low redundancy (rho). Labeled proxy.
+            rho = side.get("rho")
+            if rho is None:
+                raise RuntimeError("singleton_proxy requires side rho")
+            score = q / (rho.clamp_min(0) + 0.05)
+            return torch.argsort(score, descending=True, stable=True)[:count].sort().values
+
+        if mode == "random_swap":
+            # Matched-budget control: random donor↔dropper swaps on Top-K.
+            gen = torch.Generator(device=q.device)
+            seed = int(os.environ.get("BELA_ICER_SEED", "20261021"))
+            if ids.numel():
+                seed = int((seed + ids.long().sum() % 1000003).item() + layer * 17)
+            gen.manual_seed(seed)
+            active = torch.zeros(q.numel(), dtype=torch.bool, device=q.device)
+            active[keep] = True
+            outside = torch.where(~active)[0]
+            if outside.numel() == 0 or max_swaps <= 0:
+                return keep
+            n_swap = min(max_swaps, keep.numel(), outside.numel())
+            drop_pos = torch.randperm(keep.numel(), generator=gen, device=q.device)[:n_swap]
+            add_pos = torch.randperm(outside.numel(), generator=gen, device=q.device)[:n_swap]
+            keep = keep.clone()
+            keep[drop_pos] = outside[add_pos]
+            return keep.sort().values
+
+        if mode not in ("icer", "icer_drift"):
+            raise RuntimeError(f"unknown BELA_ICER_MODE={mode}")
+
+        # Positive drift: rank improvement vs previous boundary (early only).
+        positive_drift = None
+        if mode == "icer_drift" and not final_boundary and s.history:
+            prev_ids = s.history["ids"].to(ids.device)
+            prev_r = s.history["r"].to(q.device).float()
+            match = ids[:, None] == prev_ids[None, :]
+            old = (match.float() @ prev_r.unsqueeze(-1)).squeeze(-1)
+            # Higher current q vs matched previous mass → positive drift preference.
+            positive_drift = (q - old).clamp_min(0)
+
+        import sys
+        from pathlib import Path as _P
+        icer_root = _P("/home/xiangyue/ViTCoP/experiments/bela_stage2_icer/BELA_STAGE2_ICER_handoff")
+        if str(icer_root) not in sys.path:
+            sys.path.insert(0, str(icer_root))
+        from bela.stage2_icer import ICERConfig, select_icer
+        drift_w = 0.0 if mode == "icer" else float(os.environ.get("BELA_ICER_DRIFT_WEIGHT", "0.20"))
+        cfg = ICERConfig(
+            max_swaps=max_swaps,
+            donor_pool=donor_pool,
+            drop_pool=drop_pool,
+            min_qmass_ratio=min_qmass,
+            drift_weight=drift_w,
+        )
+        # ranking_score: prefer the score that produced `keep` when possible.
+        rank = base_score.float()
+        # Force baseline slots to match incoming keep for swap search start:
+        # select_icer recomputes Top-K from rank; align by boosting keep slots.
+        boosted = rank.clone()
+        boost = boosted.max().clamp_min(1.0) + 1.0
+        boosted[keep] = boost + boosted[keep]
+        result = select_icer(
+            q, desc.float(), ids, count,
+            ranking_score=boosted,
+            positive_drift=positive_drift,
+            final_boundary=final_boundary,
+            config=cfg,
+            record_diagnostics=os.environ.get("BELA_ICER_DIAG", "False") == "True",
+        )
+        if result.keep_slots.numel() != count:
+            raise RuntimeError("ICER must preserve event K")
+        return result.keep_slots.sort().values
 
     def _pick(self, side, count, layer):
         s = self.state
@@ -282,7 +382,11 @@ class Runtime:
             score = ((s.visual_ids * 1103515245 + 12345 + layer * 2654435761) % 2147483647).float()
         else:
             score = side["q_attn" if self.cfg.selector == "Q_ATTN" else "qed"]
+        # CoRePrune-inspired proxy replaces the ranking score before Top-K.
+        if os.environ.get("BELA_ICER_MODE", "off").strip().lower() == "singleton_proxy":
+            return self._bela_stage2_refine(side, None, count, layer, score)
         baseline = torch.argsort(score, descending=True, stable=True)[:count].sort().values
+        keep = baseline
         # E020: refine ONLY the FIRST progressive prune (continuation / controls).
         if (self.e020 is not None and self.cfg.events and layer == self.cfg.events[0][0]):
             visual = side.get("visual")
@@ -304,13 +408,7 @@ class Runtime:
                 if s.visual_ids.numel():
                     seed = int((seed + s.visual_ids.long().sum() % 1000003).item())
                 gen.manual_seed(seed)
-            # Optional decoder projection for learned/random feature path
             hidden_vis = None
-            if spec["kind"] in ("continuation", "random"):
-                # Prefer not requiring hidden; random mode works with scores/response only
-                # if select gets features — module_torch select needs token_features.
-                # For random, dispatch still builds features; hidden optional.
-                pass
             refined = e020_refine(
                 spec, hook, score, current, baseline, s.visual_ids,
                 after=after, depth=len(self.model.layers), next_after=next_after,
@@ -318,23 +416,22 @@ class Runtime:
                 hidden=hidden_vis, encoder_rank=None, patch_xy=None, generator=gen)
             if refined.numel() != count:
                 raise RuntimeError("E020 refine must preserve event K")
-            return refined.sort().values
+            keep = refined.sort().values
         # E019: refine ONLY the final progressive prune; penultimate only captures.
-        if self.e019_hook is not None and self.cfg.events and layer == self.cfg.events[-1][0]:
+        elif self.e019_hook is not None and self.cfg.events and layer == self.cfg.events[-1][0]:
             visual = side.get("visual")
             if visual is None:
                 raise RuntimeError("E019 requires question→vision response matrix")
             current = _group_query_response(visual, self.e019_groups)
             seed = int(self._e019_sample_seed)
             if seed == 0 and s.visual_ids.numel():
-                # Stable per-request seed from original patch IDs (not launch order).
                 seed = int((s.visual_ids.long().sum() % 2147483647).item())
             refined = self.e019_hook.refine(
                 score, current, s.visual_ids, baseline, sample_seed=seed)
             if refined.numel() != count:
                 raise RuntimeError("E019 refine must preserve final K")
-            return refined.sort().values
-        return baseline
+            keep = refined.sort().values
+        return self._bela_stage2_refine(side, keep, count, layer, score)
 
     def _features(self, hidden, side, keep, layer, endpoint):
         s, n = self.state, self.state.visual_ids.numel()

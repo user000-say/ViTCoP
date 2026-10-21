@@ -1,0 +1,48 @@
+{
+  "id": "S4_W2048_RDRIFT_ICER",
+  "phase": "bela_stage2_icer",
+  "schedule_name": "E88_R3_ANCHOR",
+  "config_hash": "h2_w2048_v5_cover_rdrift_20261020",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        90,
+        32
+      ],
+      "lengths": [
+        4,
+        8,
+        20
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  },
+  "bela_icer": {
+    "mode": "icer",
+    "description": "RDRIFT + ICER",
+    "max_swaps": 3,
+    "donor_pool": 24,
+    "drop_pool": 16,
+    "min_qmass_ratio": 0.97,
+    "note_singleton": "singleton_proxy uses q_attn/(rho+0.05); not full CoRePrune attn-V diagnostic (SDPA has no attn weights)"
+  }
+}
