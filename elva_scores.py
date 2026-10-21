@@ -197,24 +197,43 @@ def summarize_arm(tasks: Mapping[str, float]) -> dict[str, Any]:
     return row
 
 
+def _fmt_abs_rel(abs_score: float | None, rel: float | None, task: str) -> str:
+    """e.g. GQA 57.84/93.44%  or MME 1765.2/95.31%."""
+    if abs_score is None or rel is None:
+        return "—"
+    if task == "mme":
+        return f"{abs_score:.1f}/{rel:.2f}%"
+    return f"{abs_score:.2f}/{rel:.2f}%"
+
+
 def format_relative_table(
     arms: Mapping[str, Mapping[str, Any]],
     arm_order: Sequence[str] | None = None,
 ) -> str:
-    """Markdown table: rows=datasets+means, columns=arms."""
+    """Markdown table: each cell is abs/rel% ; footer rows are means."""
     order = list(arm_order) if arm_order else list(arms.keys())
-    headers = ["dataset", "Dense"] + order
-    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+    headers = ["dataset", "Dense"] + list(order)
+    lines = [
+        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join(["---"] * len(headers)) + " |",
+    ]
     for t in ACC_TASKS:
         cells = [TASK_LABEL.get(t, t), f"{DENSE_REF[t]:g}"]
         for arm in order:
-            rel = (arms[arm].get("relative_acc") or {}).get(t)
-            cells.append(f"{rel:.2f}" if rel is not None else "—")
+            block = arms[arm]
+            abs_map = block.get("tasks_abs") or block.get("tasks") or {}
+            rel_map = block.get("relative_acc") or {}
+            cells.append(_fmt_abs_rel(abs_map.get(t), rel_map.get(t), t))
         lines.append("| " + " | ".join(cells) + " |")
-    for name, key in (("R4 mean", "R4"), ("R8 mean", "R8"), ("R9 mean", "R9"), ("R5 extras", "R5")):
+    for name, key in (
+        ("R4 mean (rel%)", "R4"),
+        ("R8 mean (rel%)", "R8"),
+        ("R9 mean (rel%)", "R9"),
+        ("R5 extras (rel%)", "R5"),
+    ):
         cells = [name, "—"]
         for arm in order:
             v = arms[arm].get(key)
-            cells.append(f"{v:.2f}" if isinstance(v, (int, float)) else "—")
+            cells.append(f"{v:.2f}%" if isinstance(v, (int, float)) else "—")
         lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines)
