@@ -8,7 +8,7 @@ from pathlib import Path
 REPO = Path("/home/xiangyue/ViTCoP")
 sys.path.insert(0, str(REPO))
 from elva_acc_tasks import ACC_TASKS, EXTRA_TASKS, R4_TASKS
-from elva_scores import score_task_from_metrics, summarize_arm
+from elva_scores import format_relative_table, score_task_from_metrics, summarize_arm
 
 PKG = REPO / "experiments/bela_stage2_icer/BELA_STAGE2_ICER_handoff"
 ACC = REPO / "logs/e014_aee/full/bela_icer_g1"
@@ -57,12 +57,16 @@ def main():
     dest = PKG / "server_results" / "official_scores.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=2) + "\n")
-    print("arm | R4 | R8 | R9 | R5 | missing")
+    print(format_relative_table(out["arms"], ARMS))
     for arm, row in out["arms"].items():
-        print(
-            f"{arm} | {row.get('R4')} | {row.get('R8')} | {row.get('R9')} | "
-            f"{row.get('R5')} | {row.get('missing')}"
-        )
+        if row.get("missing"):
+            print(f"MISSING {arm}: {row['missing']}")
+    md = PKG / "server_results" / "relative_acc_table.md"
+    md.write_text(
+        "# ICER relative ACC (100×abs/Dense)\n\n"
+        + format_relative_table(out["arms"], ARMS)
+        + "\n"
+    )
 
 
 if __name__ == "__main__":

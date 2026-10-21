@@ -14,15 +14,16 @@ Use `elva_acc_tasks.ACC_TASKS` in launch scripts (9 tasks). Do not treat TextVQA
 
 ## Scoring (frozen 2026-10-21)
 
-Use `elva_scores.py` only:
+Use `elva_scores.py` only. Every dataset has relative ACC:
 
-- **R4**: `25*(GQA/61.9 + POPE_F1/85.8 + MME/1852 + MMBench/64.1)` — denominators frozen.
-- **Extras**: always report absolute %; also report relative retention `r = 100 * abs / Dense_ref`.
-- **Dense_ref** (provisional, do not swap silently):
-  - SciQA 69.51 (TopV), MMMU 35.60 (local Dense), AI2D 55.18 (TopV),
-    TextVQA-OCR 58.20 (LLaVA Zoo), VizWiz 50.68 (local Dense).
-- **R8** (exploratory, excludes TextVQA): `(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz) / 8`
-- **R9**: `(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz) / 9`
-- **R5**: mean of the five extra relative retentions (diagnostic).
+`r = 100 * abs / Dense_ref` (e.g. SciQA `/69.51`, AI2D `/55.18`).
 
-R8 is exploratory from current refs; do not declare it the sole paper suite without a later protocol freeze. Absolute extras are never folded into R4.
+Dense_ref: GQA 61.9, POPE 85.8, MME 1852, MMBench 64.1, SciQA 69.51, MMMU 35.60, AI2D 55.18, TextVQA-OCR 58.20, VizWiz 50.68.
+
+Aggregates are **means of relative ACCs**:
+- **R4** = mean of 4 R4-task relatives
+- **R8** = mean of 8 (excludes TextVQA-OCR)
+- **R9** = mean of all 9
+- **R5** = mean of 5 extras only
+
+Result tables must list **each dataset’s relative ACC** and **R9** (plus R4/R8). Also keep absolute scores. Do not silently change Dense refs.

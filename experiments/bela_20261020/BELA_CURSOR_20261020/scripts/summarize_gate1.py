@@ -8,7 +8,7 @@ from pathlib import Path
 REPO = Path("/home/xiangyue/ViTCoP")
 sys.path.insert(0, str(REPO))
 from elva_acc_tasks import ACC_TASKS, EXTRA_TASKS, R4_TASKS
-from elva_scores import score_task_from_metrics, summarize_arm
+from elva_scores import format_relative_table, score_task_from_metrics, summarize_arm
 
 PKG = REPO / "experiments/bela_20261020/BELA_CURSOR_20261020"
 ACC = REPO / "logs/e014_aee/full/bela_gate1_8task"
@@ -61,12 +61,13 @@ def main():
     dest = PKG / "server_results" / "official_scores.json"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=2) + "\n")
-    # Compact table for logs
-    print("arm | R4 | R8 | R9 | R5")
-    for arm, row in out["arms"].items():
-        print(
-            f"{arm} | {row.get('R4')} | {row.get('R8')} | {row.get('R9')} | {row.get('R5')}"
-        )
+    print(format_relative_table(out["arms"], ARMS))
+    md = PKG / "server_results" / "relative_acc_table.md"
+    md.write_text(
+        "# Gate1 relative ACC (100×abs/Dense)\n\n"
+        + format_relative_table(out["arms"], ARMS)
+        + "\n"
+    )
 
 
 if __name__ == "__main__":

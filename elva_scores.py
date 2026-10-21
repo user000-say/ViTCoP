@@ -1,43 +1,48 @@
-"""Canonical ELVA / BELA retention scores (R4 / R8 / R9).
+"""Canonical ELVA / BELA relative-ACC scores (R4 / R8 / R9).
 
-Frozen from 2026-10-21 user protocol:
+Protocol freeze 2026-10-21:
 
-- R4: original four-task macro (unchanged denominators).
-- Extra absolute accuracies stay reported as-is.
-- Relative retention r = 100 * abs / Dense_ref for the five extras.
-- Dense refs mix same-protocol local Dense (MMMU, VizWiz) and literature
-  Dense for ScienceQA / AI2D / TextVQA-OCR until a full unified Dense table exists.
-- R8 = (4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz) / 8
-- R9 = (4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz) / 9
-- R5 = mean of the five extra relative retentions (diagnostic only).
+For every dataset, relative ACC is:
 
-Do not fold absolute extras into R4. Do not silently change Dense refs.
+    r = 100 * abs_score / Dense_ref
+
+Dense_ref:
+  gqa 61.9, pope 85.8, mme 1852, mmbench 64.1,
+  scienceqa_img 69.51, mmmu_val 35.60, ai2d 55.18,
+  textvqa_val_ocr 58.20, vizwiz_vqa_val 50.68
+
+Aggregates (arithmetic means of relative ACCs):
+  R4 = mean of the 4 R4-task relatives
+  R8 = mean of 8 relatives (excludes TextVQA-OCR)
+  R9 = mean of all 9 relatives
+  R5 = mean of the 5 extra relatives only
+
+Reports must always show both the per-dataset relatives and R9 (and R4/R8).
 """
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
-from elva_acc_tasks import EXTRA_TASKS, R4_TASKS
+from elva_acc_tasks import ACC_TASKS, EXTRA_TASKS, R4_TASKS
 
-# R4 Dense / paper denominators (frozen).
-R4_DENOM = {
+# Per-task Dense denominators (absolute score units → relative %).
+DENSE_REF = {
     "gqa": 61.9,
     "pope": 85.8,
     "mme": 1852.0,
     "mmbench_en_dev": 64.1,
+    "scienceqa_img": 69.51,
+    "mmmu_val": 35.60,
+    "ai2d": 55.18,
+    "textvqa_val_ocr": 58.20,
+    "vizwiz_vqa_val": 50.68,
 }
 
-# Provisional Dense baselines for extras (user freeze 2026-10-21).
-# Sources recorded for audit; not a claim of unified protocol.
-DENSE_EXTRA = {
-    "scienceqa_img": 69.51,       # CVPR 2025 TopV LLaVA-1.5-7B Dense
-    "mmmu_val": 35.60,            # local same-protocol Dense
-    "ai2d": 55.18,                # CVPR 2025 TopV LLaVA-1.5-7B Dense
-    "textvqa_val_ocr": 58.20,     # LLaVA Model Zoo / LLaVA-MORE OCR prompt
-    "vizwiz_vqa_val": 50.68,      # local same-protocol Dense
-}
-
-DENSE_EXTRA_SOURCE = {
+DENSE_REF_SOURCE = {
+    "gqa": "R4_frozen_denom",
+    "pope": "R4_frozen_denom_POPE_F1",
+    "mme": "R4_frozen_denom",
+    "mmbench_en_dev": "R4_frozen_denom",
     "scienceqa_img": "TopV_CVPR2025_Table1_LLaVA15_7B",
     "mmmu_val": "local_same_protocol_dense",
     "ai2d": "TopV_CVPR2025_Table1_LLaVA15_7B",
@@ -45,13 +50,35 @@ DENSE_EXTRA_SOURCE = {
     "vizwiz_vqa_val": "local_same_protocol_dense",
 }
 
-# Tasks that enter exploratory R8 (TextVQA-OCR excluded from R8, kept in R9).
+# Backward-compatible aliases.
+R4_DENOM = {t: DENSE_REF[t] for t in R4_TASKS}
+DENSE_EXTRA = {t: DENSE_REF[t] for t in EXTRA_TASKS}
+DENSE_EXTRA_SOURCE = {t: DENSE_REF_SOURCE[t] for t in EXTRA_TASKS}
+
+R8_TASKS = R4_TASKS + (
+    "scienceqa_img",
+    "mmmu_val",
+    "ai2d",
+    "vizwiz_vqa_val",
+)
 R8_EXTRA_TASKS = (
     "scienceqa_img",
     "mmmu_val",
     "ai2d",
     "vizwiz_vqa_val",
 )
+
+TASK_LABEL = {
+    "gqa": "GQA",
+    "pope": "POPE",
+    "mme": "MME",
+    "mmbench_en_dev": "MMBench",
+    "scienceqa_img": "SciQA-IMG",
+    "mmmu_val": "MMMU",
+    "ai2d": "AI2D",
+    "textvqa_val_ocr": "TextVQA-OCR",
+    "vizwiz_vqa_val": "VizWiz",
+}
 
 
 def score_task_from_metrics(m: Mapping[str, Any], task: str) -> float:
@@ -75,31 +102,56 @@ def score_task_from_metrics(m: Mapping[str, Any], task: str) -> float:
     return v * (100 if v <= 1.5 else 1)
 
 
-def compute_r4(tasks: Mapping[str, float]) -> float:
-    return 25.0 * sum(float(tasks[t]) / R4_DENOM[t] for t in R4_TASKS)
-
-
 def relative_retention(abs_score: float, dense: float) -> float:
     return 100.0 * float(abs_score) / float(dense)
 
 
-def compute_extra_retention(tasks: Mapping[str, float]) -> dict[str, float]:
+def compute_all_relative(tasks: Mapping[str, float]) -> dict[str, float]:
+    """Per-dataset relative ACC for every task present that has a Dense ref."""
     out = {}
-    for t in EXTRA_TASKS:
-        if t not in tasks:
+    for t, abs_score in tasks.items():
+        if t not in DENSE_REF:
             continue
-        out[t] = relative_retention(tasks[t], DENSE_EXTRA[t])
+        out[t] = relative_retention(abs_score, DENSE_REF[t])
     return out
+
+
+def _mean(vals: Sequence[float]) -> float:
+    return sum(vals) / len(vals)
+
+
+def compute_r4(tasks: Mapping[str, float]) -> float:
+    """Mean of the 4 R4 relative ACCs (= classic 25*sum formula)."""
+    rel = compute_all_relative(tasks)
+    return _mean([rel[t] for t in R4_TASKS])
+
+
+def compute_extra_retention(tasks: Mapping[str, float]) -> dict[str, float]:
+    rel = compute_all_relative(tasks)
+    return {t: rel[t] for t in EXTRA_TASKS if t in rel}
 
 
 def compute_r5(retention: Mapping[str, float]) -> float | None:
     vals = [retention[t] for t in EXTRA_TASKS if t in retention]
     if len(vals) != len(EXTRA_TASKS):
         return None
-    return sum(vals) / 5.0
+    return _mean(vals)
+
+
+def compute_r8_from_relative(rel: Mapping[str, float]) -> float | None:
+    if any(t not in rel for t in R8_TASKS):
+        return None
+    return _mean([rel[t] for t in R8_TASKS])
+
+
+def compute_r9_from_relative(rel: Mapping[str, float]) -> float | None:
+    if any(t not in rel for t in ACC_TASKS):
+        return None
+    return _mean([rel[t] for t in ACC_TASKS])
 
 
 def compute_r8(r4: float, retention: Mapping[str, float]) -> float | None:
+    # Kept for callers; equivalent to mean of 8 relatives when r4 is R4 mean.
     if any(t not in retention for t in R8_EXTRA_TASKS):
         return None
     return (4.0 * float(r4) + sum(retention[t] for t in R8_EXTRA_TASKS)) / 8.0
@@ -112,29 +164,57 @@ def compute_r9(r4: float, retention: Mapping[str, float]) -> float | None:
 
 
 def summarize_arm(tasks: Mapping[str, float]) -> dict[str, Any]:
-    """Build absolute + retention + R4/R8/R9 block from absolute task scores."""
+    """Absolute scores + per-dataset relative ACC + R4/R8/R9 means."""
+    rel = compute_all_relative(tasks)
     row: dict[str, Any] = {
         "tasks_abs": {t: float(tasks[t]) for t in tasks},
+        "dense_ref": dict(DENSE_REF),
+        "dense_ref_source": dict(DENSE_REF_SOURCE),
+        "relative_acc": {t: rel[t] for t in ACC_TASKS if t in rel},
+        "retention_vs_dense": {t: rel[t] for t in EXTRA_TASKS if t in rel},
         "dense_extra": dict(DENSE_EXTRA),
         "dense_extra_source": dict(DENSE_EXTRA_SOURCE),
     }
-    if all(t in tasks for t in R4_TASKS):
-        row["R4"] = compute_r4(tasks)
-    retention = compute_extra_retention(tasks)
-    row["retention_vs_dense"] = retention
-    if "R4" in row:
-        row["R5"] = compute_r5(retention)
-        row["R8"] = compute_r8(row["R4"], retention)
-        row["R9"] = compute_r9(row["R4"], retention)
-        row["formulas"] = {
-            "R4": "25*(GQA/61.9 + POPE_F1/85.8 + MME/1852 + MMBench/64.1)",
-            "R8": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_VizWiz)/8",
-            "R9": "(4*R4 + r_SciQA + r_MMMU + r_AI2D + r_TextVQA + r_VizWiz)/9",
-            "R5": "mean(r_SciQA, r_MMMU, r_AI2D, r_TextVQA, r_VizWiz)",
-            "r_task": "100 * abs / Dense_ref",
-            "note": (
-                "R8 exploratory (excludes TextVQA-OCR). Dense refs mixed "
-                "local+literature until unified same-protocol Dense table."
-            ),
-        }
+    if all(t in rel for t in R4_TASKS):
+        row["R4"] = _mean([rel[t] for t in R4_TASKS])
+    if all(t in rel for t in EXTRA_TASKS):
+        row["R5"] = _mean([rel[t] for t in EXTRA_TASKS])
+    if all(t in rel for t in R8_TASKS):
+        row["R8"] = _mean([rel[t] for t in R8_TASKS])
+    if all(t in rel for t in ACC_TASKS):
+        row["R9"] = _mean([rel[t] for t in ACC_TASKS])
+    row["formulas"] = {
+        "r_task": "100 * abs / Dense_ref  (e.g. SciQA/69.51, AI2D/55.18)",
+        "R4": "mean(r_GQA, r_POPE, r_MME, r_MMBench)",
+        "R8": "mean of 8 relatives (excludes TextVQA-OCR)",
+        "R9": "mean of all 9 relatives",
+        "R5": "mean of 5 extra relatives",
+        "note": (
+            "Tables must list every dataset relative_acc plus R9. "
+            "Dense refs mixed local+literature until unified Dense table."
+        ),
+    }
     return row
+
+
+def format_relative_table(
+    arms: Mapping[str, Mapping[str, Any]],
+    arm_order: Sequence[str] | None = None,
+) -> str:
+    """Markdown table: rows=datasets+means, columns=arms."""
+    order = list(arm_order) if arm_order else list(arms.keys())
+    headers = ["dataset", "Dense"] + order
+    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+    for t in ACC_TASKS:
+        cells = [TASK_LABEL.get(t, t), f"{DENSE_REF[t]:g}"]
+        for arm in order:
+            rel = (arms[arm].get("relative_acc") or {}).get(t)
+            cells.append(f"{rel:.2f}" if rel is not None else "—")
+        lines.append("| " + " | ".join(cells) + " |")
+    for name, key in (("R4 mean", "R4"), ("R8 mean", "R8"), ("R9 mean", "R9"), ("R5 extras", "R5")):
+        cells = [name, "—"]
+        for arm in order:
+            v = arms[arm].get(key)
+            cells.append(f"{v:.2f}" if isinstance(v, (int, float)) else "—")
+        lines.append("| " + " | ".join(cells) + " |")
+    return "\n".join(lines)
