@@ -39,11 +39,15 @@
 | F3 `ENTRY128_RDRIFT` | COVER K128 + RDRIFT, `128/64/32` @8/8/16 | **new config**; original COVER/RDRIFT via host |
 | A0–A4 adaptive | bela_next policy | **NOT_RUN** — no production bind |
 
-## Host patch for G1 entry K (OFF identity for K172)
+## Host patch: COVER accepts budget=K0 (handoff §P3 Stage1)
 
-- `e013_choose(..., core_k=None)` — default `172` unchanged; allows `{128,160,172}` with same COVER gain / REPLACE slots=32.
-- `elva_r3/native_cover.py` + `cover_binding.py` + `llava_stage1.py` declare supported_k `{128,160,172}`.
+See `experiments/bela_cvpr2027_20261022/SOURCE_DIFF_STAGE1_COVER_K0.md`.
+
+- Same E013 REPLACE/COVER gain; **slots=32**; `core_k∈{96,128,160,172}`.
+- Default / omitted `core_k` → **172** (frozen anchor identity).
+- G1 uses static `ELVA_R3_ENTRY_K` from config (F2=160, F3=128); `BELA_NEXT_ENABLE` remains False.
 - Smoke F2 pope limit=4: `stage1_tokens=160`, `final_visual_tokens=32`, RC=0.
+- Not PCOV / not COVER_PORT / not pool172.
 
 ## Gaps (blocked for adaptive)
 
