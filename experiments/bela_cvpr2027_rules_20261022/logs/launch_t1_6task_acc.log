@@ -9,3 +9,12 @@ START gpu=0 A2_COVER_RDRIFT gqa pid=2730631
 START gpu=2 A2_COVER_RDRIFT pope pid=2730632
 START gpu=4 A2_COVER_RDRIFT mme pid=2730633
 START gpu=7 A2_COVER_RDRIFT mmbench_en_dev pid=2730634
+START gpu=4 A2_COVER_RDRIFT scienceqa_img pid=2732668
+START gpu=4 A2_COVER_RDRIFT textvqa_val_ocr pid=2734343
+START gpu=7 A3_COVER_RDRIFT gqa pid=2735678
+START gpu=2 A3_COVER_RDRIFT pope pid=2735908
+START gpu=0 A3_COVER_RDRIFT mme pid=2737793
+START gpu=4 A3_COVER_RDRIFT mmbench_en_dev pid=2738484
+START gpu=0 A3_COVER_RDRIFT scienceqa_img pid=2739460
+START gpu=2 A3_COVER_RDRIFT textvqa_val_ocr pid=2740047
+ACC queue drained
