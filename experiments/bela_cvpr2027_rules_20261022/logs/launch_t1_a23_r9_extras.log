@@ -1,0 +1,28 @@
+HAVE A2_COVER_RDRIFT/gqa
+HAVE A2_COVER_RDRIFT/pope
+HAVE A2_COVER_RDRIFT/mme
+HAVE A2_COVER_RDRIFT/mmbench_en_dev
+HAVE A2_COVER_RDRIFT/scienceqa_img
+HAVE A2_COVER_RDRIFT/textvqa_val_ocr
+HAVE A3_COVER_RDRIFT/gqa
+HAVE A3_COVER_RDRIFT/pope
+HAVE A3_COVER_RDRIFT/mme
+HAVE A3_COVER_RDRIFT/mmbench_en_dev
+HAVE A3_COVER_RDRIFT/scienceqa_img
+HAVE A3_COVER_RDRIFT/textvqa_val_ocr
+ACC pending 6 (A2/A3 R9 extras only)
+[
+  "A2_COVER_RDRIFT:mmmu_val",
+  "A2_COVER_RDRIFT:ai2d",
+  "A2_COVER_RDRIFT:vizwiz_vqa_val",
+  "A3_COVER_RDRIFT:mmmu_val",
+  "A3_COVER_RDRIFT:ai2d",
+  "A3_COVER_RDRIFT:vizwiz_vqa_val"
+]
+START gpu=0 A2_COVER_RDRIFT mmmu_val pid=2778211
+START gpu=2 A2_COVER_RDRIFT ai2d pid=2778212
+START gpu=4 A2_COVER_RDRIFT vizwiz_vqa_val pid=2778213
+START gpu=7 A3_COVER_RDRIFT mmmu_val pid=2778214
+START gpu=0 A3_COVER_RDRIFT ai2d pid=2780584
+START gpu=7 A3_COVER_RDRIFT vizwiz_vqa_val pid=2780585
+ACC queue drained
