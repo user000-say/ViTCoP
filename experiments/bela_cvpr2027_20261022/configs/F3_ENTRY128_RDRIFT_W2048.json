@@ -1,0 +1,30 @@
+{
+  "id": "F3_ENTRY128_RDRIFT_W2048",
+  "phase": "cvpr2027_g1",
+  "config_hash": "f3_entry128_rdrift_w2048_20261022",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [128, 64, 32],
+      "lengths": [8, 8, 16]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

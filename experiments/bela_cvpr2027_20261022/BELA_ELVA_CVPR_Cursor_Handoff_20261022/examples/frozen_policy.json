@@ -1,0 +1,7 @@
+{
+  "lower": 0.16749999999999998,
+  "upper": 0.35750000000000004,
+  "source_split": "dev",
+  "model_revision": "SYNTHETIC_ONLY",
+  "signal": "cosine_feature_coverage_residual"
+}

@@ -1,0 +1,4 @@
+{"question_id":"q1", "category":"popular","label":"yes","prediction":"Yes, a bike is visible."}
+{"question_id":"q2", "category":"popular","label":"no","prediction":"No."}
+{"question_id":"q3", "category":"adversarial","label":"no","prediction":"Yes."}
+{"question_id":"q4", "category":"random","label":"yes","prediction":"Yes."}

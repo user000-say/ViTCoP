@@ -34,7 +34,10 @@ def _covers():
     _COVERS = {
         "legacy_native": NativeCover(legacy_callback, dict(
             family="legacy_native", entrypoint="native_cover:legacy_callback",
-            supported_k=[172], replacement_slots={"172": 32}, source_files=legacy_files)),
+            # Same E013 REPLACE/COVER gain; G1 adds entry 160/128 (slots=32).
+            supported_k=[128, 160, 172],
+            replacement_slots={"128": 32, "160": 32, "172": 32},
+            source_files=legacy_files)),
         "protected_coverage": NativeCover(pcov_callback, dict(
             family="protected_coverage", entrypoint="elva.low_budget_cover:callback",
             # B12 fixed; K80 is the CVPR W1024 equal-budget entrance candidate.

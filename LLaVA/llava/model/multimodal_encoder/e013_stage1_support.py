@@ -48,7 +48,7 @@ def _core_relative_coverage(tokens, scores, anchor_ids, residual_ids):
 
 
 def e013_choose(tokens, cls_scores, variant, pick, budget,
-                seed=20261009, request_index=0):
+                seed=20261009, request_index=0, core_k=None):
     """Return (persistent_patch_ids, appended_patch_ids, original_patch_ids).
 
     ALL IDs refer to original 576 CLIP patches, are unique and spatially sorted.
@@ -57,6 +57,10 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
     control (these slots still add attention / normalization and RoPE).
     Random uses a seeded PyTorch generator, independent of the global RNG,
     keyed by request_index: RUNNER MUST keep the exact same sample order.
+
+    core_k defaults to CORE_K=172 (historical identity). G1 static entry
+    budgets may pass 160/128: same COVER gain and REPLACE slots, only the
+    total keep count changes. Do not invent a different coverage formula.
     """
     if tokens.ndim != 2 or tokens.shape[0] != GRID*GRID:
         raise ValueError('[E013] requires [576, dim] CLIP patch tokens')
@@ -67,23 +71,26 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
     variant = str(variant).upper()
     pick = str(pick).upper()
     b = int(budget)
+    total_k = int(CORE_K if core_k is None else core_k)
+    if total_k not in {128, 160, 172}:
+        raise ValueError('[E013] core_k must be one of {128,160,172}')
     if variant not in {'EXTRA', 'REPLACE'}:
         raise ValueError('[E013] variant must be EXTRA or REPLACE')
     if pick not in {'ATTN', 'RANDOM', 'COVER', 'NULL', 'DUPLICATE'}:
         raise ValueError('[E013] pick must be ATTN/RANDOM/COVER/NULL/DUPLICATE')
     if pick in {'NULL', 'DUPLICATE'} and variant != 'EXTRA':
         raise ValueError('[E013] NULL/DUPLICATE are only valid for EXTRA')
-    if b < 0 or b > 32:
-        raise ValueError('[E013] budget must be 0..32')
+    if b < 0 or b > 32 or b > total_k:
+        raise ValueError('[E013] budget must be 0..min(32, core_k)')
 
-    base = cls_scores.topk(CORE_K, largest=True, sorted=False).indices
+    base = cls_scores.topk(total_k, largest=True, sorted=False).indices
     base = base.sort().values
     if b == 0:
         return base, base[:0], base
     base_mask = torch.ones(GRID*GRID, dtype=torch.bool, device=tokens.device)
     base_mask[base] = False
     residual = torch.where(base_mask)[0]
-    anchors_k = CORE_K if variant == 'EXTRA' else CORE_K-b
+    anchors_k = total_k if variant == 'EXTRA' else total_k - b
     anchors = cls_scores.topk(anchors_k, largest=True, sorted=False).indices.sort().values
 
     if pick == 'NULL':
@@ -115,6 +122,6 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
 
     # Sets are disjoint by construction (original Core vs its complement).
     # Avoid torch.unique and .item() synchronizations during inference.
-    if persistent.numel() != CORE_K:
+    if persistent.numel() != total_k:
         raise RuntimeError('[E013] wrong persistent length')
     return persistent, transient, base

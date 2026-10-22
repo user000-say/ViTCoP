@@ -1,0 +1,5 @@
+# CPU reference dependencies only.
+numpy>=1.24
+# Optional: PyTorch for stage1_torch_adapter.py and its GPU/CPU consistency tests.
+# Use the PyTorch version pinned by the actual LLaVA server; do not reinstall
+# another PyTorch build merely to use this research package.
