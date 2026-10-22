@@ -1,0 +1,14 @@
+[eval] lmms_eval --model llava --model_args pretrained=liuhaotian/llava-v1.5-7b --tasks pope --batch_size 1 --log_samples --output_path /home/xiangyue/ViTCoP/logs/e014_aee/full/bela_cvpr2027_t1_6task/A2_COVER_RDRIFT/pope
+[32m2026-10-22 15:04:50.098[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate[0m:[36m295[0m - [1mVerbosity set to INFO[0m
+[32m2026-10-22 15:04:52.924[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m378[0m - [1mEvaluation tracker args: {'output_path': '/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_cvpr2027_t1_6task/A2_COVER_RDRIFT/pope'}[0m
+[32m2026-10-22 15:04:52.925[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m467[0m - [1mSelected Tasks: ['pope'][0m
+[32m2026-10-22 15:04:52.926[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36msimple_evaluate[0m:[36m155[0m - [1mSetting random seed to 0 | Setting numpy seed to 1234 | Setting torch manual seed to 1234[0m
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:04<00:04,  4.12s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.62s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.85s/it]
+[32m2026-10-22 15:05:00.218[0m | [1mINFO    [0m | [36mlmms_eval.models.llava[0m:[36m__init__[0m:[36m142[0m - [1mUsing single device: cuda:0[0m
+[32m2026-10-22 15:05:00.223[0m | [1mINFO    [0m | [36mlmms_eval.evaluator_utils[0m:[36mfrom_taskdict[0m:[36m91[0m - [1mNo metadata found in task config for pope, using default n_shot=0[0m
+[32m2026-10-22 15:05:00.224[0m | [1mINFO    [0m | [36mlmms_eval.api.task[0m:[36mbuild_all_requests[0m:[36m425[0m - [1mBuilding contexts for pope on rank 0...[0m
+  0%|          | 0/9000 [00:00<?, ?it/s] 18%|█▊        | 1601/9000 [00:00<00:00, 16003.91it/s] 36%|███▌      | 3219/9000 [00:00<00:00, 16103.60it/s] 54%|█████▍    | 4863/9000 [00:00<00:00, 16254.58it/s] 72%|███████▏  | 6504/9000 [00:00<00:00, 16313.43it/s] 91%|█████████ | 8146/9000 [00:00<00:00, 16350.82it/s]100%|██████████| 9000/9000 [00:00<00:00, 16297.29it/s]
+[32m2026-10-22 15:05:00.782[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36mevaluate[0m:[36m447[0m - [1mRunning generate_until requests[0m
+Model Responding:   0%|          | 0/9000 [00:00<?, ?it/s]Model Responding:   0%|          | 1/9000 [00:02<5:39:05,  2.26s/it]Model Responding:   0%|          | 2/9000 [00:02<2:37:18,  1.05s/it]

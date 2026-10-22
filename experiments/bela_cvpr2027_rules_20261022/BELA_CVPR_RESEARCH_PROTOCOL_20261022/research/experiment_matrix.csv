@@ -1,0 +1,13 @@
+arm,gate,k0,n0,k1,n1,k2,n2,stage1,stage2,notes,status
+A0,T1,172,4,90,8,32,20,COVER,RDRIFT,baseline: current W2048,NOT_RUN
+A1,T1,172,4,110,8,24,20,COVER,RDRIFT,tail redistribution,NOT_RUN
+A2,T1,172,4,120,8,20,20,COVER,RDRIFT,"tail redistribution, priority",NOT_RUN
+A3,T1,172,4,130,8,16,20,COVER,RDRIFT,"tail redistribution, priority",NOT_RUN
+A4,T1,172,4,140,8,12,20,COVER,RDRIFT,extreme tail diagnostic,NOT_RUN
+B0,T2,128,12,37,8,18,12,COVER,RDRIFT,"STAR-like schedule, not STAR algorithm",NOT_RUN
+B1,T2,128,12,40,8,16,12,COVER,RDRIFT,"same entry, earlier mid vs later tail",NOT_RUN
+B2,T2,128,12,46,8,12,12,COVER,RDRIFT,"same entry, smaller tail",NOT_RUN
+C0,T3,60,10,28,10,12,12,HIST_PCOV,QATTN,historical W1024 schedule; verify selector,NOT_RUN
+C1,T3,60,10,34,10,7,12,HIST_PCOV,QATTN,tail transfer W1024,NOT_RUN
+C2,T3,60,10,22,10,17,12,HIST_PCOV,QATTN,more deep W1024,NOT_RUN
+C3,T3,64,12,17,8,10,12,COVER,QATTN,"STAR-like W1024 schedule, BELA selector; novel COVER@64 variant, not STAR-Pro reproduction",NOT_RUN

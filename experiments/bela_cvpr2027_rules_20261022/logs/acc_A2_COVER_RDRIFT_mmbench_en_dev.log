@@ -1,0 +1,13 @@
+[eval] lmms_eval --model llava --model_args pretrained=liuhaotian/llava-v1.5-7b --tasks mmbench_en_dev --batch_size 1 --log_samples --output_path /home/xiangyue/ViTCoP/logs/e014_aee/full/bela_cvpr2027_t1_6task/A2_COVER_RDRIFT/mmbench_en_dev
+[32m2026-10-22 15:04:50.247[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate[0m:[36m295[0m - [1mVerbosity set to INFO[0m
+[32m2026-10-22 15:04:53.067[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m378[0m - [1mEvaluation tracker args: {'output_path': '/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_cvpr2027_t1_6task/A2_COVER_RDRIFT/mmbench_en_dev'}[0m
+[32m2026-10-22 15:04:53.068[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate_single[0m:[36m467[0m - [1mSelected Tasks: ['mmbench_en_dev'][0m
+[32m2026-10-22 15:04:53.069[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36msimple_evaluate[0m:[36m155[0m - [1mSetting random seed to 0 | Setting numpy seed to 1234 | Setting torch manual seed to 1234[0m
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+You are using a model of type llava to instantiate a model of type llava_llama. This is not supported for all configurations of models and can yield errors.
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:03<00:03,  3.91s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.41s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:05<00:00,  2.64s/it]
+[32m2026-10-22 15:04:59.941[0m | [1mINFO    [0m | [36mlmms_eval.models.llava[0m:[36m__init__[0m:[36m142[0m - [1mUsing single device: cuda:0[0m
+[32m2026-10-22 15:04:59.949[0m | [1mINFO    [0m | [36mlmms_eval.api.task[0m:[36mbuild_all_requests[0m:[36m425[0m - [1mBuilding contexts for mmbench_en_dev on rank 0...[0m
+  0%|          | 0/4329 [00:00<?, ?it/s] 16%|█▌        | 703/4329 [00:00<00:00, 7023.28it/s] 33%|███▎      | 1433/4329 [00:00<00:00, 7182.54it/s] 55%|█████▌    | 2396/4329 [00:00<00:00, 8298.55it/s] 77%|███████▋  | 3348/4329 [00:00<00:00, 8779.26it/s]100%|█████████▉| 4311/4329 [00:00<00:00, 9084.06it/s]100%|██████████| 4329/4329 [00:00<00:00, 8614.88it/s]
+[32m2026-10-22 15:05:00.455[0m | [1mINFO    [0m | [36mlmms_eval.evaluator[0m:[36mevaluate[0m:[36m447[0m - [1mRunning generate_until requests[0m
+Model Responding:   0%|          | 0/4329 [00:00<?, ?it/s]
