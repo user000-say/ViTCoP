@@ -1,6 +1,7 @@
-"""Handoff V1: B1/B2 fair-256 TTFT/Fixed32 (exclusive GPU from {0,2,4,7}).
+"""Handoff V1: B1/B2 fair-256 TTFT/Fixed32.
 
-Skips arms that already have latency_summary.json. Sequential to avoid contention.
+Sequential, one exclusive flocked GPU at a time. Never starts while another
+launcher holds the same card (even during weight-load when VRAM looks free).
 """
 from __future__ import annotations
 
@@ -8,10 +9,12 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 REPO = Path("/home/xiangyue/ViTCoP")
+sys.path.insert(0, str(REPO / "experiments"))
+from gpu_exclusive import PROJECT_GPUS, acquire_one, release  # noqa: E402
+
 PKG = REPO / "experiments/bela_cvpr2027_rules_20261022"
 R3 = REPO / "experiments/elva_r3"
 PYBENCH = str(REPO / "experiments/e014_latency_fair_256/bin/python")
@@ -19,7 +22,6 @@ BENCH = REPO / "experiments/e014_latency_fair_256/scripts/benchmark_llava_e2e_an
 PANEL = REPO / "experiments/e014_latency_fair_256/panel/speed_256.jsonl"
 MODEL = REPO / "experiments/e014_latency_fair_256/models_llava"
 OUT_ROOT = PKG / "latency"
-GPUS = (0, 2, 4, 7)
 BASE_ARM = "E018_COVER_TWO32"
 
 ARMS = (
@@ -47,25 +49,7 @@ def env_for(cfg_path: Path, audit_dir: Path) -> dict:
     return keep
 
 
-def free_gpus(max_used_mib: int = 4000) -> list[int]:
-    out = subprocess.check_output(
-        [
-            "nvidia-smi",
-            "--query-gpu=index,memory.used",
-            "--format=csv,noheader,nounits",
-        ],
-        text=True,
-    )
-    free = []
-    for line in out.strip().splitlines():
-        idx_s, used_s = [x.strip() for x in line.split(",")]
-        idx, used = int(idx_s), int(float(used_s))
-        if idx in GPUS and used < max_used_mib:
-            free.append(idx)
-    return free
-
-
-def run_one(arm: str, gpu: int) -> None:
+def run_one(arm: str) -> None:
     cfg_path = PKG / "configs" / f"{arm}.json"
     if not cfg_path.exists():
         raise FileNotFoundError(cfg_path)
@@ -76,46 +60,51 @@ def run_one(arm: str, gpu: int) -> None:
     out.mkdir(parents=True, exist_ok=True)
     log = PKG / "logs" / f"ttft_{arm}.log"
     log.parent.mkdir(parents=True, exist_ok=True)
-    child_env = os.environ.copy()
-    child_env.update(env_for(cfg_path, out))
-    child_env["CUDA_VISIBLE_DEVICES"] = str(gpu)
-    child_env["PYTHONPATH"] = (
-        f"{REPO}:{REPO / 'experiments'}:{R3}:{REPO / 'LLaVA'}:{REPO / 'e020_lib'}"
-    )
-    child_env["PYTHONUNBUFFERED"] = "1"
-    child_env["HF_HUB_OFFLINE"] = "1"
-    child_env["TRANSFORMERS_OFFLINE"] = "1"
-    child_env["HF_DATASETS_OFFLINE"] = "1"
-    cmd = [
-        PYBENCH,
-        str(BENCH),
-        "--repo-root",
-        str(REPO),
-        "--panel",
-        str(PANEL),
-        "--model-path",
-        str(MODEL),
-        "--conv-mode",
-        "llava_v1",
-        "--out-dir",
-        str(out),
-        "--warmups",
-        "8",
-        "--limit",
-        "0",
-    ]
-    print(f"TTFT START gpu={gpu} {arm}", flush=True)
-    with log.open("w") as handle:
-        rc = subprocess.call(cmd, env=child_env, stdout=handle, stderr=subprocess.STDOUT)
-    if rc != 0 or not (out / "latency_summary.json").exists():
-        raise SystemExit(f"TTFT FAIL {arm} rc={rc}")
-    summary = json.loads((out / "latency_summary.json").read_text())
-    print(
-        f"TTFT DONE {arm} "
-        f"ttft={summary['ttft_wall_ms']['mean']:.1f} "
-        f"fixed32={summary['fixed32_wall_ms']['mean']:.1f}",
-        flush=True,
-    )
+
+    lease = acquire_one(f"ttft:{arm}", allowed=PROJECT_GPUS)
+    try:
+        child_env = os.environ.copy()
+        child_env.update(env_for(cfg_path, out))
+        child_env["CUDA_VISIBLE_DEVICES"] = str(lease.gpu)
+        child_env["PYTHONPATH"] = (
+            f"{REPO}:{REPO / 'experiments'}:{R3}:{REPO / 'LLaVA'}:{REPO / 'e020_lib'}"
+        )
+        child_env["PYTHONUNBUFFERED"] = "1"
+        child_env["HF_HUB_OFFLINE"] = "1"
+        child_env["TRANSFORMERS_OFFLINE"] = "1"
+        child_env["HF_DATASETS_OFFLINE"] = "1"
+        cmd = [
+            PYBENCH,
+            str(BENCH),
+            "--repo-root",
+            str(REPO),
+            "--panel",
+            str(PANEL),
+            "--model-path",
+            str(MODEL),
+            "--conv-mode",
+            "llava_v1",
+            "--out-dir",
+            str(out),
+            "--warmups",
+            "8",
+            "--limit",
+            "0",
+        ]
+        print(f"TTFT START gpu={lease.gpu} {arm} (locked)", flush=True)
+        with log.open("w") as handle:
+            rc = subprocess.call(cmd, env=child_env, stdout=handle, stderr=subprocess.STDOUT)
+        if rc != 0 or not (out / "latency_summary.json").exists():
+            raise SystemExit(f"TTFT FAIL {arm} rc={rc}")
+        summary = json.loads((out / "latency_summary.json").read_text())
+        print(
+            f"TTFT DONE {arm} "
+            f"ttft={summary['ttft_wall_ms']['mean']:.1f} "
+            f"fixed32={summary['fixed32_wall_ms']['mean']:.1f}",
+            flush=True,
+        )
+    finally:
+        release(lease)
 
 
 def main() -> None:
@@ -123,15 +112,7 @@ def main() -> None:
     pending = [a for a in ARMS if not (OUT_ROOT / a / "latency_summary.json").exists()]
     print(f"B1/B2 TTFT pending {pending}", flush=True)
     for arm in pending:
-        while True:
-            free = free_gpus()
-            if free:
-                gpu = free[0]
-                print(f"exclusive gpu={gpu} for {arm} (free={free})", flush=True)
-                run_one(arm, gpu)
-                break
-            print("waiting for free GPU in {0,2,4,7} ...", flush=True)
-            time.sleep(60)
+        run_one(arm)
     print("B1/B2 TTFT queue drained", flush=True)
     for arm in ARMS:
         p = OUT_ROOT / arm / "latency_summary.json"

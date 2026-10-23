@@ -2,6 +2,9 @@
 
 B1 172/90/20 W1808; B2 172/120/32 W2288. COVER+RDRIFT. GPUs 0/2/4/7.
 Skip any metrics.json already present. VizWiz intentionally excluded.
+
+GPU policy: every spawn takes an exclusive flock via experiments.gpu_exclusive
+*before* the child starts loading weights, so TTFT/other queues cannot race.
 """
 from __future__ import annotations
 
@@ -14,16 +17,17 @@ from pathlib import Path
 
 REPO = Path("/home/xiangyue/ViTCoP")
 sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "experiments"))
 from elva_acc_tasks import ACC_TASKS  # noqa: E402
+from gpu_exclusive import PROJECT_GPUS, release, try_acquire  # noqa: E402
 
 PKG = REPO / "experiments/bela_cvpr2027_rules_20261022"
 R3 = REPO / "experiments/elva_r3"
 PY = "/home/xiangyue/envs/vitcopreback/vitcopreback/bin/python"
-ACC_GPUS = (0, 2, 4, 7)
+ACC_GPUS = PROJECT_GPUS
 BASE_ARM = "E018_COVER_TWO32"
 OUT_ROOT = REPO / "logs/e014_aee/full/bela_cvpr27_handoff_v1_b12"
 
-# R8 = all ACC_TASKS except vizwiz
 R8_TASKS = tuple(t for t in ACC_TASKS if t != "vizwiz_vqa_val")
 
 ARMS = (
@@ -31,7 +35,6 @@ ARMS = (
     (PKG / "configs/B2_COVER_RDRIFT_W2288.json", "B2_COVER_RDRIFT"),
 )
 
-# Paired baseline fill for A0 (reuse T1 out root)
 A0_FILL = (
     PKG / "configs/A0_COVER_RDRIFT_W2048.json",
     "A0_COVER_RDRIFT",
@@ -84,32 +87,30 @@ def run_acc() -> None:
     print(f"ACC pending {len(jobs)} (B1/B2 R8 + A0 mmmu/ai2d; no VizWiz)", flush=True)
     print(json.dumps([f"{o}:{t}" for _, o, t, _ in jobs], indent=2), flush=True)
 
-    def free_slots(busy: set[int], max_used_mib: int = 4000) -> list[int]:
-        out = subprocess.check_output(
-            [
-                "nvidia-smi",
-                "--query-gpu=index,memory.used",
-                "--format=csv,noheader,nounits",
-            ],
-            text=True,
-        )
-        free = []
-        for line in out.strip().splitlines():
-            idx_s, used_s = [x.strip() for x in line.split(",")]
-            idx, used = int(idx_s), int(float(used_s))
-            if idx in ACC_GPUS and idx not in busy and used < max_used_mib:
-                free.append(idx)
-        return free
-
-    running = []
+    # (proc, lease, name)
+    running: list[tuple[subprocess.Popen, object, str]] = []
     while jobs or running:
-        running = [(p, gpu, name) for p, gpu, name in running if p.poll() is None]
-        busy = {gpu for _, gpu, _ in running}
+        still = []
+        for proc, lease, name in running:
+            if proc.poll() is None:
+                still.append((proc, lease, name))
+            else:
+                release(lease)  # type: ignore[arg-type]
+                print(f"DONE {name} rc={proc.returncode}", flush=True)
+        running = still
+
         while jobs:
-            candidates = free_slots(busy)
-            if not candidates:
+            leased = None
+            for gpu in ACC_GPUS:
+                if any(g.gpu == gpu for _, g, _ in running):  # type: ignore[attr-defined]
+                    continue
+                owner = f"acc:{jobs[0][1]}:{jobs[0][2]}"
+                leased = try_acquire(gpu, owner, allowed=ACC_GPUS)
+                if leased is not None:
+                    break
+            if leased is None:
                 break
-            gpu = candidates[0]
+
             cfg_path, out_id, task, out = jobs.pop(0)
             out.mkdir(parents=True, exist_ok=True)
             log = PKG / "logs" / f"acc_{out_id}_{task}.log"
@@ -124,13 +125,13 @@ def run_acc() -> None:
                 "--output",
                 str(out),
                 "--gpu-index",
-                str(gpu),
+                str(leased.gpu),
                 "--layer",
                 "8",
             ]
             child_env = os.environ.copy()
             child_env.update(env_for(cfg_path, out))
-            child_env["CUDA_VISIBLE_DEVICES"] = str(gpu)
+            child_env["CUDA_VISIBLE_DEVICES"] = str(leased.gpu)
             child_env["PYTHONPATH"] = (
                 f"{REPO}:{REPO / 'experiments'}:{R3}:{REPO / 'LLaVA'}:{REPO / 'e020_lib'}"
             )
@@ -146,9 +147,11 @@ def run_acc() -> None:
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
             )
-            running.append((proc, gpu, f"{out_id}:{task}"))
-            busy.add(gpu)
-            print(f"START gpu={gpu} {out_id} {task} pid={proc.pid}", flush=True)
+            running.append((proc, leased, f"{out_id}:{task}"))
+            print(
+                f"START gpu={leased.gpu} {out_id} {task} pid={proc.pid} (locked)",
+                flush=True,
+            )
         time.sleep(20)
     print("ACC queue drained", flush=True)
 

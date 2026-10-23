@@ -1,0 +1,11 @@
+# GPU exclusive scheduling — no card contention
+
+Never launch ACC and TTFT (or two GPU consumers) by only checking `nvidia-smi` memory. Weight load keeps VRAM low for tens of seconds; a second job will steal the card and contaminate TTFT/Fixed32.
+
+## Mandatory
+
+1. Use `experiments/gpu_exclusive.py`: `try_acquire` / `acquire_one` **before** spawn; `release` only after the child exits.
+2. Project GPUs remain **0, 2, 4, 7** only.
+3. Prefer one campaign supervisor: ACC queue drains → then TTFT. Do not start TTFT in parallel with ACC on the same set unless each card is flock-leased.
+4. If a job may have shared a card, delete its outputs and re-run; never report contaminated latency as valid.
+5. New launch scripts must import `gpu_exclusive`; do not copy the old memory-only `free_gpus()` pattern.
