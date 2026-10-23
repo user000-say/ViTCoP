@@ -1,0 +1,11 @@
+# STOP_GO 冻结结果
+- Time / operator / git SHA / config SHA:
+- P0 source call map verified? trace? scoring protocol?:
+- A0/A2/A3 actual W, Q, TTFT, Fixed32, selector time:
+- B1 vs A0 GQA/POPE/TextVQA, paired wins/losses, CI, W & latency:
+- B2 vs A2 GQA/POPE/TextVQA, paired wins/losses, CI, W & latency:
+- POPE random/popular/adversarial FP/FN, Yes/No bias:
+- GQA relation/count/attribute, OCR errors:
+- Disconfirmed hypotheses / unresolved limitations:
+- Decision: STOP | GO_C1_DESIGN | GO_IDENTITY_ABLATION | NEED_MORE_DATA
+- One (only) next production change, flag default, rollback, tests:

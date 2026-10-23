@@ -1,0 +1,14 @@
+---
+description: "BELA CVPR2027 evidence-first research protocol"
+alwaysApply: true
+---
+- Evaluate GQA, POPE F1, MME Total, MMBench absolute scores. Protect ScienceQA-IMG, TextVQA, AI2D.
+- Source code and real runtime trace outrank user, auditor, and other agents' hypotheses.
+- Do not edit production Stage1/Stage2 until P0 frozen commit+scorer+actual event call map are verified.
+- A2 = 172/120/20 W2048 USER_REPORTED baseline, not reproduced by this package.
+- B1 W1808 and B2 W2288 are NON-ISOBUDGET diagnosis; never claim same-cost superiority.
+- Trace source score at each cut, original patch IDs, attention mask, cache physical/masked behavior, and time provenance.
+- Same W does not imply equal TTFT. Measure selector overhead, Fixed32 and GPU memory.
+- Evidence Guard / risk probe is NOT approved production code. Continue it only after paired ID-error proof.
+- Only one algorithm change after P0/P1; demand ablations, latency Pareto, negative cases, STOP_GO record.
+- CVPR 2027 enrollment Nov 10 AoE and full submission Nov 16 AoE. Write parallel to experiments.

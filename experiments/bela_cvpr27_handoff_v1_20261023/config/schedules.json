@@ -1,0 +1,12 @@
+{
+  "layers": 32,
+  "arms": {
+    "A0": {"status":"REPORTED","stages":[[4,172],[8,90],[20,32]],"note":"previous fixed baseline"},
+    "A2": {"status":"REPORTED_MAIN_BASELINE","stages":[[4,172],[8,120],[20,20]],"note":"current fixed main baseline"},
+    "A3": {"status":"REPORTED","stages":[[4,172],[8,130],[20,16]],"note":"deep capacity diagnostic"},
+    "B1": {"status":"NOT_RUN","stages":[[4,172],[8,90],[20,20]],"note":"non-isobudget: only final K vs A0"},
+    "B2": {"status":"NOT_RUN","stages":[[4,172],[8,120],[20,32]],"note":"non-isobudget: only final K vs A2"},
+    "C1": {"status":"CONDITIONAL_NOT_RUN","stages":[[4,172],[8,108],[8,32],[12,20]],"note":"extra pruning event, only if P1 supports it"},
+    "STARPRO_T64": {"status":"PAPER_ONLY","stages":[[12,128],[8,37],[12,18]],"note":"external paper trajectory"}
+  }
+}

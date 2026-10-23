@@ -1,0 +1,1 @@
+arm,git_sha,checkpoint_sha,gpu,seed,warmup_n,repeat_id,ttft_ms,fixed32_total_ms,selector_ms,peak_memory_mb,actual_W,Q_visual

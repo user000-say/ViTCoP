@@ -1,0 +1,31 @@
+{
+  "id": "B2_COVER_RDRIFT_W2288",
+  "phase": "cvpr2027_handoff_v1_p1",
+  "config_hash": "b2_cover_rdrift_w2288_20261023",
+  "note": "non-isobudget vs A2: same mid 120, deep 20->32; W=2288",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2288,
+    "schedule": {
+      "counts": [172, 120, 32],
+      "lengths": [4, 8, 20]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "A0": {
+    "W": 2048,
+    "Q": 203616,
+    "mean": 64.0,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 90
+      },
+      {
+        "after_layer_index": 11,
+        "before": 90,
+        "after": 32
+      }
+    ],
+    "n_events": 2
+  },
+  "A2": {
+    "W": 2048,
+    "Q": 241536,
+    "mean": 64.0,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 120
+      },
+      {
+        "after_layer_index": 11,
+        "before": 120,
+        "after": 20
+      }
+    ],
+    "n_events": 2
+  },
+  "A3": {
+    "W": 2048,
+    "Q": 258656,
+    "mean": 64.0,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 130
+      },
+      {
+        "after_layer_index": 11,
+        "before": 130,
+        "after": 16
+      }
+    ],
+    "n_events": 2
+  },
+  "B1": {
+    "W": 1808,
+    "Q": 191136,
+    "mean": 56.5,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 90
+      },
+      {
+        "after_layer_index": 11,
+        "before": 90,
+        "after": 20
+      }
+    ],
+    "n_events": 2
+  },
+  "B2": {
+    "W": 2288,
+    "Q": 254016,
+    "mean": 71.5,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 120
+      },
+      {
+        "after_layer_index": 11,
+        "before": 120,
+        "after": 32
+      }
+    ],
+    "n_events": 2
+  },
+  "C1": {
+    "W": 2048,
+    "Q": 224640,
+    "mean": 64.0,
+    "events": [
+      {
+        "after_layer_index": 3,
+        "before": 172,
+        "after": 108
+      },
+      {
+        "after_layer_index": 11,
+        "before": 108,
+        "after": 32
+      },
+      {
+        "after_layer_index": 19,
+        "before": 32,
+        "after": 20
+      }
+    ],
+    "n_events": 3
+  },
+  "STARPRO_T64": {
+    "W": 2048,
+    "Q": 211448,
+    "mean": 64.0,
+    "events": [
+      {
+        "after_layer_index": 11,
+        "before": 128,
+        "after": 37
+      },
+      {
+        "after_layer_index": 19,
+        "before": 37,
+        "after": 18
+      }
+    ],
+    "n_events": 2
+  }
+}
