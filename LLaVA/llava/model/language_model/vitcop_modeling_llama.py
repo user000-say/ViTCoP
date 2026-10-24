@@ -1499,12 +1499,13 @@ class LlamaModel(LlamaPreTrainedModel):
                 e014_registered_budget_point = (
                     self.e014_enable and self.e006_target_k in {64, 32}
                 )
-                # ELVA / CVPR T1: exact-W2048 tails may finish at 32/24/20/16/12
-                # (A0–A4). Must match ELVA_R3_FINAL_K from the frozen schedule.
+                # ELVA exact-W schedule: final K must match ELVA_R3_FINAL_K.
+                # Allow 8..64 so W1024/W2048 schedule sweeps (handoff 136-arm) can run;
+                # still requires ELVA_R3_ENABLE and exact FINAL_K match (not free-form).
                 elva_registered_budget_point = (
                     os.environ.get("ELVA_R3_ENABLE") == "True"
                     and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
-                    and self.e006_target_k in {12, 16, 20, 24, 32}
+                    and 8 <= self.e006_target_k <= 64
                 )
                 # E016: final K may be 16 when an explicit decreasing cascade is set.
                 e016_registered_budget_point = (
@@ -1553,10 +1554,10 @@ class LlamaModel(LlamaPreTrainedModel):
             allowed_k = {96, 64, 32} if self.e014_enable else {96, 64}
             if self.e016_cascade:
                 allowed_k = allowed_k | {16, 32, 64, 96}
-            if (os.environ.get("ELVA_R3_ENABLE") == "True"
-                    and int(os.environ.get("ELVA_R3_FINAL_K", "-1")) in {12, 16, 20, 24, 32}):
-                # CVPR T1 A0–A4 exact-W2048 finals
-                allowed_k = allowed_k | {12, 16, 20, 24, 32}
+            if os.environ.get("ELVA_R3_ENABLE") == "True":
+                fk = int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
+                if 8 <= fk <= 64:
+                    allowed_k = allowed_k | {fk}
             if self.e006_target_k not in allowed_k:
                 raise ValueError(
                     f"[E007] target K invalid for this registered experiment: "
@@ -1685,7 +1686,7 @@ class LlamaModel(LlamaPreTrainedModel):
             elva_final = (
                 os.environ.get("ELVA_R3_ENABLE") == "True"
                 and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
-                and self.e006_target_k in {12, 16, 20, 24, 32}  # CVPR T1 A0–A4
+                and 8 <= self.e006_target_k <= 64
             )
             if self.e006_target_k not in {96, 64, 32} and not elva_final and not (
                 self.e016_cascade and self.e006_target_k == int(self.e016_cascade[-1][1])
@@ -1740,7 +1741,7 @@ class LlamaModel(LlamaPreTrainedModel):
             elva_final = (
                 os.environ.get("ELVA_R3_ENABLE") == "True"
                 and self.e006_target_k == int(os.environ.get("ELVA_R3_FINAL_K", "-1"))
-                and self.e006_target_k in {12, 16, 20, 24, 32}  # CVPR T1 A0–A4
+                and 8 <= self.e006_target_k <= 64
             )
             if self.e006_target_k != 96 and not (
                 self.e014_enable and self.e006_target_k in {64, 32}
