@@ -1,0 +1,31 @@
+{
+  "id": "W1024_PROBE_COVER_RDRIFT",
+  "phase": "cvpr2027_handoff_v2_p3",
+  "config_hash": "w1024_probe_cover_rdrift_96_50_12_20261024",
+  "note": "P3 W1024 candidate 96x4+50x8+12x20; COVER K96 (not historical PCOV60)",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [96, 50, 12],
+      "lengths": [4, 8, 20]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
