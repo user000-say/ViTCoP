@@ -1,0 +1,8 @@
+arm,status,source,W_expected,W_actual,gqa,pope_f1,mme_total,mme_perception,mmbench,sciqa,textvqa,ai2d,mmmu,ttft_ms,fixed32_ms,selector_ms,latency_scope,git_sha,checkpoint_sha,evaluator_sha,dataset_manifest_sha
+A0,REPORTED,CHAT_HISTORY,2048,2048,57.84,83.31,1767.8,,62.20,68.96,55.97,,,123.7,1234.6,,,,,,
+A2,REPORTED,CHAT_HISTORY,2048,2048,57.62,85.44,1774.9,,63.14,68.67,54.89,,,122.5,1217.7,,,,,,
+A3,REPORTED,CHAT_HISTORY,2048,2048,57.35,85.68,1775.9,,62.80,68.67,54.88,,,120.3,1177.1,,,,,,
+B1,PARTIAL,CHAT_HISTORY,1808,,NOT_RUN,83.45,1747.8,,62.37,68.86,54.51,,,,,,,,,,
+B2,PARTIAL,CHAT_HISTORY,2288,,58.44,85.36,1804.2,,62.80,68.37,55.13,,,,,,,,,,
+E1_RET32_TO12,NOT_RUN,NONE,2048,,NOT_RUN,NOT_RUN,NOT_RUN,,NOT_RUN,NOT_RUN,NOT_RUN,,,,,,,,,,
+L2_LATE_64_17_10,NOT_RUN,NONE,1024,,NOT_RUN,NOT_RUN,NOT_RUN,,NOT_RUN,NOT_RUN,NOT_RUN,,,,,,,,,,

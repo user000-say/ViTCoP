@@ -1,0 +1,13 @@
+---
+description: BELA / ELVA CVPR 2027 final sprint — evidence-driven decisions
+alwaysApply: true
+---
+- Read 00_CURSOR_START_HERE.md before modifying production code. All previous Handoffs are historical only.
+- No unverified SOTA or promised model acceptance; results need GPU logs, source SHA and matched evaluator.
+- Prioritize GQA / POPE F1 / MME Total / MMBench absolute numbers, monitor SciQA/TextVQA and full wall-time latency.
+- Stage1/Stage2 must be independently and jointly ablated, with legitimate cheap and random controls.
+- Two primary mechanisms: W2048 conditional late retirement (E1 E2 E3), W1024 delayed first cut (L2 L3). Avoid exhaustive K ratio sweeps.
+- Official first/second-cut scorer callsites MUST be audited before swapping RDRIFT/QAttn.
+- Only forward-available signals may select token K or identity. Preserve original Patch IDs, position, KV cache, attention mask and physical deletion.
+- Any real changes default OFF, smoke tests and rollback; do not extrapolate CPU scheduling tests to GPU accuracy.
+- Freeze one candidate by Oct29, finish eight-page manuscript draft by Oct31, comply with CVPR 2027 LLM Usage Statement.

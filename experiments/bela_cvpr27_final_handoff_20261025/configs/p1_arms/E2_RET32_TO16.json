@@ -1,0 +1,39 @@
+{
+  "id": "E2_RET32_TO16",
+  "phase": "cvpr2027_final_p1",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        120,
+        32,
+        16
+      ],
+      "lengths": [
+        4,
+        8,
+        5,
+        15
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

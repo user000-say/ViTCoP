@@ -1,0 +1,15 @@
+# Evidence-based final-method decision
+- Date / run SHA:
+- Frozen baseline source and evaluation hash:
+- Real Cut1 / Cut2 / Cut3 callsites:
+- P1 W2048 late-survival result, paired GQA/POPE/TextVQA and TTFT:
+- P1 W1024 delayed-cut result, paired GQA/POPE/TextVQA and TTFT:
+- Entry-stage vs downstream failure attribution:
+- POPE precision/recall/FP/FN shift:
+- Accuracy-latency Pareto conclusion:
+- Control vs random/cheap selector outcome:
+- Stage1×Stage2 cross ablation outcome:
+- Decision: GO_ERS / GO_STAGE1 / GO_SIMPLE_FIXED / STOP_NEW_METHOD:
+- Which paper claims are currently supportable:
+- Unverified claims deleted from manuscript:
+- Future proof / rollback:

@@ -1,0 +1,31 @@
+id,phase,priority,status,W_target,Q_visual,stages,stage1_variant,stage2_variant,requires_runtime_patch,hypothesis
+A0,REFERENCE,0,REPORTED,2048,203616,"[[4, 172], [8, 90], [20, 32]]",DUAL_COVER,CURRENT,False,Old reference
+A2,REFERENCE,0,REPORTED,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,CURRENT,False,Current W2048 main baseline
+A3,REFERENCE,0,REPORTED,2048,258656,"[[4, 172], [8, 130], [20, 16]]",DUAL_COVER,CURRENT,False,More aggressive late budget
+B1,REFERENCE,0,PARTIAL_REPORTED,1808,191136,"[[4, 172], [8, 90], [20, 20]]",DUAL_COVER,CURRENT,False,Deep-only reduction diagnostic
+B2,REFERENCE,0,REPORTED,2288,254016,"[[4, 172], [8, 120], [20, 32]]",DUAL_COVER,CURRENT,False,"Deep budget recovery, not cost matched"
+E1_RET32_TO12,P1_W2048,1,NOT_RUN,2048,243456,"[[4, 172], [8, 120], [8, 32], [12, 12]]",DUAL_COVER,CURRENT,True,"Keep A2 first12 identical; B2-like K32 through L20; release to K12, equal W"
+E2_RET32_TO16,P1_W2048,2,NOT_RUN,2048,242496,"[[4, 172], [8, 120], [5, 32], [15, 16]]",DUAL_COVER,CURRENT,True,"Shorter K32 survival; same A2 first12, equal W"
+E3_RET24_TO16,P1_W2048,3,NOT_RUN,2048,241856,"[[4, 172], [8, 120], [10, 24], [10, 16]]",DUAL_COVER,CURRENT,True,Moderate staged late survival
+E4_RET35_TO10,P2_W2048,6,NOT_RUN,2048,244536,"[[4, 172], [8, 120], [8, 35], [12, 10]]",DUAL_COVER,CURRENT,True,Diagnostic extreme; NOT unconditional full eval
+E5_DELAY_128_12_20,P1_W2048,2,NOT_RUN,2048,211448,"[[12, 128], [8, 37], [12, 18]]",DUAL_COVER,CURRENT,True,STAR-Pro schedule shape using BELA candidate and REAL BELA selector
+E6_DELAY_128_8_16,P2_W2048,3,NOT_RUN,2048,180224,"[[8, 128], [8, 64], [16, 32]]",DUAL_COVER,CURRENT,True,"Delayed first removal, fixed budget; tests feature maturity"
+E7_DELAY_160_8_16,P2_W2048,4,NOT_RUN,2048,241664,"[[8, 160], [8, 64], [16, 16]]",DUAL_COVER,CURRENT,True,"Larger entrance, delayed cut; vs E6 controls entry magnitude"
+L0_HIST_60_28_12,REFERENCE,0,REPORTED,1024,45568,"[[10, 60], [10, 28], [12, 12]]",DUAL_COVER,CURRENT,True,Previously reported W1024 reference; reproduce exact code and provenance
+L1_EARLY_96_50_12,REFERENCE,0,PARTIAL_REPORTED,1024,59744,"[[4, 96], [8, 50], [20, 12]]",DUAL_COVER,CURRENT,False,Previous pilot reference must match its own code
+L2_LATE_64_17_10,P1_W1024,1,NOT_RUN,1024,52664,"[[12, 64], [8, 17], [12, 10]]",DUAL_COVER,CURRENT,True,STAR-Pro T32 schedule shape with COVER and own selector
+L3_MID_80_24_12,P1_W1024,2,NOT_RUN,1024,58112,"[[8, 80], [8, 24], [16, 12]]",DUAL_COVER,CURRENT,True,"Mid-depth first cut, matched W"
+L4_MID_72_24_8,P2_W1024,3,NOT_RUN,1024,57344,"[[10, 72], [8, 24], [14, 8]]",DUAL_COVER,CURRENT,True,Longer pre-cut with small final K
+L5_96_6_48_8,P2_W1024,4,NOT_RUN,1024,70400,"[[6, 96], [6, 48], [20, 8]]",DUAL_COVER,CURRENT,True,Keep wider entrance early then aggressively shrink
+L6_FIXED64_EARLY,P2_W1024,4,NOT_RUN,1024,46592,"[[4, 64], [8, 56], [20, 16]]",DUAL_COVER,CURRENT,False,"Same Stage1 K64 as L2, early cut; tests timing not pure causal"
+S_A2_QA_TOPK,GATED_SELECTOR,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,QA_TOPK,False,Second-cut identity control; keep first-cut survivor set and whole schedule unchanged
+S_A2_RDRIFT,GATED_SELECTOR,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,RDRIFT,False,Second-cut identity control; keep first-cut survivor set and whole schedule unchanged
+S_A2_RANDOM_11,GATED_SELECTOR,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,RANDOM_11,False,Second-cut identity control; keep first-cut survivor set and whole schedule unchanged
+S_A2_RANDOM_22,GATED_SELECTOR,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,RANDOM_22,False,Second-cut identity control; keep first-cut survivor set and whole schedule unchanged
+S_A2_RANDOM_33,GATED_SELECTOR,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",DUAL_COVER,RANDOM_33,False,Second-cut identity control; keep first-cut survivor set and whole schedule unchanged
+S_L2_QA_TOPK,GATED_SELECTOR,7,NOT_RUN,1024,52664,"[[12, 64], [8, 17], [12, 10]]",DUAL_COVER,QA_TOPK,True,W1024 last-cut identity diagnostic after call-chain audit
+S_L2_RDRIFT,GATED_SELECTOR,7,NOT_RUN,1024,52664,"[[12, 64], [8, 17], [12, 10]]",DUAL_COVER,RDRIFT,True,W1024 last-cut identity diagnostic after call-chain audit
+S_L2_RANDOM_11,GATED_SELECTOR,7,NOT_RUN,1024,52664,"[[12, 64], [8, 17], [12, 10]]",DUAL_COVER,RANDOM_11,True,W1024 last-cut identity diagnostic after call-chain audit
+X_A2_PENULTIMATE_ONLY,GATED_CROSS,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",PENULTIMATE_ONLY,CURRENT,False,Stage1 x Stage2 cross ablation; matches K and schedule
+X_A2_LAYER9_ONLY,GATED_CROSS,7,NOT_RUN,2048,241536,"[[4, 172], [8, 120], [20, 20]]",LAYER9_ONLY,CURRENT,False,Stage1 x Stage2 cross ablation; matches K and schedule
+H1_W4096,P3_W4096,8,NOT_RUN,4096,660992,"[[4, 256], [8, 184], [20, 80]]",DUAL_COVER,CURRENT,False,"Generalization and latency, only after entry K256 validated"

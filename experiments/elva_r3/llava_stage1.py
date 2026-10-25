@@ -34,9 +34,9 @@ def _covers():
     _COVERS = {
         "legacy_native": NativeCover(legacy_callback, dict(
             family="legacy_native", entrypoint="native_cover:legacy_callback",
-            # Handoff COVER@K0: EASY96 / G1-F3-128 / NORMAL160 / HARD172; slots=32.
-            supported_k=[96, 128, 160, 172],
-            replacement_slots={"96": 32, "128": 32, "160": 32, "172": 32},
+            # COVER@K0: late-cut 64/72/80 + EASY96 / G1-F3-128 / NORMAL160 / HARD172; slots=32.
+            supported_k=[64, 72, 80, 96, 128, 160, 172],
+            replacement_slots={"64": 32, "72": 32, "80": 32, "96": 32, "128": 32, "160": 32, "172": 32},
             source_files=legacy_files)),
         "protected_coverage": NativeCover(pcov_callback, dict(
             family="protected_coverage", entrypoint="elva.low_budget_cover:callback",

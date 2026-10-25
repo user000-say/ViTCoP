@@ -1,0 +1,803 @@
+{
+  "version": "2026-10-25_FINAL_RESEARCH_FREEZE_V1",
+  "decoder_layers": 32,
+  "metadata_note": "CPU-budget checks only, GPU results NOT included",
+  "arms": [
+    {
+      "id": "A0",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "REPORTED",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          90
+        ],
+        [
+          20,
+          32
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 203616,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Old reference"
+    },
+    {
+      "id": "A2",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "REPORTED",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Current W2048 main baseline"
+    },
+    {
+      "id": "A3",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "REPORTED",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          130
+        ],
+        [
+          20,
+          16
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 258656,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "More aggressive late budget"
+    },
+    {
+      "id": "B1",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "PARTIAL_REPORTED",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          90
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 1808,
+      "Q_visual": 191136,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Deep-only reduction diagnostic"
+    },
+    {
+      "id": "B2",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "REPORTED",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          32
+        ]
+      ],
+      "W_target": 2288,
+      "Q_visual": 254016,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Deep budget recovery, not cost matched"
+    },
+    {
+      "id": "E1_RET32_TO12",
+      "phase": "P1_W2048",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          8,
+          32
+        ],
+        [
+          12,
+          12
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 243456,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Keep A2 first12 identical; B2-like K32 through L20; release to K12, equal W"
+    },
+    {
+      "id": "E2_RET32_TO16",
+      "phase": "P1_W2048",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          5,
+          32
+        ],
+        [
+          15,
+          16
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 242496,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Shorter K32 survival; same A2 first12, equal W"
+    },
+    {
+      "id": "E3_RET24_TO16",
+      "phase": "P1_W2048",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241856,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Moderate staged late survival"
+    },
+    {
+      "id": "E4_RET35_TO10",
+      "phase": "P2_W2048",
+      "priority": 6,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          8,
+          35
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 244536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Diagnostic extreme; NOT unconditional full eval"
+    },
+    {
+      "id": "E5_DELAY_128_12_20",
+      "phase": "P1_W2048",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          12,
+          128
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          12,
+          18
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 211448,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "STAR-Pro schedule shape using BELA candidate and REAL BELA selector"
+    },
+    {
+      "id": "E6_DELAY_128_8_16",
+      "phase": "P2_W2048",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          8,
+          128
+        ],
+        [
+          8,
+          64
+        ],
+        [
+          16,
+          32
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 180224,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Delayed first removal, fixed budget; tests feature maturity"
+    },
+    {
+      "id": "E7_DELAY_160_8_16",
+      "phase": "P2_W2048",
+      "priority": 4,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          8,
+          160
+        ],
+        [
+          8,
+          64
+        ],
+        [
+          16,
+          16
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241664,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Larger entrance, delayed cut; vs E6 controls entry magnitude"
+    },
+    {
+      "id": "L0_HIST_60_28_12",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "REPORTED",
+      "stages": [
+        [
+          10,
+          60
+        ],
+        [
+          10,
+          28
+        ],
+        [
+          12,
+          12
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 45568,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Previously reported W1024 reference; reproduce exact code and provenance"
+    },
+    {
+      "id": "L1_EARLY_96_50_12",
+      "phase": "REFERENCE",
+      "priority": 0,
+      "status": "PARTIAL_REPORTED",
+      "stages": [
+        [
+          4,
+          96
+        ],
+        [
+          8,
+          50
+        ],
+        [
+          20,
+          12
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 59744,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Previous pilot reference must match its own code"
+    },
+    {
+      "id": "L2_LATE_64_17_10",
+      "phase": "P1_W1024",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 52664,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "STAR-Pro T32 schedule shape with COVER and own selector"
+    },
+    {
+      "id": "L3_MID_80_24_12",
+      "phase": "P1_W1024",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          8,
+          80
+        ],
+        [
+          8,
+          24
+        ],
+        [
+          16,
+          12
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 58112,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Mid-depth first cut, matched W"
+    },
+    {
+      "id": "L4_MID_72_24_8",
+      "phase": "P2_W1024",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          10,
+          72
+        ],
+        [
+          8,
+          24
+        ],
+        [
+          14,
+          8
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 57344,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Longer pre-cut with small final K"
+    },
+    {
+      "id": "L5_96_6_48_8",
+      "phase": "P2_W1024",
+      "priority": 4,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          6,
+          96
+        ],
+        [
+          6,
+          48
+        ],
+        [
+          20,
+          8
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 70400,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": true,
+      "hypothesis": "Keep wider entrance early then aggressively shrink"
+    },
+    {
+      "id": "L6_FIXED64_EARLY",
+      "phase": "P2_W1024",
+      "priority": 4,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          64
+        ],
+        [
+          8,
+          56
+        ],
+        [
+          20,
+          16
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 46592,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Same Stage1 K64 as L2, early cut; tests timing not pure causal"
+    },
+    {
+      "id": "S_A2_QA_TOPK",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "QA_TOPK",
+      "requires_runtime_patch": false,
+      "hypothesis": "Second-cut identity control; keep first-cut survivor set and whole schedule unchanged"
+    },
+    {
+      "id": "S_A2_RDRIFT",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RDRIFT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Second-cut identity control; keep first-cut survivor set and whole schedule unchanged"
+    },
+    {
+      "id": "S_A2_RANDOM_11",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RANDOM_11",
+      "requires_runtime_patch": false,
+      "hypothesis": "Second-cut identity control; keep first-cut survivor set and whole schedule unchanged"
+    },
+    {
+      "id": "S_A2_RANDOM_22",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RANDOM_22",
+      "requires_runtime_patch": false,
+      "hypothesis": "Second-cut identity control; keep first-cut survivor set and whole schedule unchanged"
+    },
+    {
+      "id": "S_A2_RANDOM_33",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RANDOM_33",
+      "requires_runtime_patch": false,
+      "hypothesis": "Second-cut identity control; keep first-cut survivor set and whole schedule unchanged"
+    },
+    {
+      "id": "S_L2_QA_TOPK",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 52664,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "QA_TOPK",
+      "requires_runtime_patch": true,
+      "hypothesis": "W1024 last-cut identity diagnostic after call-chain audit"
+    },
+    {
+      "id": "S_L2_RDRIFT",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 52664,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RDRIFT",
+      "requires_runtime_patch": true,
+      "hypothesis": "W1024 last-cut identity diagnostic after call-chain audit"
+    },
+    {
+      "id": "S_L2_RANDOM_11",
+      "phase": "GATED_SELECTOR",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W_target": 1024,
+      "Q_visual": 52664,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "RANDOM_11",
+      "requires_runtime_patch": true,
+      "hypothesis": "W1024 last-cut identity diagnostic after call-chain audit"
+    },
+    {
+      "id": "X_A2_PENULTIMATE_ONLY",
+      "phase": "GATED_CROSS",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "PENULTIMATE_ONLY",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Stage1 x Stage2 cross ablation; matches K and schedule"
+    },
+    {
+      "id": "X_A2_LAYER9_ONLY",
+      "phase": "GATED_CROSS",
+      "priority": 7,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W_target": 2048,
+      "Q_visual": 241536,
+      "stage1_variant": "LAYER9_ONLY",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Stage1 x Stage2 cross ablation; matches K and schedule"
+    },
+    {
+      "id": "H1_W4096",
+      "phase": "P3_W4096",
+      "priority": 8,
+      "status": "NOT_RUN",
+      "stages": [
+        [
+          4,
+          256
+        ],
+        [
+          8,
+          184
+        ],
+        [
+          20,
+          80
+        ]
+      ],
+      "W_target": 4096,
+      "Q_visual": 660992,
+      "stage1_variant": "DUAL_COVER",
+      "stage2_variant": "CURRENT",
+      "requires_runtime_patch": false,
+      "hypothesis": "Generalization and latency, only after entry K256 validated"
+    }
+  ]
+}
