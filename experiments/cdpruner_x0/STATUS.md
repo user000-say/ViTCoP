@@ -8,3 +8,6 @@
 
 ## Note vs BELA W1024/W2048
 CDPruner K=32 keeps ~32 tokens every layer (W≈32×32=1024 only if counted that way, but pruning is **single early keep**, not progressive mid/late). Compare as **final-K baseline**, not iso-schedule to L2/E3.
+
+## Latency
+After K64+K32 ACC drain: `watch_acc_then_ttft.py` → `bench_ttft.py` (TTFT + Fixed32, warm=10 / meas=50, same shape as STAR bench).
