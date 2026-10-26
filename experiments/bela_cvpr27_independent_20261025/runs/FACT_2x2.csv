@@ -1,0 +1,9 @@
+budget,cell,gqa,pope,mean6,status
+W1024,BB,55.57,82.21,93.56,verified-gpu
+W1024,QS,57.19,86.67,93.53,verified-gpu
+W1024,QB,,,,blocked
+W1024,BS,,,,blocked
+W2048,BB,57.88,84.96,96.08,verified-gpu
+W2048,QS,58.42,87.26,93.85,verified-gpu
+W2048,QB,,,,blocked
+W2048,BS,,,,blocked

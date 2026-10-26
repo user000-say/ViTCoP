@@ -1,0 +1,7 @@
+arm,ttft_ms,fixed32_ms,status,path
+E3_CURRENT,123.0,1203.7,verified-gpu,/home/xiangyue/ViTCoP/experiments/bela_cvpr27_final_handoff_20261025/latency/E3_RET24_TO16/latency_summary.json
+E1_DIAGNOSTIC,127.0,1340.4,verified-gpu,/home/xiangyue/ViTCoP/experiments/bela_cvpr27_final_handoff_20261025/latency/E1_RET32_TO12/latency_summary.json
+F2048_BB,121.4,1198.7,verified-gpu,/home/xiangyue/ViTCoP/experiments/bela_cvpr27_final_handoff_20261025/latency/E5_DELAY_128_12_20/latency_summary.json
+F1024_BB,114.5,1188.6,verified-gpu,/home/xiangyue/ViTCoP/experiments/bela_cvpr27_final_handoff_20261025/latency/L2_LATE_64_17_10/latency_summary.json
+A2_CURRENT,122.5,1217.7,verified-gpu,/home/xiangyue/ViTCoP/experiments/bela_cvpr2027_rules_20261022/latency/A2_COVER_RDRIFT_W2048/latency_summary.json
+F2048_QS,148.7,939.2,verified-gpu,/home/xiangyue/ViTCoP/logs/starpro_x0_t64/ttft/STARPRO_T64/latency_summary.json

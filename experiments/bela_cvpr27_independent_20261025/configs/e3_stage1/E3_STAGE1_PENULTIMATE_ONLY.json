@@ -1,0 +1,39 @@
+{
+  "id": "E3_STAGE1_PENULTIMATE_ONLY",
+  "phase": "cvpr2027_independent_e3_stage1",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 2048,
+    "schedule": {
+      "counts": [
+        172,
+        120,
+        24,
+        16
+      ],
+      "lengths": [
+        4,
+        8,
+        10,
+        10
+      ]
+    },
+    "stage1": {
+      "guide": "pen",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.0,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
