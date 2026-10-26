@@ -36,7 +36,10 @@ FULL_N = {
     "mme": 2374,
     "mmbench_en_dev": 4329,
     "scienceqa_img": 2017,
+    "mmmu_val": 900,
+    "ai2d": 3088,
     "textvqa_val_ocr": 5000,
+    "vizwiz_vqa_val": 4319,
 }
 
 
@@ -132,6 +135,7 @@ def main() -> None:
         "mme_perception_score": pick(block, "mme_perception_score"),
         "mme_cognition_score": pick(block, "mme_cognition_score"),
         "gpt_eval_score": pick(block, "gpt_eval_score"),
+        "mmmu_acc": pick(block, "mmmu_acc"),
     }
     (dest / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     print(f"[ok] wrote {dest / 'metrics.json'}", flush=True)
