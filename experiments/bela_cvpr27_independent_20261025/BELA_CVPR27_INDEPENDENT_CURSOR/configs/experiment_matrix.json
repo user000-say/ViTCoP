@@ -1,0 +1,645 @@
+{
+  "version": "2026-10-25_critical_independent",
+  "dataset_policy": "dev first, untouched confirm after freeze",
+  "citation": "User-reported completed rows are NOT GPU-verified by this package",
+  "runs": [
+    {
+      "arm": "F1024_BB",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "BELA_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "REPORTED",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F1024_QB",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "STAR_QR",
+      "stage2": "BELA_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F1024_BS",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "BELA_COVER",
+      "stage2": "STAR_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F1024_QS",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "STAR_QR",
+      "stage2": "STAR_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F2048_BB",
+      "stages": [
+        [
+          12,
+          128
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          12,
+          18
+        ]
+      ],
+      "W": 2048,
+      "Q": 211448,
+      "stage1": "BELA_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "REPORTED",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F2048_QB",
+      "stages": [
+        [
+          12,
+          128
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          12,
+          18
+        ]
+      ],
+      "W": 2048,
+      "Q": 211448,
+      "stage1": "STAR_QR",
+      "stage2": "BELA_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F2048_BS",
+      "stages": [
+        [
+          12,
+          128
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          12,
+          18
+        ]
+      ],
+      "W": 2048,
+      "Q": 211448,
+      "stage1": "BELA_COVER",
+      "stage2": "STAR_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "F2048_QS",
+      "stages": [
+        [
+          12,
+          128
+        ],
+        [
+          8,
+          37
+        ],
+        [
+          12,
+          18
+        ]
+      ],
+      "W": 2048,
+      "Q": 211448,
+      "stage1": "STAR_QR",
+      "stage2": "STAR_REAL",
+      "phase": "P1_FACTORIAL",
+      "priority": 1,
+      "status": "NOT_RUN",
+      "gate": "MATCHED_CHECKPOINT_AND_SOURCE",
+      "hypothesis": "Same schedule 2x2; benchmark official STAR code only as a diagnostic (not final model)"
+    },
+    {
+      "arm": "E3_CURRENT",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "ANCHOR",
+      "priority": 0,
+      "status": "REPORTED",
+      "gate": "NONE",
+      "hypothesis": "Best current efficiency / tiny improvements, not a novel contribution"
+    },
+    {
+      "arm": "A2_CURRENT",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          20,
+          20
+        ]
+      ],
+      "W": 2048,
+      "Q": 241536,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "ANCHOR",
+      "priority": 0,
+      "status": "REPORTED",
+      "gate": "NONE",
+      "hypothesis": "Current 2-cut strong baseline"
+    },
+    {
+      "arm": "E1_DIAGNOSTIC",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          8,
+          32
+        ],
+        [
+          12,
+          12
+        ]
+      ],
+      "W": 2048,
+      "Q": 243456,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "REFERENCE",
+      "priority": 8,
+      "status": "REPORTED",
+      "gate": "NONE",
+      "hypothesis": "R4 highest but costly Fixed32; do NOT promote"
+    },
+    {
+      "arm": "W1024_EARLY",
+      "stages": [
+        [
+          4,
+          96
+        ],
+        [
+          8,
+          60
+        ],
+        [
+          20,
+          8
+        ]
+      ],
+      "W": 1024,
+      "Q": 66944,
+      "stage1": "BELA_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "REFERENCE",
+      "priority": 8,
+      "status": "REPORTED",
+      "gate": "NONE",
+      "hypothesis": "Early high entrance, severe late budget"
+    },
+    {
+      "arm": "E3_STAGE1_PENULTIMATE_ONLY",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "PENULTIMATE_ONLY",
+      "stage2": "BELA_REAL",
+      "phase": "P2_NATIVE_STAGE1",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Hold EXACT Stage2+schedule fixed; test whether entrance quality changes GQA/POPE/OCR"
+    },
+    {
+      "arm": "E3_STAGE1_LAYER9_ONLY",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "LAYER9_ONLY",
+      "stage2": "BELA_REAL",
+      "phase": "P2_NATIVE_STAGE1",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Hold EXACT Stage2+schedule fixed; test whether entrance quality changes GQA/POPE/OCR"
+    },
+    {
+      "arm": "E3_STAGE1_CALIBRATED_DUAL",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "CALIBRATED_DUAL",
+      "stage2": "BELA_REAL",
+      "phase": "P2_NATIVE_STAGE1",
+      "priority": 2,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Hold EXACT Stage2+schedule fixed; test whether entrance quality changes GQA/POPE/OCR"
+    },
+    {
+      "arm": "E3_FINAL_QATTN",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_KEEP_UNTIL_CUT3_QATTN",
+      "phase": "P2_NATIVE_SELECTOR",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Only change cut3, keep earlier original Patch IDs identical"
+    },
+    {
+      "arm": "E3_FINAL_RDRIFT",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_KEEP_UNTIL_CUT3_RDRIFT",
+      "phase": "P2_NATIVE_SELECTOR",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Only change cut3, keep earlier original Patch IDs identical"
+    },
+    {
+      "arm": "E3_FINAL_RANDOM11",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_KEEP_UNTIL_CUT3_RANDOM11",
+      "phase": "P2_NATIVE_SELECTOR",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Only change cut3, keep earlier original Patch IDs identical"
+    },
+    {
+      "arm": "E3_FINAL_RANDOM22",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_KEEP_UNTIL_CUT3_RANDOM22",
+      "phase": "P2_NATIVE_SELECTOR",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Only change cut3, keep earlier original Patch IDs identical"
+    },
+    {
+      "arm": "E3_FINAL_RANDOM33",
+      "stages": [
+        [
+          4,
+          172
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          24
+        ],
+        [
+          10,
+          16
+        ]
+      ],
+      "W": 2048,
+      "Q": 241856,
+      "stage1": "BELA_DUAL_COVER",
+      "stage2": "BELA_KEEP_UNTIL_CUT3_RANDOM33",
+      "phase": "P2_NATIVE_SELECTOR",
+      "priority": 3,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Only change cut3, keep earlier original Patch IDs identical"
+    },
+    {
+      "arm": "L2_STAGE1_PENULTIMATE_ONLY",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "PENULTIMATE_ONLY",
+      "stage2": "BELA_REAL",
+      "phase": "P3_W1024_TRANSFER",
+      "priority": 4,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Retest same entrance method at W1024, all cut layers unchanged"
+    },
+    {
+      "arm": "L2_STAGE1_LAYER9_ONLY",
+      "stages": [
+        [
+          12,
+          64
+        ],
+        [
+          8,
+          17
+        ],
+        [
+          12,
+          10
+        ]
+      ],
+      "W": 1024,
+      "Q": 52664,
+      "stage1": "LAYER9_ONLY",
+      "stage2": "BELA_REAL",
+      "phase": "P3_W1024_TRANSFER",
+      "priority": 4,
+      "status": "NOT_RUN",
+      "gate": "SOURCE_AUDIT",
+      "hypothesis": "Retest same entrance method at W1024, all cut layers unchanged"
+    },
+    {
+      "arm": "H1_W4096_REFERENCE",
+      "stages": [
+        [
+          4,
+          256
+        ],
+        [
+          8,
+          184
+        ],
+        [
+          20,
+          80
+        ]
+      ],
+      "W": 4096,
+      "Q": 660992,
+      "stage1": "BELA_COVER",
+      "stage2": "BELA_REAL",
+      "phase": "P4_GENERALIZE",
+      "priority": 9,
+      "status": "NOT_RUN",
+      "gate": "LATE_OPTIONAL",
+      "hypothesis": "Optional budget generalization; requires K256 source support"
+    }
+  ]
+}

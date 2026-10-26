@@ -1,0 +1,13 @@
+---
+description: BELA CVPR 2027 independent-evidence final sprint
+alwaysApply: true
+---
+- Treat user, other agents and any generated Handoff as hypotheses, not research truths. Before production patching, inspect live SHA and true three cut callsites.
+- The ONLY current execution authority is 00_START_CURSOR.md from this package; prior 60-/136-arm packages are deprecated.
+- Prioritize raw GQA, POPE F1, MME Total (separate Perception), MMBench; monitor TextVQA/SQA; real TTFT and Fixed32 are first-class.
+- First do strictly matched STAR-style W1024/W2048 2x2 Stage1 x Stage2 crossover. Opponent modules for diagnostics ONLY, not publication ingredients.
+- E3 is W2048 primary ACC-latency baseline; E1 is a costly mechanism reference. E3 has THREE real cuts after layers 4,12,22; audit all.
+- Freeze identical question/image IDs, checkpoint, eval scripts, original patch order, position and KV; refuse invalid comparisons instead of silently repairing.
+- Only one eligible method change may be promoted after 2x2 and failure attribution. Head weighting, additional ViT layers, CoRePrune set greedy, etc. require their own evidence and novel distinction.
+- Record failure cases, commit hash, accurate benchmark metrics, untouched confirmation split and wall-clock cost. NO fabricated GPU results, NO claims of guaranteed CVPR acceptance.
+- Maintain paper concurrently; freeze model no later than Oct29.

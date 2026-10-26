@@ -1,0 +1,9 @@
+{
+  "LLaVA/llava/model/e018_stage2_support.py": "2389fc8b2f671623c09d895bbc8877326e2800db539c06d237c2676975b3e774",
+  "LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py": "afe586e08bcbabfdbc61c9ce84dc90e4cbc27cab82d92b286fb94f4fd846ef02",
+  "experiments/elva_r3/apply_llava.py": "5cd3c004fa10a89cd74c33b59081e7bc6423789d50ad0e43400926a1f7b27976",
+  "experiments/elva_r3/native_cover.py": "0e5667e078bdc18f5fc0783817a8ed097c65bd72574b07a31bddc6952a9e244c",
+  "third_party/LLaVA-starpro/llava/model/language_model/modelling_llama_star.py": "f8f3e9d13c6bf2ccc3a695789e66cf77bc24bfe9be472ae505688dda0d9de664",
+  "git_sha": "eede17393167dbc296efdfdad9d9400a5d5378b3",
+  "star_env": "/home/xiangyue/envs/starpro"
+}
