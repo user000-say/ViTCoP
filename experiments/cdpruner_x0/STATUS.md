@@ -11,3 +11,6 @@ CDPruner K=32 keeps ~32 tokens every layer (W≈32×32=1024 only if counted that
 
 ## Latency
 After K64+K32 ACC drain: `watch_acc_then_ttft.py` → `bench_ttft.py` (TTFT + Fixed32, warm=10 / meas=50, same shape as STAR bench).
+
+## Results (2026-10-26)
+See RESULTS.md — K64 mean6=96.01 TTFT=103.8 Fixed32=891; K32 mean6=94.41 TTFT=98.3 Fixed32=883.5
