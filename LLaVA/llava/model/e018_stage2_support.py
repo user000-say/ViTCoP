@@ -843,14 +843,21 @@ class Runtime:
             pos = torch.tensor([[s.original_next]], device=hidden.device, dtype=torch.long)
             if position_ids is not None and not torch.equal(position_ids.to(pos.device), pos):
                 raise ValueError("Decode RoPE must use original position, not compacted cache length")
+            # Decode has no further prune: skip cache_positions cat (bookkeeping-only).
+            # Pass Python rope length so attention avoids position_ids.max().item() CUDA sync.
+            rope_seq_len = int(s.original_next) + 1
             for i, layer in enumerate(m.layers):
                 if output_hidden_states:
                     history += (hidden,)
                 layer.self_attn._e018_callback = None
-                output = layer(hidden, attention_mask=None, position_ids=pos,
-                               past_key_value=cache, use_cache=True, output_attentions=False)
+                layer.self_attn._e018_rope_seq_len = rope_seq_len
+                try:
+                    output = layer(hidden, attention_mask=None, position_ids=pos,
+                                   past_key_value=cache, use_cache=True, output_attentions=False)
+                finally:
+                    if hasattr(layer.self_attn, "_e018_rope_seq_len"):
+                        delattr(layer.self_attn, "_e018_rope_seq_len")
                 hidden = output[0]
-                s.cache_positions[i] = torch.cat((s.cache_positions[i], pos[0]))
             s.original_next += 1
             hidden = m.norm(hidden)
             if output_hidden_states:

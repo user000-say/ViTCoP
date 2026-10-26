@@ -470,7 +470,10 @@ class LlamaAttention(nn.Module):
         ## TODO
         ## FASTV
         # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max().item() + 1)
+        _rope_len = getattr(self, "_e018_rope_seq_len", None)
+        if _rope_len is None:
+            _rope_len = position_ids.max().item() + 1
+        cos, sin = self.rotary_emb(value_states, seq_len=int(_rope_len))
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -578,7 +581,10 @@ class LlamaFlashAttention2(LlamaAttention):
         ## TODO
         ## FASTV
         # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max().item() + 1)
+        _rope_len = getattr(self, "_e018_rope_seq_len", None)
+        if _rope_len is None:
+            _rope_len = position_ids.max().item() + 1
+        cos, sin = self.rotary_emb(value_states, seq_len=int(_rope_len))
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
         if past_key_value is not None:
@@ -777,7 +783,11 @@ class LlamaSdpaAttention(LlamaAttention):
         ## TODO
         ## FASTV
         # cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-        cos, sin = self.rotary_emb(value_states, seq_len=position_ids.max().item() + 1)
+        # Prefer Python rope length from E018 decode to avoid .item() CUDA sync each layer.
+        _rope_len = getattr(self, "_e018_rope_seq_len", None)
+        if _rope_len is None:
+            _rope_len = position_ids.max().item() + 1
+        cos, sin = self.rotary_emb(value_states, seq_len=int(_rope_len))
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
         if past_key_value is not None:
