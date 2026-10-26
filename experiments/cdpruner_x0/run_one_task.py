@@ -35,10 +35,12 @@ FULL_N = {
     "pope": 9000,
     "mme": 2374,
     "mmbench_en_dev": 4329,
+    "mmbench_cn_dev": 4329,
     "scienceqa_img": 2017,
     "mmmu_val": 900,
     "ai2d": 3088,
     "textvqa_val_ocr": 5000,
+    "textvqa_val": 5000,
     "vizwiz_vqa_val": 4319,
 }
 
