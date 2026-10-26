@@ -1,0 +1,38 @@
+{
+  "id": "T2_96_L6_17",
+  "phase": "cvpr2027_w1024_2stage",
+  "W_nominal": 1024,
+  "W_actual": 1018,
+  "isobudget": false,
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1018,
+    "schedule": {
+      "counts": [
+        96,
+        17
+      ],
+      "lengths": [
+        6,
+        26
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}
