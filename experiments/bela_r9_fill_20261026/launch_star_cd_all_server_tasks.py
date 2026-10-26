@@ -25,21 +25,11 @@ PKG = REPO / "experiments/bela_r9_fill_20261026"
 LOG_DIR = PKG / "logs_star_cd"
 PY = "/home/xiangyue/envs/starpro/bin/python"
 
-# Full server task universe (skip-if-have). Prefer historical non-R9 first so
-# this queue does not race the active R9-extras BELA/STAR/CD fill on the same
-# mmmu/ai2d/vizwiz slots.
+# Historical tasks that appeared on this server but are outside default R9.
+# R9 holes for STAR T32 / CD are filled by launch_r9_extras_fill.py.
 SERVER_TASKS = (
     "mmbench_cn_dev",
     "textvqa_val",
-    "gqa",
-    "pope",
-    "mme",
-    "mmbench_en_dev",
-    "scienceqa_img",
-    "mmmu_val",
-    "ai2d",
-    "textvqa_val_ocr",
-    "vizwiz_vqa_val",
 )
 
 STAR_ARMS = (
