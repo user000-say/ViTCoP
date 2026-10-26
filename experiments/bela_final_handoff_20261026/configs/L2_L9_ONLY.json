@@ -1,0 +1,30 @@
+{
+  "id": "L2_L9_ONLY",
+  "phase": "cvpr2027_final_handoff_20261026",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [64, 17, 10],
+      "lengths": [12, 8, 12]
+    },
+    "stage1": {
+      "guide": "l9",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.0,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE",
+      "admission_cap": 0
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

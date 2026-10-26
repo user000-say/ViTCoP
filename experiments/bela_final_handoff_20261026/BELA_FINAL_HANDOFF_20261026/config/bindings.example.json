@@ -1,0 +1,42 @@
+{
+  "python": "UNBOUND_PRODUCTION_PYTHON",
+  "adapter": "UNBOUND_PRODUCTION_EVAL_ADAPTER.py",
+  "repo": "UNBOUND_PRODUCTION_REPO",
+  "run_tag": "UNBOUND_FIXED_COMMIT_AND_CONFIG_HASH",
+  "output_root": "UNBOUND_NEW_RESULTS_DIRECTORY",
+  "ids_files": {
+    "pilot": {
+      "gqa": "UNBOUND_FROZEN_gqa_IDS.json",
+      "pope": "UNBOUND_FROZEN_pope_IDS.json",
+      "textvqa_val_ocr": "UNBOUND_FROZEN_textvqa_val_ocr_IDS.json",
+      "mmbench_en_dev": "UNBOUND_FROZEN_mmbench_en_dev_IDS.json"
+    },
+    "full": {
+      "gqa": "UNBOUND_FULL_gqa_IDS.json",
+      "pope": "UNBOUND_FULL_pope_IDS.json",
+      "mme": "UNBOUND_FULL_mme_IDS.json",
+      "mmbench_en_dev": "UNBOUND_FULL_mmbench_en_dev_IDS.json",
+      "scienceqa_img": "UNBOUND_FULL_scienceqa_img_IDS.json",
+      "textvqa_val_ocr": "UNBOUND_FULL_textvqa_val_ocr_IDS.json"
+    }
+  },
+  "command": [
+    "{python}",
+    "{adapter}",
+    "--arm",
+    "{arm}",
+    "--budget",
+    "{budget}",
+    "--task",
+    "{task}",
+    "--ids",
+    "{ids_file}",
+    "--output",
+    "{output}",
+    "--run-tag",
+    "{run_tag}",
+    "--seed",
+    "{seed}"
+  ],
+  "external_model_adapter": null
+}

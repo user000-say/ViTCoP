@@ -44,14 +44,15 @@ def overlay(meta: dict | None = None) -> dict:
         e018_selector = "Q_ATTN"
     if e018_selector not in {"Q_ATTN", "QED", "RANDOM"}:
         raise ValueError(f"unsupported E018_SELECTOR from stage2: {first}/{later}")
-    last_layer = int(events.split(",")[-1].split(":")[0])
+    # Flat schedules (single segment) yield empty E018_EVENTS — entry-only, no Stage2 cuts.
+    last_layer = int(events.split(",")[-1].split(":")[0]) if events else -1
     os.environ.update(
         ELVA_R3_ENABLE="True",
         ELVA_R3_ENTRY_K=str(counts[0]),
         ELVA_R3_FINAL_K=str(counts[-1]),
         ELVA_R3_SLOTS=str(slots),
         ELVA_R3_ID=config["id"],
-        E018_ENABLE="True",
+        E018_ENABLE="True" if events else "False",
         E018_MODE="STATIC",
         E018_EVENTS=events,
         E018_SELECTOR=e018_selector,
@@ -61,7 +62,7 @@ def overlay(meta: dict | None = None) -> dict:
         E009_EXPECT_VISUAL=str(counts[0]),
         E007_EXPECT_STAGE1=str(counts[0]),
     )
-    if first == "RDRIFT":
+    if first == "RDRIFT" and events:
         # Original E020 rank_drift on FIRST only; FINAL stays Q_ATTN. No merge.
         if e018_selector != "Q_ATTN":
             raise ValueError("RDRIFT first_selector requires E018_SELECTOR=Q_ATTN baseline")

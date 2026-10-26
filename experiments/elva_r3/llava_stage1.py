@@ -53,6 +53,101 @@ def _sum_cls(attentions, index):
     return attentions[index][0, :, 0, 1:].sum(0).float()
 
 
+def _rank_percentile(scores: torch.Tensor) -> torch.Tensor:
+    """Average-rank percentile in [0, 1]; ties share the same percentile."""
+    n = int(scores.numel())
+    if n <= 1:
+        return torch.zeros_like(scores)
+    order = torch.argsort(scores, descending=False)
+    ranks = torch.empty_like(scores, dtype=torch.float32)
+    # dense average ranks for ties
+    sorted_scores = scores[order]
+    ranks_sorted = torch.empty(n, device=scores.device, dtype=torch.float32)
+    i = 0
+    while i < n:
+        j = i + 1
+        while j < n and sorted_scores[j] == sorted_scores[i]:
+            j += 1
+        avg = 0.5 * (i + j - 1)
+        ranks_sorted[i:j] = avg
+        i = j
+    ranks[order] = ranks_sorted
+    return ranks / float(n - 1)
+
+
+def bounded_admission(
+    keep: torch.Tensor,
+    early_feat: torch.Tensor,
+    early_scores: torch.Tensor,
+    late_scores: torch.Tensor,
+    cap: int,
+) -> tuple[torch.Tensor, dict]:
+    """Handoff A: swap up to ``cap`` Dual keep slots for positive L9–late disagreement.
+
+    Payload features stay penultimate; L9 is selection statistics only.
+    No permanent survivors; K unchanged. See METHOD_AND_CONTROLS §3.
+    """
+    cap = int(cap)
+    k = int(keep.numel())
+    n = int(late_scores.numel())
+    if cap <= 0 or k == 0:
+        return keep, {"admission_cap": cap, "swapped": 0, "action": "noop"}
+    device = keep.device
+    s0 = torch.zeros(n, dtype=torch.bool, device=device)
+    s0[keep] = True
+    r9 = _rank_percentile(early_scores.float())
+    r_late = _rank_percentile(late_scores.float())
+    d = torch.clamp(r9 - r_late, min=0.0)
+    feat = torch.nn.functional.normalize(early_feat.float(), dim=-1, eps=1e-6)
+    # max cosine to current keep set
+    keep_feat = feat.index_select(0, keep)
+    # (n, k) -> max over keep
+    cos = torch.clamp(feat @ keep_feat.transpose(0, 1), 0.0, 1.0).max(dim=1).values
+    t = d * (1.0 - cos)
+    t = torch.where(s0, torch.zeros_like(t), t)
+    # protect high positive-disagreement keep members from being donors
+    d_keep = d.index_select(0, keep)
+    protect_b = min(cap, k)
+    if protect_b > 0:
+        prot_local = torch.topk(d_keep, k=protect_b, largest=True).indices
+        protected = torch.zeros(k, dtype=torch.bool, device=device)
+        protected[prot_local] = True
+    else:
+        protected = torch.zeros(k, dtype=torch.bool, device=device)
+    # candidate outsiders with positive priority
+    cand_mask = (~s0) & (t > 0)
+    cand_ids = torch.where(cand_mask)[0]
+    if cand_ids.numel() == 0:
+        return keep, {"admission_cap": cap, "swapped": 0, "action": "no_positive_t"}
+    cand_scores = t.index_select(0, cand_ids)
+    take = min(cap, int(cand_ids.numel()))
+    pick_local = torch.topk(cand_scores, k=take, largest=True).indices
+    incoming = cand_ids.index_select(0, pick_local)
+    # donors: lowest late score among unprotected keep
+    late_keep = late_scores.float().index_select(0, keep)
+    donor_scores = late_keep.clone()
+    donor_scores[protected] = float("inf")
+    # need `take` finite donors
+    n_donor = min(take, int((~protected).sum().item()))
+    if n_donor <= 0:
+        return keep, {"admission_cap": cap, "swapped": 0, "action": "no_donor"}
+    incoming = incoming[:n_donor]
+    donor_local = torch.topk(donor_scores, k=n_donor, largest=False).indices
+    donor_ids = keep.index_select(0, donor_local)
+    new_keep = keep.clone()
+    new_keep[donor_local] = incoming
+    new_keep, _ = torch.sort(new_keep)
+    if int(new_keep.unique().numel()) != k:
+        raise RuntimeError("bounded_admission produced duplicate keep IDs")
+    return new_keep, {
+        "admission_cap": cap,
+        "swapped": int(n_donor),
+        "incoming": incoming.detach().cpu().tolist(),
+        "donors": donor_ids.detach().cpu().tolist(),
+        "action": "swap",
+    }
+
+
 def select_existing_forward(image_forward_outs, tokens_0):
     config = json.loads(Path(os.environ["ELVA_R3_CONFIG"]).read_text())
     hidden = image_forward_outs.hidden_states
@@ -64,8 +159,12 @@ def select_existing_forward(image_forward_outs, tokens_0):
     beta = float(stage.get("beta") or 0.0)
     score_guide = stage.get("score_guide", "same")
     sg = guide if score_guide == "same" else score_guide
-    need_early = (guide == "l9" or (guide == "dual" and beta > 0)
-                  or sg == "l9" or (sg == "dual" and beta > 0))
+    admission_cap = int(stage.get("admission_cap") or 0)
+    need_early = (
+        guide == "l9" or (guide == "dual" and beta > 0)
+        or sg == "l9" or (sg == "dual" and beta > 0)
+        or admission_cap > 0
+    )
     early = hidden[9][0, 1:] if need_early else None
     pen_scores = _sum_cls(image_forward_outs.attentions, -2)
     early_scores = _sum_cls(image_forward_outs.attentions, 8) if need_early else None
@@ -78,9 +177,18 @@ def select_existing_forward(image_forward_outs, tokens_0):
         early_ids=ids if need_early else None,
         native_cover=cover, backend="torch")
     keep = selected["keep"]
-    if not torch.equal(selected["payload"], pen.index_select(0, keep)):
-        raise RuntimeError("selected payload left the captured pen rows")
     audit = selected["stage1_audit"]
+    if admission_cap > 0:
+        if early is None or early_scores is None:
+            raise RuntimeError("admission_cap>0 requires L9 features/scores")
+        keep, admit_audit = bounded_admission(
+            keep, early, early_scores, pen_scores, admission_cap
+        )
+        audit = dict(audit)
+        audit["admission"] = admit_audit
+    payload = pen.index_select(0, keep)
+    if payload.shape[0] != int(keep.numel()) or int(keep.unique().numel()) != int(keep.numel()):
+        raise RuntimeError("admission/cover keep is not a unique pen-row index set")
     audit_dir = os.environ.get("ELVA_R3_AUDIT_DIR", "")
     if audit_dir:
         path = Path(audit_dir) / "stage1.jsonl"

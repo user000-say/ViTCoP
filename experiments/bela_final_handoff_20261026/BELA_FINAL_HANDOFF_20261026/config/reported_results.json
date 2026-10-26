@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-26",
+  "timezone": "America/Los_Angeles",
+  "status": "user_reported_not_reproduced_here",
+  "normalization_reference_approx": {
+    "gqa": 61.9,
+    "pope": 85.8,
+    "mme_total": 1852,
+    "mmbench_en_dev": 64.1,
+    "scienceqa_img": 69.51,
+    "textvqa_val_ocr": 58.2
+  },
+  "reference_note": "Historical ratios reconstructed from rounded reports; bind the authoritative production scorer and reference hash before model comparison. Do not silently replace these with another paper's dense values.",
+  "rows": [
+    {
+      "arm": "E3_NATIVE",
+      "mean6": 96.85,
+      "gqa": 57.76,
+      "pope": 85.46,
+      "mme_total": 1779.1,
+      "mmbench_en_dev": 63.32,
+      "scienceqa_img": 68.57,
+      "textvqa_val_ocr": 55.13
+    },
+    {
+      "arm": "L2_NATIVE",
+      "mean6": 93.56,
+      "gqa": 55.57,
+      "pope": 82.21,
+      "mme_total": 1651.8,
+      "mmbench_en_dev": 61.34,
+      "scienceqa_img_approx": 68.9,
+      "textvqa_val_ocr_approx": 53.4
+    },
+    {
+      "arm": "CD64_FLAT",
+      "mean6": 96.01,
+      "gqa": 58.66,
+      "pope": 87.53,
+      "mme_total": 1712.0,
+      "mmbench_en_dev": 60.91,
+      "scienceqa_img": 67.38,
+      "textvqa_val_ocr": 55.23
+    },
+    {
+      "arm": "CD32_FLAT",
+      "mean6": 94.41,
+      "per_task": "recover_from_server_not_provided_here"
+    },
+    {
+      "arm": "E3_L9",
+      "mean6": 96.35,
+      "gqa": 58.67,
+      "pope": 85.71,
+      "mme_total": 1745.0,
+      "mmbench_en_dev": 62.71,
+      "scienceqa_img": 68.17,
+      "textvqa_val_ocr": 54.3
+    }
+  ],
+  "latency": {
+    "status": "user_reported_code_fixed",
+    "current_values": null,
+    "action": "freeze corrected commit and record matched current measurements; do not reuse old 1204/1189 or require arbitrary 930"
+  },
+  "targets": {
+    "1024": 95.0,
+    "2048": 98.0
+  }
+}

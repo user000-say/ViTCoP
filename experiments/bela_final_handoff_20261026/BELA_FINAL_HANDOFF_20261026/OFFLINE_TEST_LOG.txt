@@ -1,0 +1,32 @@
+test_missing_pairs_and_null_pope_labels_fail_closed (test_offline.AnalysisChecks.test_missing_pairs_and_null_pope_labels_fail_closed) ... ok
+test_mme_cannot_be_replaced_with_row_mean (test_offline.AnalysisChecks.test_mme_cannot_be_replaced_with_row_mean) ... ok
+test_pope_recomputes_nonlinear_f1_by_image_cluster (test_offline.AnalysisChecks.test_pope_recomputes_nonlinear_f1_by_image_cluster) ... ok
+test_pope_reduction_must_be_explicit (test_offline.AnalysisChecks.test_pope_reduction_must_be_explicit) ... ok
+test_textvqa_soft_score_is_not_binarized (test_offline.AnalysisChecks.test_textvqa_soft_score_is_not_binarized) ... ok
+test_every_defined_arm_matches_declared_budget (test_offline.BudgetChecks.test_every_defined_arm_matches_declared_budget) ... ok
+test_exact_anchors_and_cut_indices (test_offline.BudgetChecks.test_exact_anchors_and_cut_indices) ... ok
+test_invalid_growth_and_layer_counts_rejected (test_offline.BudgetChecks.test_invalid_growth_and_layer_counts_rejected) ... ok
+test_permanent_76_survivors_are_infeasible (test_offline.BudgetChecks.test_permanent_76_survivors_are_infeasible) ... ok
+test_cache_requires_current_ids_and_predictions_hash (test_offline.QueueChecks.test_cache_requires_current_ids_and_predictions_hash) ... ok
+test_low_budget_has_five_arms_and_deterministic_control_is_not_repeated (test_offline.QueueChecks.test_low_budget_has_five_arms_and_deterministic_control_is_not_repeated) ... ok
+test_queue_dry_run_needs_no_cuda_and_does_not_launch_adapter (test_offline.QueueChecks.test_queue_dry_run_needs_no_cuda_and_does_not_launch_adapter) ... ok
+test_unknown_or_unevidenced_gates_do_not_release_jobs (test_offline.QueueChecks.test_unknown_or_unevidenced_gates_do_not_release_jobs) ... ok
+test_wrong_budget_winner_is_rejected (test_offline.QueueChecks.test_wrong_budget_winner_is_rejected) ... ok
+test_admission_and_random_control_match_donors_and_capacity (test_offline.SelectorChecks.test_admission_and_random_control_match_donors_and_capacity) ... ok
+test_deleted_anchor_cannot_be_resurrected (test_offline.SelectorChecks.test_deleted_anchor_cannot_be_resurrected) ... ok
+test_flat_query_has_no_new_query_conditioned_action (test_offline.SelectorChecks.test_flat_query_has_no_new_query_conditioned_action) ... ok
+test_fractional_admission_and_overcapacity_anchors_are_rejected (test_offline.SelectorChecks.test_fractional_admission_and_overcapacity_anchors_are_rejected) ... ok
+test_lambda_zero_preserves_native_and_order (test_offline.SelectorChecks.test_lambda_zero_preserves_native_and_order) ... ok
+test_no_admission_when_no_source_signal (test_offline.SelectorChecks.test_no_admission_when_no_source_signal) ... ok
+test_no_query_gate_is_not_native_score_reoptimization (test_offline.SelectorChecks.test_no_query_gate_is_not_native_score_reoptimization) ... ok
+test_positive_proxy_swap_does_not_increase_K (test_offline.SelectorChecks.test_positive_proxy_swap_does_not_increase_K) ... ok
+test_randomized_subset_and_quota_invariants (test_offline.SelectorChecks.test_randomized_subset_and_quota_invariants) ... ok
+test_shared_prefix_random_cut_has_same_net_donors (test_offline.SelectorChecks.test_shared_prefix_random_cut_has_same_net_donors) ... ok
+test_shuffle_preserves_weight_multiset_and_anchor_cap (test_offline.SelectorChecks.test_shuffle_preserves_weight_multiset_and_anchor_cap) ... ok
+test_source_only_control_removes_only_explicit_query_gate (test_offline.SelectorChecks.test_source_only_control_removes_only_explicit_query_gate) ... ok
+test_ties_do_not_create_fake_disagreement (test_offline.SelectorChecks.test_ties_do_not_create_fake_disagreement) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.107s
+
+OK

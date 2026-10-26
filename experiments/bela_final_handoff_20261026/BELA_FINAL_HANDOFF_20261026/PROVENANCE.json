@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-26",
+  "timezone": "America/Los_Angeles",
+  "current_attachment": {
+    "filename": "01-chatgpt-export_-PDF-3-.txt",
+    "bytes": 665121,
+    "sha256": "92178b7bb1305df6a7327ae36109522ec4398455ab6705ca3ef02b51d63f9793"
+  },
+  "additional_context": "Current-conversation user updates: CD K32 mean6=94.41; targets 95/98; latency code reportedly fixed.",
+  "source_restriction": "Only current uploaded text and workspace report were read; no Library search or earlier ZIP retrieval.",
+  "production_access": false
+}

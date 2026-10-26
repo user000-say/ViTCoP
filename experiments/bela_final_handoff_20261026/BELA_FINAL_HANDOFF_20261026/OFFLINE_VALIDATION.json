@@ -1,0 +1,29 @@
+{
+  "status": "PASS_OFFLINE_ONLY",
+  "unit_tests_passed": 27,
+  "scope": [
+    "exact W and cut indices",
+    "source-admission and cut cardinality / no resurrection",
+    "matched random, shuffle, source-only semantics",
+    "nonlinear POPE and soft TextVQA pairing",
+    "image-cluster bootstrap",
+    "gates / four-GPU dry-run / strict result reuse hashes"
+  ],
+  "not_run": [
+    "production source patch",
+    "PyTorch tensor equivalence",
+    "VLM forward",
+    "GPU ACC",
+    "CUDA queue execution",
+    "corrected server latency"
+  ],
+  "arms_defined": 28,
+  "unique_primary_algorithm_candidates": 1,
+  "schedule_validation": "PASS",
+  "source_files": {
+    "tools/check_plan.py": "d615c10049d12e016a2c92fa46415d2e5345faeabbf40f483a7bd089e9aed8c5",
+    "tools/paired_analysis.py": "49b558d640895d6f1835660a34d6d6449a410f4aba5e61327c41f0328b18764e",
+    "tools/reference_selector.py": "521256752e9a7572d5625b719233523f1ece3e59fdf4a1e56ae07e5e3235a66b",
+    "tools/run_queue.py": "19b4670b1d8f80b1d43fdbb0794d5ceb2349b7cce333539575ec619df8fec777"
+  }
+}

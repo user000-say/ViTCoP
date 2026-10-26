@@ -1,0 +1,37 @@
+{
+  "note": "All runtime gates are false. No server/GPU jobs were launched. Pilot merges low/high into one four-GPU coordinator. Confirmation/control jobs depend on actual evidenced winners.",
+  "phases": {
+    "pilot": {
+      "jobs_defined_now": 32,
+      "enabled_for_gpu_execution": false
+    },
+    "pilot_low": {
+      "jobs_defined_now": 20,
+      "enabled_for_gpu_execution": false
+    },
+    "pilot_high": {
+      "jobs_defined_now": 12,
+      "enabled_for_gpu_execution": false
+    },
+    "candidate": {
+      "jobs_defined_now": 40,
+      "enabled_for_gpu_execution": false
+    },
+    "controls": {
+      "jobs_defined_now": 0,
+      "enabled_for_gpu_execution": false
+    },
+    "confirm": {
+      "jobs_defined_now": 0,
+      "enabled_for_gpu_execution": false
+    },
+    "ablation": {
+      "jobs_defined_now": 0,
+      "enabled_for_gpu_execution": false
+    },
+    "diagnostic_extra": {
+      "jobs_defined_now": 8,
+      "enabled_for_gpu_execution": false
+    }
+  }
+}

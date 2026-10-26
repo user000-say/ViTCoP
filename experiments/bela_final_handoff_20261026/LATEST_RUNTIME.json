@@ -1,0 +1,12 @@
+{
+  "latency_fix_commit": "922514dfc1450095fc16cde32320522aae702a44",
+  "note": "decode .item()/cache_pos opt; E3 fair256 Fixed32_med=932.4; ACC bit-identical on POPE",
+  "model": "liuhaotian/llava-v1.5-7b@4481d270",
+  "precision": "fp16",
+  "attention_backend": "sdpa",
+  "ttft_fixed32_definition": "separate 1-token and 32-token generate walltime on fair-256 panel",
+  "E3_fair256_ttft_med_ms": 124.29,
+  "E3_fair256_fixed32_med_ms": 932.43,
+  "matched_STAR_T64_fixed32_med_ms": 935.26,
+  "matched_CD_K64_fixed32_med_ms": 917.37
+}

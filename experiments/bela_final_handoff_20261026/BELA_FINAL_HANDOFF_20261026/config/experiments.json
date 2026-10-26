@@ -1,0 +1,505 @@
+{
+  "version": "20261026-final-v1",
+  "layers": 32,
+  "schedules": {
+    "L2": [
+      [
+        64,
+        12
+      ],
+      [
+        17,
+        8
+      ],
+      [
+        10,
+        12
+      ]
+    ],
+    "E3": [
+      [
+        172,
+        4
+      ],
+      [
+        120,
+        8
+      ],
+      [
+        24,
+        10
+      ],
+      [
+        16,
+        10
+      ]
+    ],
+    "FLAT32": [
+      [
+        32,
+        32
+      ]
+    ],
+    "FLAT64": [
+      [
+        64,
+        32
+      ]
+    ],
+    "E3_ENTRY_ONLY": [
+      [
+        172,
+        32
+      ]
+    ],
+    "L2_ENTRY_ONLY": [
+      [
+        64,
+        32
+      ]
+    ]
+  },
+  "arms": [
+    {
+      "id": "L2_NATIVE",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": false,
+      "control": null,
+      "role": "anchor",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "CD32_FLAT",
+      "schedule": "FLAT32",
+      "budget": 1024,
+      "entry_selector": "cd",
+      "admission_cap": 0,
+      "anchor_capacity": 0,
+      "cut_exchange": false,
+      "control": null,
+      "role": "external_anchor",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "COVER32_FLAT",
+      "schedule": "FLAT32",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 0,
+      "cut_exchange": false,
+      "control": null,
+      "role": "diagnostic",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "CD64_L2_NATIVE",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "cd",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": false,
+      "control": null,
+      "role": "diagnostic",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "CD64_L2_STATIC",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "cd",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": false,
+      "control": "dpp_greedy_prefix",
+      "role": "diagnostic",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "E3_NATIVE",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": false,
+      "control": null,
+      "role": "anchor",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "E3_L9",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "l9",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": false,
+      "control": null,
+      "role": "reported_ablation",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "CD64_FLAT",
+      "schedule": "FLAT64",
+      "budget": 2048,
+      "entry_selector": "cd",
+      "admission_cap": 0,
+      "anchor_capacity": 0,
+      "cut_exchange": false,
+      "control": null,
+      "role": "external_anchor",
+      "gate": null,
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "COVER64_FLAT",
+      "schedule": "FLAT64",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 0,
+      "cut_exchange": false,
+      "control": null,
+      "role": "diagnostic",
+      "gate": "flat2048_needed",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "CD172_E3_NATIVE",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "cd",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": false,
+      "control": null,
+      "role": "diagnostic",
+      "gate": "cd172_needed",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "A_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": false,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_1024",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "S_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "AS_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "RAND_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": false,
+      "control": "matched_random_admission",
+      "role": "negative_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "SHUFFLE_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": "shuffle_entry_risk",
+      "role": "negative_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "A_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": false,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_2048",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "S_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "AS_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": null,
+      "role": "candidate",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "RAND_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": false,
+      "control": "matched_random_admission",
+      "role": "negative_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.0,
+      "condition_on_query": true
+    },
+    {
+      "id": "SHUFFLE_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": "shuffle_entry_risk",
+      "role": "negative_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "RAND_AS_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": "matched_random_admission",
+      "role": "negative_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "SHUFFLE_S_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": "shuffle_entry_risk",
+      "role": "negative_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "RAND_AS_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": "matched_random_admission",
+      "role": "negative_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "SHUFFLE_S_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": "shuffle_entry_risk",
+      "role": "negative_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": true
+    },
+    {
+      "id": "SOURCE_ONLY_AS_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 2,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": "remove_explicit_query_gate",
+      "role": "mechanism_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": false
+    },
+    {
+      "id": "SOURCE_ONLY_S_1024",
+      "schedule": "L2",
+      "budget": 1024,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 2,
+      "cut_exchange": true,
+      "control": "remove_explicit_query_gate",
+      "role": "mechanism_control",
+      "gate": "mechanism_1024",
+      "lambda": 0.25,
+      "condition_on_query": false
+    },
+    {
+      "id": "SOURCE_ONLY_AS_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 8,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": "remove_explicit_query_gate",
+      "role": "mechanism_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": false
+    },
+    {
+      "id": "SOURCE_ONLY_S_2048",
+      "schedule": "E3",
+      "budget": 2048,
+      "entry_selector": "dual",
+      "admission_cap": 0,
+      "anchor_capacity": 8,
+      "cut_exchange": true,
+      "control": "remove_explicit_query_gate",
+      "role": "mechanism_control",
+      "gate": "mechanism_2048",
+      "lambda": 0.25,
+      "condition_on_query": false
+    }
+  ],
+  "seeds": {
+    "main": 17,
+    "negative_controls": [
+      17,
+      29,
+      43
+    ]
+  },
+  "tasks": [
+    "gqa",
+    "pope",
+    "mme",
+    "mmbench_en_dev",
+    "scienceqa_img",
+    "textvqa_val_ocr"
+  ],
+  "pilot": {
+    "gqa": {
+      "unit": "image",
+      "count": 256
+    },
+    "pope": {
+      "unit": "image",
+      "count": 256,
+      "include_all_questions_for_selected_images": true
+    },
+    "textvqa_val_ocr": {
+      "unit": "image",
+      "count": 128
+    },
+    "mmbench_en_dev": {
+      "unit": "image",
+      "count": 128
+    }
+  },
+  "runtime_policy": {
+    "speed_fixed_reported_by_user": true,
+    "historical_latency_retired": true,
+    "overwrite_default_method": false,
+    "extra_llm_forward_online": false,
+    "per_sample_exact_W": true,
+    "candidate_swap_fraction_cap": "floor(K/8)",
+    "gpu_ids": [
+      0,
+      2,
+      4,
+      7
+    ]
+  }
+}

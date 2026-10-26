@@ -1,0 +1,45 @@
+{
+  "note": "Cursor updates gates autonomously from actual evidence. Unknown is false; this is an experiment condition, not user approval.",
+  "gates": {
+    "runtime_bound": {
+      "value": false,
+      "evidence": []
+    },
+    "mechanism_1024": {
+      "value": false,
+      "evidence": []
+    },
+    "mechanism_2048": {
+      "value": false,
+      "evidence": []
+    },
+    "flat2048_needed": {
+      "value": false,
+      "evidence": []
+    },
+    "cd172_needed": {
+      "value": false,
+      "evidence": []
+    },
+    "cut_intervention_needed": {
+      "value": false,
+      "evidence": []
+    },
+    "confirm_1024": {
+      "value": false,
+      "evidence": []
+    },
+    "confirm_2048": {
+      "value": false,
+      "evidence": []
+    },
+    "external_model_ready": {
+      "value": false,
+      "evidence": []
+    }
+  },
+  "winners": {
+    "1024": null,
+    "2048": null
+  }
+}

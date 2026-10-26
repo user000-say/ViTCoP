@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "arms_defined": 28,
+  "schedule_checks": {
+    "L2": {
+      "W": 1024,
+      "Q_visual_only": 52664,
+      "cuts_after_1based_blocks": [
+        12,
+        20
+      ],
+      "entry_K": 64,
+      "final_K": 10
+    },
+    "E3": {
+      "W": 2048,
+      "Q_visual_only": 241856,
+      "cuts_after_1based_blocks": [
+        4,
+        12,
+        22
+      ],
+      "entry_K": 172,
+      "final_K": 16
+    },
+    "FLAT32": {
+      "W": 1024,
+      "Q_visual_only": 32768,
+      "cuts_after_1based_blocks": [],
+      "entry_K": 32,
+      "final_K": 32
+    },
+    "FLAT64": {
+      "W": 2048,
+      "Q_visual_only": 131072,
+      "cuts_after_1based_blocks": [],
+      "entry_K": 64,
+      "final_K": 64
+    },
+    "E3_ENTRY_ONLY": {
+      "W": 5504,
+      "Q_visual_only": 946688,
+      "cuts_after_1based_blocks": [],
+      "entry_K": 172,
+      "final_K": 172
+    },
+    "L2_ENTRY_ONLY": {
+      "W": 2048,
+      "Q_visual_only": 131072,
+      "cuts_after_1based_blocks": [],
+      "entry_K": 64,
+      "final_K": 64
+    }
+  },
+  "warning": "Q is not full attention FLOPs; no GPU accuracy or speed validated."
+}

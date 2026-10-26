@@ -1,0 +1,26 @@
+{
+  "version": "20261026-final-v1",
+  "files": {
+    "CURSOR_MASTER.md": "05aae4d573d0db10fa5d2f4bdcf9e69e5147b093e0e4158c7c6bee24672b61d3",
+    "OFFLINE_BUDGETS.json": "9ccc3aa183420ec6431660a8fc06fcf7ba9a3870a0803a1e60826339d0af67ae",
+    "OFFLINE_TEST_LOG.txt": "2d19a9d55d066d049d4e5adf846c74c3443bb1712f234d660158ca326af2d40f",
+    "OFFLINE_VALIDATION.json": "99ee34a4bcf4d09ca61b886f68f8b0ab4ba4317662563ad55523226febaa34a7",
+    "PROVENANCE.json": "8287a8d8c2c47ae05c8d634d707af501453b4ff52f4dc8a4c6f6ad627124d364",
+    "QUEUE_PREVIEW.json": "138596c21196b9671137f133ee7af5dbce11a86d4620051a9a367d60604f8b5c",
+    "README.md": "036ed363f9db04d95092e2d8e98f27ec852efbe5ea30c4c8fa7e76c6ffbe589c",
+    "START_HERE.txt": "1eb780cfdc6c7665bac6567f73c3976044b3cbcde66eedf19d5f65fc2ce34f17",
+    "config/bindings.example.json": "1aa3cd1cd10bcbebc147ec5da412079c8d79eb3e062a4b55e0083abfd3bf9797",
+    "config/experiments.json": "1ae2f17e71e2c2d4cb4652b99afcb3333e6350be4585440f0aa877f443f00b68",
+    "config/gates.example.json": "bc89289c04acfb2be9f0f903078b9bd0c29213161881b0897d89b3dfb630756b",
+    "config/reported_results.json": "46a033b04a058301261070837b4d9877a37a89daae88d607b7646fb8768b75c2",
+    "docs/ADAPTER_CONTRACT.md": "cc055747dcb8534c38d2e6cc910e0043d02ad5a7209874c1ff6f37ea68ead3d2",
+    "docs/METHOD_AND_CONTROLS.md": "b404bc72828f22c2c23343ae4cad1d20a04e24d00caa96aa83dbc54f869fd967",
+    "docs/PAPER_PLAN.md": "9a86384f698f7c37cab723bc56abefa6b08ddb7a0a89f59b6898223f9f0a943b",
+    "docs/PRIOR_ART_AND_CLAIMS.md": "2212c8b1f3b2a15de72c51c7527b9e472c194c5162ccd1d98d3fdbcae47a9b2a",
+    "tests/test_offline.py": "540e0951274e2bf1e1f8396299d6a3acc0f06e1dde6f54c3d79e80e4d447773e",
+    "tools/check_plan.py": "d615c10049d12e016a2c92fa46415d2e5345faeabbf40f483a7bd089e9aed8c5",
+    "tools/paired_analysis.py": "49b558d640895d6f1835660a34d6d6449a410f4aba5e61327c41f0328b18764e",
+    "tools/reference_selector.py": "521256752e9a7572d5625b719233523f1ece3e59fdf4a1e56ae07e5e3235a66b",
+    "tools/run_queue.py": "19b4670b1d8f80b1d43fdbb0794d5ceb2349b7cce333539575ec619df8fec777"
+  }
+}
