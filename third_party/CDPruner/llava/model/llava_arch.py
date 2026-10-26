@@ -152,7 +152,9 @@ class LlavaMetaForCausalLM(ABC):
         image_normalized = image_normalized.float() # (B, N, D)
         similarity = torch.matmul(image_normalized, image_normalized.transpose(1, 2)) # (B, N, N)
 
-        # [CDPruner] Calculate query relevance
+        # [CDPruner] Calculate query relevance (float32: CLIP text tower often Half under fp16 load)
+        image_embeds = image_embeds.float()
+        text_embeds = text_embeds.float()
         image_embeds = image_embeds / image_embeds.norm(dim=-1, keepdim=True) # (B, N, C)
         text_embeds = text_embeds / text_embeds.norm(dim=-1, keepdim=True) # (M, C)
         relevance = torch.matmul(image_embeds, text_embeds.t()) # (B, N, M)

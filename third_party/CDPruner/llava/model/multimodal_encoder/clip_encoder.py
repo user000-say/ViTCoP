@@ -92,7 +92,12 @@ class CLIPVisionTower(nn.Module):
 
             if texts is not None:
                 image_embeds = self.vision_tower.vision_model.post_layernorm(image_outputs)
-                image_embeds = self.vision_tower.visual_projection(image_embeds.float())
+                # FP16 checkpoint: Linear weight is Half; .float() input alone raises dtype mismatch.
+                # Project in float32 (same numeric intent as upstream .float() call).
+                proj = self.vision_tower.visual_projection
+                w = proj.weight.float()
+                b = None if proj.bias is None else proj.bias.float()
+                image_embeds = torch.nn.functional.linear(image_embeds.float(), w, b)
                 image_features = (image_features, image_embeds, text_embeds)
 
         return image_features

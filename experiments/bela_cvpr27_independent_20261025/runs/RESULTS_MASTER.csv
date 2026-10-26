@@ -11,5 +11,5 @@ E3_CURRENT,verified-gpu,2048,57.76,85.46,1779.1,63.32,68.57,55.13,96.94,96.85,W2
 A2_CURRENT,verified-gpu,2048,57.62,85.44,1774.9,63.14,68.67,54.89,96.75,96.68,anchor,/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_cvpr2027_t1_6task/A2_COVER_RDRIFT
 E1_DIAGNOSTIC,verified-gpu,2048,57.95,85.46,1797.9,62.71,68.47,55.0,97.03,96.86,costly timing ref,/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_final_p1_20261025/E1_RET32_TO12
 W1024_EARLY,verified-gpu,1024,54.06,81.95,1736.7,60.31,68.52,52.48,92.68,93.24,Wave1 early-cut best,/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_136_wave1_full6/S_1024_96_60_8
-E3_STAGE1_PENULTIMATE_ONLY,not-run,2048,,,,,,,,,launching,
-E3_STAGE1_LAYER9_ONLY,not-run,2048,,,,,,,,,launching,
+E3_STAGE1_PENULTIMATE_ONLY,verified-gpu,2048,57.34,84.63,1768.9,63.40,68.67,54.70,96.42,96.41,Stage1 guide ablation,logs/e014_aee/full/bela_independent_e3_stage1_20261026/E3_STAGE1_PENULTIMATE_ONLY
+E3_STAGE1_LAYER9_ONLY,verified-gpu,2048,58.67,85.71,1745.0,62.71,68.17,54.30,96.69,96.35,Stage1 guide ablation,logs/e014_aee/full/bela_independent_e3_stage1_20261026/E3_STAGE1_LAYER9_ONLY
