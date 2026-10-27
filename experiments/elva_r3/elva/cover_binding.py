@@ -74,9 +74,9 @@ class NativeCover:
         self.supported = tuple(integer(k, "supported K", 1) for k in spec.get("supported_k", ()))
         if not self.supported or len(set(self.supported)) != len(self.supported):
             raise ValueError("declare unique verified supported K values")
-        # Handoff COVER@K0: same gain; K0 in {64,72,80,96,128,160,172} (FINAL late-cut).
-        if self.family == "legacy_native" and set(self.supported) - {64, 72, 80, 96, 128, 160, 172}:
-            raise ValueError("legacy_native COVER only allows K0 in {64,72,80,96,128,160,172}")
+        # Handoff COVER@K0 + sprint B1 K32 (slots bound separately per K).
+        if self.family == "legacy_native" and set(self.supported) - {32, 64, 72, 80, 96, 128, 160, 172}:
+            raise ValueError("legacy_native COVER only allows K0 in {32,64,72,80,96,128,160,172}")
         if self.family == "legacy_native" and 172 not in self.supported:
             raise ValueError("legacy_native must still declare historical K172")
         if self.family == "legacy_pool172_then_topk" and any(k >= 172 for k in self.supported):
