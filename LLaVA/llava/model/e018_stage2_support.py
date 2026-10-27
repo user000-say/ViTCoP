@@ -272,6 +272,96 @@ class Runtime:
         self._side = question_response(q, k, mask, s.question_indices,
                                        s.visual_start, s.visual_ids.numel(), need)
 
+    def _bela_qcp_refine(self, side, keep, count, layer, base_score):
+        """Query-Aware Coverage Preservation on the FIRST progressive cut only.
+
+        Env:
+          BELA_QCP_MODE: off|qcp|random_swap
+          BELA_QCP_MAX_SWAPS / DONOR_POOL / DROP_POOL / LAMBDA / TAU
+        Uses Stage1 Dual features + unmodified cut q_attn / ranking score.
+        """
+        mode = os.environ.get("BELA_QCP_MODE", "off").strip().lower()
+        if mode in ("", "off", "none"):
+            return keep
+        if not self.cfg.events or layer != self.cfg.events[0][0]:
+            return keep  # first cut only (handoff)
+        s = self.state
+        max_swaps = int(os.environ.get("BELA_QCP_MAX_SWAPS", "2"))
+        if mode == "random_swap":
+            gen = torch.Generator(device=base_score.device)
+            seed = int(os.environ.get("BELA_QCP_SEED", "20261027"))
+            if s.visual_ids.numel():
+                seed = int((seed + s.visual_ids.long().sum() % 1000003).item() + layer * 17)
+            gen.manual_seed(seed)
+            active = torch.zeros(base_score.numel(), dtype=torch.bool, device=base_score.device)
+            active[keep] = True
+            outside = torch.where(~active)[0]
+            if outside.numel() == 0 or max_swaps <= 0:
+                return keep
+            n_swap = min(max_swaps, keep.numel(), outside.numel())
+            drop_pos = torch.randperm(keep.numel(), generator=gen, device=base_score.device)[:n_swap]
+            add_pos = torch.randperm(outside.numel(), generator=gen, device=base_score.device)[:n_swap]
+            keep = keep.clone()
+            keep[drop_pos] = outside[add_pos]
+            if os.environ.get("BELA_QCP_TRACE", "False") == "True":
+                self._qcp_last = {"mode": "random_swap", "swaps": int(n_swap), "layer": int(layer)}
+            return keep.sort().values
+        if mode != "qcp":
+            raise RuntimeError(f"unknown BELA_QCP_MODE={mode}")
+
+        import sys
+        from pathlib import Path as _P
+        _elva = str(_P("/home/xiangyue/ViTCoP/experiments/elva_r3"))
+        _qcp = str(_P("/home/xiangyue/ViTCoP/experiments/bela_qcp"))
+        for p in (_elva, _qcp):
+            if p not in sys.path:
+                sys.path.insert(0, p)
+        from llava_stage1 import LAST_ENTRY_KEEP, LAST_ENTRY_METRIC
+        from qcp import QCPConfig, select_qcp
+        if LAST_ENTRY_KEEP is None or LAST_ENTRY_METRIC is None:
+            raise RuntimeError("QCP requires Stage1 LAST_ENTRY_KEEP/METRIC")
+        q = side["q_attn"].float()
+        cfg = QCPConfig(
+            max_swaps=max_swaps,
+            donor_pool=int(os.environ.get("BELA_QCP_DONOR_POOL", "16")),
+            drop_pool=int(os.environ.get("BELA_QCP_DROP_POOL", "12")),
+            lambda_rank=float(os.environ.get("BELA_QCP_LAMBDA", "0.5")),
+            tau=float(os.environ.get("BELA_QCP_TAU", "1e-4")),
+        )
+        result = select_qcp(
+            keep_slots=keep,
+            ranking_score=base_score.float(),
+            q_attn=q,
+            alive_ids=s.visual_ids.long(),
+            entry_ids=LAST_ENTRY_KEEP.to(device=s.visual_ids.device),
+            entry_features=LAST_ENTRY_METRIC.to(device=s.visual_ids.device),
+            config=cfg,
+            record_diagnostics=os.environ.get("BELA_QCP_TRACE", "False") == "True",
+        )
+        if result.keep_slots.numel() != count:
+            raise RuntimeError("QCP must preserve event K")
+        self._qcp_last = {
+            "mode": "qcp",
+            "swaps": int(result.swaps),
+            "layer": int(layer),
+            "diagnostics": result.diagnostics,
+        }
+        # Optional JSONL trace for handoff delivery.
+        audit_dir = os.environ.get("ELVA_R3_AUDIT_DIR", "")
+        if audit_dir and result.diagnostics is not None:
+            import json
+            from pathlib import Path as _AP
+            path = _AP(audit_dir) / "qcp_trace.jsonl"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps({
+                    "layer": int(layer),
+                    "swaps": int(result.swaps),
+                    "events": result.diagnostics,
+                    "keep_ids": s.visual_ids.index_select(0, result.keep_slots).detach().cpu().tolist(),
+                }, ensure_ascii=False) + "\n")
+        return result.keep_slots.sort().values
+
     def _bela_stage2_refine(self, side, keep, count, layer, base_score):
         """Optional BELA Stage2 ICER / CoRePrune-proxy / random-swap on top of Top-K.
 
@@ -280,6 +370,10 @@ class Runtime:
           BELA_ICER_MAX_SWAPS / DONOR_POOL / DROP_POOL / MIN_QMASS
         Keeps K unchanged; uses existing gather path via returned slots.
         """
+        # QCP takes precedence when enabled (mutually exclusive with ICER stack).
+        qcp_mode = os.environ.get("BELA_QCP_MODE", "off").strip().lower()
+        if qcp_mode not in ("", "off", "none"):
+            return self._bela_qcp_refine(side, keep, count, layer, base_score)
         mode = os.environ.get("BELA_ICER_MODE", "off").strip().lower()
         if mode in ("", "off", "none"):
             return keep

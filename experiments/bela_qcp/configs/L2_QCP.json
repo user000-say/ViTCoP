@@ -1,0 +1,38 @@
+{
+  "id": "L2_QCP",
+  "phase": "cvpr2027_qcp_20261027",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [64, 17, 10],
+      "lengths": [12, 8, 12]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false,
+    "qcp": {
+      "mode": "qcp",
+      "max_swaps": 2,
+      "donor_pool": 16,
+      "drop_pool": 12,
+      "lambda": 0.5,
+      "tau": 1e-4,
+      "first_cut_only": true
+    }
+  }
+}

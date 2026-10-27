@@ -21,6 +21,9 @@ E013 = Path("/home/xiangyue/ViTCoP/LLaVA/llava/model/multimodal_encoder/e013_sta
 _COVERS = None
 # Original-patch priority for sprint B2 ENTRY_ORDER cuts (higher = keep first).
 LAST_ENTRY_PRIORITY = None
+# QCP needs Stage1 Dual features + entry keep IDs (original patch coordinates).
+LAST_ENTRY_KEEP = None
+LAST_ENTRY_METRIC = None
 
 
 def _covers():
@@ -239,6 +242,10 @@ def select_existing_forward(image_forward_outs, tokens_0):
     # Always record entry COVER priority (B2 ENTRY_ORDER; cheap; others ignore).
     slots = int(audit.get("replacement_slots") or 0)
     _set_entry_priority(selected["metric"], selected["scores"], keep, slots)
+    global LAST_ENTRY_KEEP, LAST_ENTRY_METRIC
+    LAST_ENTRY_KEEP = keep.detach().long().clone()
+    # Dual (or pen) metric features over all 576 patches — QCP similarity source.
+    LAST_ENTRY_METRIC = selected["metric"].detach().clone()
     payload = pen.index_select(0, keep)
     if payload.shape[0] != int(keep.numel()) or int(keep.unique().numel()) != int(keep.numel()):
         raise RuntimeError("admission/cover keep is not a unique pen-row index set")
