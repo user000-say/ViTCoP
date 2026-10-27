@@ -50,8 +50,8 @@ class E018Config:
     def validate(self, layers, initial):
         if self.mode not in {"STATIC", "COLLECT", "ONLINE", "PROXY"}:
             raise ValueError("E018_MODE must be STATIC/COLLECT/ONLINE/PROXY")
-        if self.selector not in {"Q_ATTN", "QED", "RANDOM"}:
-            raise ValueError("E018_SELECTOR must be Q_ATTN/QED/RANDOM")
+        if self.selector not in {"Q_ATTN", "QED", "RANDOM", "ENTRY_ORDER"}:
+            raise ValueError("E018_SELECTOR must be Q_ATTN/QED/RANDOM/ENTRY_ORDER")
         if self.cache_policy not in {"layer_local", "scrub_all"}:
             raise ValueError("Unknown cache policy")
         # E019 THREE_WMATCH needs three checkpoints; keep empty STATIC as dense identity.

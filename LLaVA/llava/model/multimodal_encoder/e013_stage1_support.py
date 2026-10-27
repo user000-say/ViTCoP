@@ -76,9 +76,9 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
     pick = str(pick).upper()
     b = int(budget)
     total_k = int(CORE_K if core_k is None else core_k)
-    # Handoff PolicyProfile k0 + G1 F3 entry128.
-    if total_k not in {64, 72, 80, 96, 128, 160, 172}:
-        raise ValueError('[E013] core_k must be one of {64,72,80,96,128,160,172}')
+    # Handoff PolicyProfile k0 + G1 F3 entry128 + sprint B1 COVER@K32 (slots<=K).
+    if total_k not in {32, 64, 72, 80, 96, 128, 160, 172}:
+        raise ValueError('[E013] core_k must be one of {32,64,72,80,96,128,160,172}')
     if variant not in {'EXTRA', 'REPLACE'}:
         raise ValueError('[E013] variant must be EXTRA or REPLACE')
     if pick not in {'ATTN', 'RANDOM', 'COVER', 'NULL', 'DUPLICATE'}:
@@ -87,6 +87,8 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
         raise ValueError('[E013] NULL/DUPLICATE are only valid for EXTRA')
     if b < 0 or b > 32 or b > total_k:
         raise ValueError('[E013] budget must be 0..min(32, core_k)')
+    if total_k == 32 and b not in {0, 4, 6, 8}:
+        raise ValueError('[E013] COVER@K32 only allows replacement slots in {0,4,6,8}')
 
     base = cls_scores.topk(total_k, largest=True, sorted=False).indices
     base = base.sort().values

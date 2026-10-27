@@ -19,6 +19,8 @@ from native_cover import legacy_callback
 PKG = Path("/home/xiangyue/ViTCoP/experiments/elva_r3")
 E013 = Path("/home/xiangyue/ViTCoP/LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py")
 _COVERS = None
+# Original-patch priority for sprint B2 ENTRY_ORDER cuts (higher = keep first).
+LAST_ENTRY_PRIORITY = None
 
 
 def _covers():
@@ -35,8 +37,11 @@ def _covers():
         "legacy_native": NativeCover(legacy_callback, dict(
             family="legacy_native", entrypoint="native_cover:legacy_callback",
             # COVER@K0: late-cut 64/72/80 + EASY96 / G1-F3-128 / NORMAL160 / HARD172; slots=32.
-            supported_k=[64, 72, 80, 96, 128, 160, 172],
-            replacement_slots={"64": 32, "72": 32, "80": 32, "96": 32, "128": 32, "160": 32, "172": 32},
+            supported_k=[32, 64, 72, 80, 96, 128, 160, 172],
+            replacement_slots={
+                "32": 8, "64": 32, "72": 32, "80": 32, "96": 32,
+                "128": 32, "160": 32, "172": 32,
+            },
             source_files=legacy_files)),
         "protected_coverage": NativeCover(pcov_callback, dict(
             family="protected_coverage", entrypoint="elva.low_budget_cover:callback",
@@ -51,6 +56,51 @@ def _covers():
 def _sum_cls(attentions, index):
     # attentions[index]: [1, heads, 577, 577] -> [576]
     return attentions[index][0, :, 0, 1:].sum(0).float()
+
+
+def _set_entry_priority(metric_features, scores, keep: torch.Tensor, slots: int) -> torch.Tensor:
+    """Rebuild COVER REPLACE priority on original patch IDs (same scores/features COVER saw).
+
+    Anchors = CLS top (K-slots) → priority = 1e6 + CLS.
+    Residual COVER picks → priority = coverage utility.
+    Keep members altered by admission get CLS fallback. Others stay -1e9.
+    """
+    from llava.model.multimodal_encoder.e013_stage1_support import _core_relative_coverage
+
+    global LAST_ENTRY_PRIORITY
+    n = int(scores.numel())
+    k = int(keep.numel())
+    b = int(slots)
+    if b < 0 or b > k:
+        raise RuntimeError(f"invalid COVER slots={b} for K={k}")
+    scores_f = scores.float()
+    priority = torch.full((n,), -1e9, device=scores.device, dtype=torch.float32)
+    anchors_k = k - b
+    anchors = (
+        torch.topk(scores_f, k=anchors_k, largest=True, sorted=False).indices
+        if anchors_k > 0
+        else scores.new_empty(0, dtype=torch.long)
+    )
+    if anchors_k > 0:
+        priority[anchors] = scores_f.index_select(0, anchors) + 1e6
+    if b > 0:
+        base = torch.topk(scores_f, k=k, largest=True, sorted=False).indices
+        base_mask = torch.ones(n, dtype=torch.bool, device=scores.device)
+        base_mask[base] = False
+        residual = torch.where(base_mask)[0]
+        utility = _core_relative_coverage(metric_features, scores_f, anchors, residual)
+        keep_set = torch.zeros(n, dtype=torch.bool, device=scores.device)
+        keep_set[keep] = True
+        for local_i in range(int(residual.numel())):
+            pid = int(residual[local_i].item())
+            if keep_set[pid]:
+                priority[pid] = float(utility[local_i].item())
+    # Admission / edge: any keep still unset gets CLS so Stage2 can rank it.
+    for pid in keep.detach().tolist():
+        if float(priority[pid].item()) <= -1e8:
+            priority[pid] = float(scores_f[pid].item())
+    LAST_ENTRY_PRIORITY = priority.detach()
+    return priority
 
 
 def _rank_percentile(scores: torch.Tensor) -> torch.Tensor:
@@ -186,6 +236,9 @@ def select_existing_forward(image_forward_outs, tokens_0):
         )
         audit = dict(audit)
         audit["admission"] = admit_audit
+    # Always record entry COVER priority (B2 ENTRY_ORDER; cheap; others ignore).
+    slots = int(audit.get("replacement_slots") or 0)
+    _set_entry_priority(selected["metric"], selected["scores"], keep, slots)
     payload = pen.index_select(0, keep)
     if payload.shape[0] != int(keep.numel()) or int(keep.unique().numel()) != int(keep.numel()):
         raise RuntimeError("admission/cover keep is not a unique pen-row index set")

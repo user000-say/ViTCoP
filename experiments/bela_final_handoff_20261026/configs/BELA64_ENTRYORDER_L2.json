@@ -1,0 +1,29 @@
+{
+  "id": "BELA64_ENTRYORDER_L2",
+  "phase": "cvpr2027_sprint_b2_20261027",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [64, 17, 10],
+      "lengths": [12, 8, 12]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "ENTRY_ORDER",
+      "later_selector": "ENTRY_ORDER"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false
+  }
+}

@@ -2785,6 +2785,15 @@ class LlamaModel(LlamaPreTrainedModel):
                     and seq_length > 1
                 ):
                     expected_stage1 = self._e007_stage1_expected[self.e007_stage1_mode]
+                    # ELVA exact-W Stage1 may legally enter with K != 172; honor
+                    # the overlay contract (E007_EXPECT_STAGE1 / ELVA_R3_ENTRY_K).
+                    if os.environ.get("ELVA_R3_ENABLE") == "True":
+                        expected_stage1 = int(
+                            os.environ.get(
+                                "E007_EXPECT_STAGE1",
+                                os.environ.get("ELVA_R3_ENTRY_K", str(expected_stage1)),
+                            )
+                        )
                     if int(v_token_num) != int(expected_stage1):
                         raise RuntimeError(
                             f"[E007] Stage1/Llama mismatch: mode={self.e007_stage1_mode} "

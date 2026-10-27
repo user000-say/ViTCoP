@@ -38,11 +38,16 @@ def overlay(meta: dict | None = None) -> dict:
     # QED is a native E018 selector; RDRIFT refines the first event on top of Q_ATTN.
     if first == "QED" or later == "QED":
         e018_selector = "QED"
+    elif first == "ENTRY_ORDER" or later == "ENTRY_ORDER":
+        # Sprint B2: both cuts must use entry COVER order (no Q_ATTN/RDRIFT mix).
+        if first != "ENTRY_ORDER" or later != "ENTRY_ORDER":
+            raise ValueError("ENTRY_ORDER requires first_selector=later_selector=ENTRY_ORDER")
+        e018_selector = "ENTRY_ORDER"
     elif first in {"Q_ATTN", "RANDOM"}:
         e018_selector = first
     else:
         e018_selector = "Q_ATTN"
-    if e018_selector not in {"Q_ATTN", "QED", "RANDOM"}:
+    if e018_selector not in {"Q_ATTN", "QED", "RANDOM", "ENTRY_ORDER"}:
         raise ValueError(f"unsupported E018_SELECTOR from stage2: {first}/{later}")
     # Flat schedules (single segment) yield empty E018_EVENTS — entry-only, no Stage2 cuts.
     last_layer = int(events.split(",")[-1].split(":")[0]) if events else -1

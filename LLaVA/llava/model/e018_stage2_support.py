@@ -380,6 +380,20 @@ class Runtime:
         if self.cfg.selector == "RANDOM":
             # Control is keyed by original patch ID, not a changing local coordinate.
             score = ((s.visual_ids * 1103515245 + 12345 + layer * 2654435761) % 2147483647).float()
+        elif self.cfg.selector == "ENTRY_ORDER":
+            # Sprint B2: keep by Stage1 COVER greedy / CLS-anchor priority (original patch IDs).
+            import sys
+            from pathlib import Path as _P
+            _elva = str(_P("/home/xiangyue/ViTCoP/experiments/elva_r3"))
+            if _elva not in sys.path:
+                sys.path.insert(0, _elva)
+            from llava_stage1 import LAST_ENTRY_PRIORITY
+            if LAST_ENTRY_PRIORITY is None:
+                raise RuntimeError("ENTRY_ORDER requires Stage1 LAST_ENTRY_PRIORITY")
+            pri = LAST_ENTRY_PRIORITY.to(device=s.visual_ids.device, dtype=torch.float32)
+            if pri.numel() < int(s.visual_ids.max()) + 1:
+                raise RuntimeError("ENTRY_ORDER priority shorter than patch id range")
+            score = pri.index_select(0, s.visual_ids.long())
         else:
             score = side["q_attn" if self.cfg.selector == "Q_ATTN" else "qed"]
         # CoRePrune-inspired proxy replaces the ranking score before Top-K.
