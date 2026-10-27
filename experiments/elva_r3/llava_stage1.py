@@ -201,6 +201,134 @@ def bounded_admission(
     }
 
 
+def _qa_mode() -> str:
+    mode = os.environ.get("BELA_QA_ENTRY_MODE", "off").strip().lower()
+    if mode in ("", "none"):
+        return "off"
+    return mode
+
+
+def _apply_qa_cover(keep, selected, pen, pen_scores):
+    """Swap a bounded set of original patch IDs before the penultimate gather.
+
+    Called only when BELA_QA_ENTRY_MODE is not off. The LLM still receives
+    pen.index_select(keep); the extra mm_projector call is the query proxy.
+    """
+    import json
+    import sys
+    import time
+    from pathlib import Path
+
+    root = str(Path("/home/xiangyue/ViTCoP/experiments"))
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from bela_query_anchor.llava_adapter import apply_llava_query_anchor
+    from bela_query_anchor.query_anchor import AnchorConfig
+    from bela_query_anchor.request_context import current
+
+    mode = _qa_mode()
+    if mode not in ("s1_anchor", "matched_random"):
+        raise RuntimeError(f"unknown BELA_QA_ENTRY_MODE={mode}")
+    n = int(pen.shape[0])
+    if n != 576:
+        raise RuntimeError(f"QA-COVER is bound to a single 576-patch grid, got {n}")
+    req = current()
+    if req is None or req.mm_projector is None or req.embed_tokens is None:
+        raise RuntimeError("QA-COVER is on but this forward has no request-local question/modules")
+    metric = selected["metric"]
+    if int(metric.shape[0]) != n:
+        raise RuntimeError("Dual COVER metric is not aligned with the 576 penultimate rows")
+
+    class _TimedProjector:
+        def __init__(self, module):
+            self.module = module
+            self.ms = 0.0
+
+        def __call__(self, features):
+            if torch.cuda.is_available() and features.is_cuda:
+                torch.cuda.synchronize()
+            started = time.perf_counter()
+            out = self.module(features)
+            if torch.cuda.is_available() and features.is_cuda:
+                torch.cuda.synchronize()
+            self.ms += (time.perf_counter() - started) * 1000.0
+            return out
+
+    projector = _TimedProjector(req.mm_projector)
+    guard = int(os.environ.get("BELA_QA_SALIENCY_GUARD", "0"))
+    config = AnchorConfig(
+        max_swaps=int(os.environ.get("BELA_QA_MAX_SWAPS", "8")),
+        donor_pool=int(os.environ.get("BELA_QA_DONOR_POOL", "16")),
+        drop_pool=int(os.environ.get("BELA_QA_DROP_POOL", "12")),
+        min_raw_std=float(os.environ.get("BELA_QA_MIN_RAW_STD", "0.008")),
+        min_query_gain=float(os.environ.get("BELA_QA_MIN_QUERY_GAIN", "0.08")),
+        min_novelty=float(os.environ.get("BELA_QA_MIN_NOVELTY", "0.05")),
+        max_coverage_loss=float(os.environ.get("BELA_QA_MAX_COVERAGE_LOSS", "0.005")),
+        coverage_weight=float(os.environ.get("BELA_QA_COVERAGE_WEIGHT", "0.5")),
+        saliency_guard_slots=guard,
+    )
+    started = time.perf_counter()
+    result = apply_llava_query_anchor(
+        mode=mode,
+        native_keep_ids=keep,
+        dual_metric=metric,
+        full_vision_features_for_projector=pen,
+        question_only_ids=req.question_ids,
+        question_content_mask=req.content_mask,
+        native_saliency=pen_scores if guard else None,
+        mm_projector=projector,
+        llm_input_embeddings=req.embed_tokens,
+        config=config,
+        random_seed=int(os.environ.get("BELA_QA_SEED", "17")),
+        diagnostics=os.environ.get("BELA_QA_TRACE", "False") == "True",
+    )
+    if torch.cuda.is_available() and pen.is_cuda:
+        torch.cuda.synchronize()
+    selector_ms = (time.perf_counter() - started) * 1000.0
+    new_keep = result.keep_ids.to(device=keep.device, dtype=torch.long)
+    if int(new_keep.numel()) != int(keep.numel()) or int(new_keep.unique().numel()) != int(keep.numel()):
+        raise RuntimeError("QA-COVER broke the fixed-K unique-id contract")
+    if not torch.equal(new_keep, new_keep.sort().values):
+        raise RuntimeError("QA-COVER keep ids are not in spatial order")
+    native_list = result.native_ids.detach().cpu().tolist()
+    final_list = new_keep.detach().cpu().tolist()
+    native_set, final_set = set(native_list), set(final_list)
+    req.native_ids = native_list
+    req.final_ids = final_list
+    req.added_ids = sorted(final_set - native_set)
+    req.removed_ids = sorted(native_set - final_set)
+    req.swaps = int(result.swaps)
+    req.reason = result.reason
+    if os.environ.get("BELA_QA_TRACE", "False") == "True":
+        audit_dir = os.environ.get("ELVA_R3_AUDIT_DIR", "")
+        if audit_dir:
+            path = Path(audit_dir) / "entry_trace.jsonl"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            row = {
+                "sample_id": req.sample_id,
+                "image_id": req.image_id,
+                "mode": mode,
+                "reason": result.reason,
+                "swaps": int(result.swaps),
+                "native_ids": native_list,
+                "final_ids": final_list,
+                "added_ids": req.added_ids,
+                "removed_ids": req.removed_ids,
+                "question_source": req.source,
+                "question_definition": req.definition,
+                "donor_sample_id": req.donor_sample_id,
+                "question_tokens": int(req.question_ids.numel()),
+                "content_tokens": int(req.content_mask.sum().item()) if req.content_mask is not None else int(req.question_ids.numel()),
+                "question_preview": req.question_text[:180],
+                "projector_ms": round(projector.ms, 3),
+                "selector_ms": round(selector_ms, 3),
+                "records": result.records,
+            }
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return new_keep
+
+
 def select_existing_forward(image_forward_outs, tokens_0):
     config = json.loads(Path(os.environ["ELVA_R3_CONFIG"]).read_text())
     hidden = image_forward_outs.hidden_states
@@ -231,6 +359,10 @@ def select_existing_forward(image_forward_outs, tokens_0):
         native_cover=cover, backend="torch")
     keep = selected["keep"]
     audit = selected["stage1_audit"]
+    if _qa_mode() != "off":
+        if admission_cap > 0:
+            raise RuntimeError("QA-COVER refuses to stack with bounded admission")
+        keep = _apply_qa_cover(keep, selected, pen, pen_scores)
     if admission_cap > 0:
         if early is None or early_scores is None:
             raise RuntimeError("admission_cap>0 requires L9 features/scores")

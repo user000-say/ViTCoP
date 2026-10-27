@@ -11,6 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import os
 from abc import ABC, abstractmethod
 
 import torch
@@ -136,7 +137,20 @@ class LlavaMetaForCausalLM(ABC):
         return self.get_model().get_vision_tower()
 
     def encode_images(self, images):
-        image_features, cluster_labels = self.get_model().get_vision_tower()(images)
+        qa_on = os.environ.get("BELA_QA_ENTRY_MODE", "off").strip().lower() not in ("", "off", "none")
+        if qa_on:
+            import sys
+            from pathlib import Path as _QAPath
+            _qa_root = str(_QAPath("/home/xiangyue/ViTCoP/experiments"))
+            if _qa_root not in sys.path:
+                sys.path.insert(0, _qa_root)
+            from bela_query_anchor.request_context import attach_modules, detach_modules
+            attach_modules(self.get_model().mm_projector, self.get_model().embed_tokens)
+        try:
+            image_features, cluster_labels = self.get_model().get_vision_tower()(images)
+        finally:
+            if qa_on:
+                detach_modules()
         image_features = self.get_model().mm_projector(image_features)
         return image_features, cluster_labels
 

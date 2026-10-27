@@ -26,6 +26,7 @@ _ORIG = e009_common.apply_profile
 
 _SYNC_FILES = (
     "LLaVA/llava/model/language_model/vitcop_modeling_llama.py",
+    "LLaVA/llava/model/vitcop_llava_arch.py",
     "LLaVA/llava/model/multimodal_encoder/clip_encoder.py",
     "LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py",
     "LLaVA/llava/model/multimodal_encoder/e014_config.py",

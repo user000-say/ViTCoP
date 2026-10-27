@@ -943,6 +943,38 @@ class Runtime:
                         '{"counts":[%s],"final_k":%d,"events":"%s"}\n'
                         % (counts, int(m.e006_last["e018_final_k"]), events)
                     )
+                if (
+                    os.environ.get("BELA_QA_TRACE", "False") == "True"
+                    and os.environ.get("BELA_QA_ENTRY_MODE", "off").strip().lower() not in ("", "off", "none")
+                ):
+                    import sys
+                    from pathlib import Path as _QAPath
+                    _qa_root = str(_QAPath("/home/xiangyue/ViTCoP/experiments"))
+                    if _qa_root not in sys.path:
+                        sys.path.insert(0, _qa_root)
+                    from bela_query_anchor.request_context import current as _qa_current
+                    req = _qa_current()
+                    added = set(req.added_ids) if req is not None else set()
+                    survival = []
+                    for ev in self.state.events:
+                        kids = [int(x) for x in ev["keep_ids"].detach().cpu().tolist()]
+                        survival.append({
+                            "layer": int(ev["layer"]),
+                            "k": len(kids),
+                            "alive_added": [i for i in kids if i in added],
+                        })
+                    final_ids = [int(x) for x in self.state.visual_ids.detach().cpu().tolist()]
+                    import json as _qa_json
+                    with open(os.path.join(audit_dir, "qa_survival.jsonl"), "a", encoding="utf-8") as handle:
+                        handle.write(_qa_json.dumps({
+                            "sample_id": None if req is None else req.sample_id,
+                            "image_id": None if req is None else req.image_id,
+                            "final_ids": final_ids,
+                            "final_k": len(final_ids),
+                            "added_ids": sorted(added),
+                            "added_alive_final": [i for i in final_ids if i in added],
+                            "events": survival,
+                        }) + "\n")
         else:
             s = self.state
             if s is None or hidden.shape[1] != 1:

@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-27",
+  "limit": 2,
+  "task": "gqa",
+  "off_mode": "BELA_QA_ENTRY_MODE=off",
+  "reference": "logs/e014_aee/smoke/final_p1/L2_LATE_64_17_10_gqa",
+  "samples": [
+    {
+      "id": "201307251",
+      "question": "Is it overcast?",
+      "reference_pred": "No",
+      "off_pred": "No",
+      "anchor_pred": "No"
+    },
+    {
+      "id": "201640614",
+      "question": "Who is wearing the dress?",
+      "reference_pred": "Woman",
+      "off_pred": "Woman",
+      "anchor_pred": "Woman"
+    }
+  ],
+  "off_matches_reference_predictions": true,
+  "off_audit": {
+    "stage1_tokens": 64,
+    "events": [[11, 17], [19, 10]],
+    "final_visual_tokens": 10,
+    "qa_trace_rows": 0
+  },
+  "anchor_audit": {
+    "stage1_tokens": 64,
+    "events": [[11, 17], [19, 10]],
+    "final_visual_tokens": 10,
+    "swaps": [8, 8],
+    "added_alive_after_final_cut": {"201640614": [298], "201307251": []}
+  },
+  "note": "Two-sample check only. Off predictions match the stored L2 smoke. Anchor changed patch ids on both items; these two decoded answers did not move. Not a full-set equivalence proof and not a G1 accuracy result."
+}
