@@ -1,0 +1,50 @@
+{
+  "model": "llava-hf/llava-v1.6-vicuna-7b-hf",
+  "arm": "DENSE",
+  "pruning": "none",
+  "scorer": "lmms-eval",
+  "limit": null,
+  "dtype": "float16",
+  "attn_implementation": "sdpa",
+  "device_map": "cuda:0",
+  "gpus": [0, 2, 4, 7],
+  "finished": "2026-10-28T18:50:37+08:00",
+  "note": "Unpruned LLaVA-NeXT-7B absolute scores. These are the Dense reference for this model. Relative ACC of a later pruned run is 100 * pruned_absolute / these values. The llava15_relative field uses the frozen LLaVA-1.5 references and is not this model's own baseline.",
+  "absolute": {
+    "gqa": 64.28685005565272,
+    "pope_f1": 86.52862362971986,
+    "mme": 1826.5735294117646,
+    "mme_perception": 1514.4306722689075,
+    "mme_cognition": 312.1428571428571,
+    "mmbench_en_dev": 67.0103092783505,
+    "scienceqa_img": 70.10411502231036,
+    "textvqa_val_ocr": 61.45400000000028
+  },
+  "llava15_dense_ref": {
+    "gqa": 61.9,
+    "pope_f1": 85.8,
+    "mme": 1852,
+    "mmbench_en_dev": 64.1,
+    "scienceqa_img": 69.51,
+    "textvqa_val_ocr": 58.2
+  },
+  "relative_to_llava15": {
+    "gqa": 103.85597747278242,
+    "pope_f1": 100.84921285515135,
+    "mme": 98.62708042180262,
+    "mmbench_en_dev": 104.540264084789,
+    "scienceqa_img": 100.8548612017128,
+    "textvqa_val_ocr": 105.5910652920967,
+    "r4": 101.96813370863135,
+    "mean6": 102.38641022138915
+  },
+  "raw_lmms": {
+    "gqa_exact_match": 0.6428685005565272,
+    "pope_f1_score": 0.8652862362971986,
+    "mme_perception_score": 1514.4306722689075,
+    "mme_cognition_score": 312.1428571428571,
+    "mmbench_gpt_eval_score": 67.0103092783505,
+    "scienceqa_img_exact_match": 0.7010411502231036,
+    "textvqa_val_ocr_exact_match": 0.6145400000000028
+  }
+}
