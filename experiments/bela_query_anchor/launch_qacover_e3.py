@@ -41,6 +41,15 @@ def _metrics(arm: str, task: str) -> Path:
     return OUT_ROOT / arm / task / "metrics.json"
 
 
+def _boot_alive(out: Path) -> bool:
+    needle = str(out)
+    try:
+        listing = subprocess.check_output(["ps", "-u", "xiangyue", "-o", "cmd"], text=True)
+    except subprocess.CalledProcessError:
+        return False
+    return any("e014_boot.py" in line and needle in line for line in listing.splitlines())
+
+
 def _protect_alive() -> bool:
     try:
         out = subprocess.check_output(["ps", "-u", "xiangyue", "-o", "cmd"], text=True)
@@ -165,6 +174,9 @@ def main() -> None:
         if (out / "metrics.json").exists():
             print(f"HAVE {ARM}/{task}", flush=True)
             continue
+        if _boot_alive(out):
+            print(f"ALREADY {ARM}/{task}; not starting a second copy", flush=True)
+            continue
         jobs.append((task, out))
     running: list[tuple[subprocess.Popen, object, str]] = []
     while jobs or running:
@@ -190,6 +202,11 @@ def main() -> None:
             proc = _spawn(task, out, LOG_DIR / f"acc_{ARM}_{task}.log", leased, limit=None)
             running.append((proc, leased, f"{ARM}:{task}"))
         time.sleep(20)
+    pending = [task for task in TASKS if not _metrics(ARM, task).exists()]
+    while pending and any(_boot_alive(root / task) for task in pending):
+        print(f"WAIT in-flight {pending}", flush=True)
+        time.sleep(30)
+        pending = [task for task in TASKS if not _metrics(ARM, task).exists()]
     missing = [task for task in TASKS if not _metrics(ARM, task).exists()]
     if missing:
         print("MISSING", missing, flush=True)
