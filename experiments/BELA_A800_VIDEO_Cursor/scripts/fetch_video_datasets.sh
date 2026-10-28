@@ -15,19 +15,32 @@ RSH="ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no"
 REMOTE=xiangyue@114.212.10.250
 
 mark() {
-  local name=$1
+  local name=$1 dir=$2
+  local n
+  n=$(find "$dir" \( -name '*.mp4' -o -name '*.mkv' -o -name '*.webm' \) 2>/dev/null | wc -l)
+  if [[ ${n:-0} -lt 100 ]]; then
+    echo "NOT_READY $name media=$n $(date -Is)"
+    return 0
+  fi
   setsid ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no "$REMOTE" "mkdir -p /data1/xiangyue/datasets; touch /data1/xiangyue/datasets/READY_${name}"
-  echo "READY $name $(date -Is)"
+  echo "READY $name media=$n $(date -Is)"
 }
 
 unpack_and_push() {
   local repo=$1 cache=$2 ready=$3
-  echo "DOWNLOAD $repo $(date -Is)"
-  HF_HOME=$HF "$PY" - << PY
+  local n=0
+  if [[ -d $HF/$cache/data ]]; then
+    n=$(find "$HF/$cache/data" -name '*.mp4' | wc -l)
+  fi
+  if [[ $cache == videomme && $n -ge 900 ]]; then
+    echo "SKIP_DOWNLOAD $cache mp4=$n $(date -Is)"
+  else
+    echo "DOWNLOAD $repo $(date -Is)"
+    HF_HOME=$HF "$PY" - << PY
 from huggingface_hub import snapshot_download
 snapshot_download(${repo@Q}, repo_type="dataset", local_dir="${HF}/repos/${cache}")
 PY
-  HF_HOME=$HF "$PY" - << PY
+    HF_HOME=$HF "$PY" - << PY
 import os, glob, zipfile, tarfile
 src = "${HF}/repos/${cache}"
 dst = os.path.join("${HF}", "${cache}")
@@ -42,12 +55,16 @@ for t in glob.glob(src + "/**/*.tar*", recursive=True):
         tt.extractall(dst)
 print("UNPACK_DONE", dst, flush=True)
 PY
+  fi
   echo "RSYNC $cache $(date -Is)"
-  setsid rsync -a --info=stats2 -e "$RSH" "$HF/" "$REMOTE:/data1/xiangyue/hf/"
-  mark "$ready"
+  rsync -a --exclude '*.zip' --info=stats2 -e "$RSH" "$HF/$cache/" "$REMOTE:/data1/xiangyue/hf/$cache/"
+  rsync -a --exclude '*.zip' -e "$RSH" "$HF/repos/$cache/" "$REMOTE:/data1/xiangyue/hf/ann/$cache/"
+  mark "$ready" "$HF/$cache"
 }
 
-unpack_and_push "lmms-lab/Video-MME" videomme videomme
+if [[ ${1:-} != --rest ]]; then
+  unpack_and_push "lmms-lab/Video-MME" videomme videomme
+fi
 unpack_and_push "longvideobench/LongVideoBench" longvideobench longvideobench
 unpack_and_push "sy1998/MLVU_dev" mlvu mlvu
 "$PY" - << 'PY'
@@ -71,6 +88,7 @@ for t in glob.glob(src + "/**/*.tar*", recursive=True):
         tt.extractall(dst)
 print("UNPACK_DONE", dst, flush=True)
 PY
-setsid rsync -a --info=stats2 -e "$RSH" "$HF/" "$REMOTE:/data1/xiangyue/hf/"
-mark mvbench
+rsync -a --exclude '*.zip' --info=stats2 -e "$RSH" "$HF/mvbench_video/" "$REMOTE:/data1/xiangyue/hf/mvbench_video/"
+rsync -a --exclude '*.zip' -e "$RSH" "$HF/repos/mvbench_video/" "$REMOTE:/data1/xiangyue/hf/ann/mvbench_video/"
+mark mvbench "$HF/mvbench_video"
 echo "FETCH_DONE $(date -Is)"

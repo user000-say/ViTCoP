@@ -942,7 +942,17 @@ class ConfigurableTask(Task):
                     force_unzip = dataset_kwargs.get("force_unzip", False)
                     revision = dataset_kwargs.get("revision", "main")
                     create_link = dataset_kwargs.get("create_link", False)
-                    cache_path = snapshot_download(repo_id=self.DATASET_PATH, revision=revision, repo_type="dataset", force_download=force_download, etag_timeout=60)
+                    data_dir = os.path.join(cache_dir, "data")
+                    videos_ready = os.path.isdir(data_dir) and any(name.endswith(".mp4") for name in os.listdir(data_dir))
+                    local_ann = os.environ.get("BELA_LOCAL_DATASET", "")
+                    if videos_ready and local_ann and os.path.isdir(local_ann):
+                        eval_logger.info(f"Using local videos in {data_dir} and annotations in {local_ann}.")
+                        self.DATASET_PATH = local_ann
+                        cache_path = local_ann
+                        zip_files = []
+                        tar_files = []
+                    else:
+                        cache_path = snapshot_download(repo_id=self.DATASET_PATH, revision=revision, repo_type="dataset", force_download=force_download, etag_timeout=60)
                     zip_files = glob(os.path.join(cache_path, "**/*.zip"), recursive=True)
                     tar_files = glob(os.path.join(cache_path, "**/*.tar*"), recursive=True)
 

@@ -19,8 +19,35 @@ MODEL=$ROOT/models/LLaVA-Video-7B-Qwen2
 ARGS="pretrained=${MODEL},conv_template=qwen_1_5,max_frames_num=64,mm_spatial_pool_mode=average,mm_spatial_pool_stride=2,attn_implementation=sdpa,force_sample=True,add_time_instruction=True,torch_dtype=bfloat16,video_decode_backend=decord"
 TASKS=(videomme longvideobench_val_v mlvu_dev mvbench)
 READY_FOR=(videomme longvideobench mlvu mvbench)
-declare -A PID GPU_OF
+declare -A PID GPU_OF ANN_OF
+ANN_OF[videomme]=$ROOT/hf/ann/videomme
 idx=0
+media_count() {
+  find "$1" \( -name '*.mp4' -o -name '*.mkv' -o -name '*.webm' \) 2>/dev/null | wc -l
+}
+data_ready() {
+  local task=$1 flag=$2
+  case "$task" in
+    videomme)
+      [[ -f $ROOT/hf/ann/videomme/videomme/test-00000-of-00001.parquet ]] || return 1
+      local n
+      n=$(find "$ROOT/hf/videomme/data" -name '*.mp4' 2>/dev/null | wc -l)
+      [[ "$n" -ge 900 ]]
+      ;;
+    longvideobench_val_v)
+      [[ $(media_count "$ROOT/hf/longvideobench") -ge 100 ]]
+      ;;
+    mlvu_dev)
+      [[ $(media_count "$ROOT/hf/mlvu") -ge 100 ]]
+      ;;
+    mvbench)
+      [[ $(media_count "$ROOT/hf/mvbench_video") -ge 100 ]]
+      ;;
+    *)
+      [[ -f $flag ]]
+      ;;
+  esac
+}
 echo "QUEUE_START $(date -Is)" | tee -a "$LOG"
 while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
   for task in "${!PID[@]}"; do
@@ -33,7 +60,7 @@ while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
   while [[ $idx -lt ${#TASKS[@]} ]]; do
     task=${TASKS[$idx]}
     flag=$ROOT/datasets/READY_${READY_FOR[$idx]}
-    if [[ ! -f $flag ]]; then
+    if ! data_ready "$task" "$flag"; then
       echo "WAIT_DATA $task $(date -Is)" | tee -a "$LOG"
       break
     fi
@@ -56,7 +83,8 @@ while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
     [[ -z $free ]] && break
     echo "START gpu=$free $task $(date -Is)" | tee -a "$LOG"
     mkdir -p "$OUT/$task"
-    CUDA_VISIBLE_DEVICES=$free "$PY" -m lmms_eval \
+    local_ann=${ANN_OF[$task]:-}
+    BELA_LOCAL_DATASET="$local_ann" CUDA_VISIBLE_DEVICES=$free "$PY" -m lmms_eval \
       --model llava_vid \
       --model_args "$ARGS" \
       --tasks "$task" --batch_size 1 --log_samples \
