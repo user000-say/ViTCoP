@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-28",
+  "offline_video_unit_tests": 14,
+  "all_offline_video_tests_passed": true,
+  "schedule_checks": {
+    "T32": {
+      "framewise_counts": [
+        64,
+        11,
+        4
+      ],
+      "visual_token_layer_W": 57280,
+      "dense_visual_token_layer_W": 302848,
+      "nominal_reduction_fraction": 0.8108622147083686,
+      "final_total_k": 256,
+      "entry_total_k": 4096
+    },
+    "T16": {
+      "framewise_counts": [
+        32,
+        5,
+        3
+      ],
+      "visual_token_layer_W": 28800,
+      "dense_visual_token_layer_W": 302848,
+      "nominal_reduction_fraction": 0.9049027895181742,
+      "final_total_k": 192,
+      "entry_total_k": 2048
+    }
+  },
+  "prior_QACOVER_reference_core_SHA256": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+  "remote_SSH_attempted": false,
+  "A800_GPU_test_run": false,
+  "LLaVA_Video_integration_completed": false,
+  "video_accuracy_measured": false,
+  "warning": "Offline tests do not establish model-level correctness, performance, or video Accuracy."
+}

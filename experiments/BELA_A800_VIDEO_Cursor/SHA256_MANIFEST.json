@@ -1,0 +1,20 @@
+{
+  "README.md": "f7d59eab863952f2a39906fb7c7aa26d523eb6a801b23b7d91c79140157c937b",
+  "VALIDATION_SUMMARY.json": "01bed7d55f0a831a586a0b0e87bdc896ee6a01849858d4eccf6a5ac5ccd9fe42",
+  "bela_video_a800/__init__.py": "ae7b4685c1826663bd77ab09ee9c9baad6c295b71ef64b33dc5a770aac24e8b8",
+  "bela_video_a800/perf.py": "d438ca7bc6137fcad08727803d639761f8a891151c2aeb86fbddf787453089e3",
+  "bela_video_a800/qa_core.py": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+  "bela_video_a800/schedule.py": "42d68abe7a4a9517524ddd42c118859f5104db2f69149f28fc70dd99d4a8e0f8",
+  "bela_video_a800/shuffle_control.py": "83c09b17a34e0e21063da15a2c58bd297d5d986628f75c66e4a6de7c7d134b42",
+  "bela_video_a800/trace_audit.py": "0a9679e4904d6011a4de874e9fb95ef2eeb28ecec52c6c2c3fa1eb98cef9c2dd",
+  "bela_video_a800/video_entry.py": "6cb2a68895924cf941f9de984ce02d97f388ca72d09866f17e410f124cfcd050",
+  "configs/paper_reported_video_scores_NOT_OURS.json": "075d543366eb5e011529d1afade5c3b200f5610b33d16d8849924db3037cad6e",
+  "configs/run_matrix_PENDING.json": "3dfdac120219c22a3cadc94101df91d0991c0cc5ec05c4fed45a77f55e7d7078",
+  "configs/video_protocol.json": "f1e614ea89e2aabc3ae6593fbb59b9437136033de06f3d3458d9da4af8241269",
+  "docs/CURSOR_HANDOFF.md": "82947d5b7674efad0448ccbb2c7d4c4203575a7bcef066b5ddd667bdae4114f7",
+  "prior_qa_cover/PROVENANCE.txt": "d2baa525d24671502ae5476543e331018c1ea844155158cb37d1a5cf1c8815b0",
+  "scripts/a800_preflight.sh": "ccbec716ae8c47dc1a4ec5cb1a2367f1762f6ccc1e1429c9fd790ef0994ebede",
+  "scripts/offline_verify.sh": "1705c4ef690e621e4868c781d9ca760c5009a9572ce03c52b97dcfba9e1bf1ea",
+  "scripts/run_matrix_template.sh": "ea194ded8baf57b31db1a2276db6337c9d5317937ff248d3ff4b8a6887cb1ea5",
+  "tests/test_video_package.py": "a735d672ad01668e58cb85569e13e007f42e1363510e2ea0bd1326186550ade7"
+}

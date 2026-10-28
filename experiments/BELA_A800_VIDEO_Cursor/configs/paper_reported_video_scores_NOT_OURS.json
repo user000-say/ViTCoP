@@ -1,0 +1,96 @@
+{
+  "note": "Original-paper scores; not independently reproduced. Different authors use different Dense denominators, scorer versions and compute definitions.",
+  "rows": [
+    {
+      "paper": "STAR-Pro 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "DENSE",
+      "budget_type": "dense",
+      "MLVU_mavg": 67.7,
+      "LongVideoBench_val": 59.0,
+      "VideoMME_without_sub": 63.6,
+      "MVBench_test": null,
+      "source": "https://arxiv.org/html/2609.05916"
+    },
+    {
+      "paper": "STAR-Pro 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "T32 (layer avg 31.96/frame)",
+      "budget_type": "layer_average_W57280",
+      "MLVU_mavg": 65.4,
+      "LongVideoBench_val": 57.0,
+      "VideoMME_without_sub": 61.6,
+      "MVBench_test": null,
+      "source": "https://arxiv.org/html/2609.05916"
+    },
+    {
+      "paper": "STAR-Pro 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "T16 (layer avg 16.07/frame)",
+      "budget_type": "layer_average_W28800",
+      "MLVU_mavg": 60.3,
+      "LongVideoBench_val": 56.1,
+      "VideoMME_without_sub": 60.0,
+      "MVBench_test": null,
+      "source": "https://arxiv.org/html/2609.05916"
+    },
+    {
+      "paper": "CoRePrune 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "DENSE",
+      "budget_type": "dense",
+      "MLVU_mavg": null,
+      "LongVideoBench_val": 58.9,
+      "VideoMME_without_sub": 64.3,
+      "MVBench_test": 60.8,
+      "source": "https://arxiv.org/html/2609.26484"
+    },
+    {
+      "paper": "CoRePrune 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "K64/frame final",
+      "budget_type": "final_K4096_not_matched_W",
+      "MLVU_mavg": null,
+      "LongVideoBench_val": 57.7,
+      "VideoMME_without_sub": 63.5,
+      "MVBench_test": 61.4,
+      "source": "https://arxiv.org/html/2609.26484"
+    },
+    {
+      "paper": "CoRePrune 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "K32/frame final",
+      "budget_type": "final_K2048_not_matched_W",
+      "MLVU_mavg": null,
+      "LongVideoBench_val": 57.2,
+      "VideoMME_without_sub": 63.1,
+      "MVBench_test": 60.4,
+      "source": "https://arxiv.org/html/2609.26484"
+    },
+    {
+      "paper": "CoRePrune 2026",
+      "model": "LLaVA-Video-7B",
+      "frames": 64,
+      "native_per_frame": 169,
+      "budget": "K16/frame final",
+      "budget_type": "final_K1024_not_matched_W",
+      "MLVU_mavg": null,
+      "LongVideoBench_val": 56.2,
+      "VideoMME_without_sub": 62.3,
+      "MVBench_test": 59.5,
+      "source": "https://arxiv.org/html/2609.26484"
+    }
+  ]
+}

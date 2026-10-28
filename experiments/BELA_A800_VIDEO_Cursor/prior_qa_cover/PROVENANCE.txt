@@ -1,0 +1,4 @@
+Reference QA-COVER core copied UNCHANGED from user-visible prior pack:
+BELA_CVPR27_Stage1_QACOVER_Cursor_FINAL.zip
+SHA256: 78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581
+Code runs standalone in PyTorch. This is not the production LLaVA-Video integration.
