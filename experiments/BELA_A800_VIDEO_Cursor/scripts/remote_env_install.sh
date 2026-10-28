@@ -5,7 +5,15 @@ ROOT=/data1/xiangyue
 ENV=$ROOT/envs/vitcop-a800-video
 WHEEL=$ROOT/wheels
 LLAVA=$ROOT/src/LLaVA-NeXT
-mkdir -p "$ROOT/logs"
+mkdir -p "$ROOT/logs" "$ROOT/tmp" "$ROOT/cache/pip" "$ROOT/hf/hub" "$ROOT/hf/transformers" "$ROOT/torch"
+# Weights, wheels, env, and caches stay on /data1. Do not use the system disk or GPUs 2 and 3.
+export TMPDIR=$ROOT/tmp
+export PIP_CACHE_DIR=$ROOT/cache/pip
+export HF_HOME=$ROOT/hf
+export HUGGINGFACE_HUB_CACHE=$ROOT/hf/hub
+export TRANSFORMERS_CACHE=$ROOT/hf/transformers
+export XDG_CACHE_HOME=$ROOT/cache
+export TORCH_HOME=$ROOT/torch
 if [[ ! -x $ENV/bin/python ]]; then
   python3 -m venv "$ENV"
 fi
@@ -18,6 +26,7 @@ fi
   decord av pillow shortuuid safetensors huggingface_hub \
   protobuf pyyaml tqdm requests ftfy opencv-python-headless
 "$ENV/bin/python" -m pip install --no-index --find-links "$WHEEL" --no-deps -e "$LLAVA"
+export CUDA_VISIBLE_DEVICES=0,1
 "$ENV/bin/python" - << 'PY'
 import json, torch, transformers, platform
 from pathlib import Path

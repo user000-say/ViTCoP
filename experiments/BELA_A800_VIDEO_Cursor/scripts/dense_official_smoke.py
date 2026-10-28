@@ -1,8 +1,23 @@
-"""Official LLaVA-Video Dense generate. No pruning, no QA-COVER."""
+"""Official LLaVA-Video Dense generate. No pruning, no QA-COVER.
+
+Uses one visible GPU. The caller must set CUDA_VISIBLE_DEVICES to 0 or 1.
+Caches stay under /data1/xiangyue.
+"""
 import json
 import os
-import time
 from pathlib import Path
+
+_ROOT = Path("/data1/xiangyue")
+os.environ.setdefault("TMPDIR", str(_ROOT / "tmp"))
+os.environ.setdefault("HF_HOME", str(_ROOT / "hf"))
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(_ROOT / "hf" / "hub"))
+os.environ.setdefault("TRANSFORMERS_CACHE", str(_ROOT / "hf" / "transformers"))
+os.environ.setdefault("XDG_CACHE_HOME", str(_ROOT / "cache"))
+os.environ.setdefault("TORCH_HOME", str(_ROOT / "torch"))
+for _p in ("tmp", "hf/hub", "hf/transformers", "cache", "torch"):
+    (_ROOT / _p).mkdir(parents=True, exist_ok=True)
+
+import time
 
 import numpy as np
 import torch
@@ -30,6 +45,11 @@ def load_video(path, n):
 
 
 def main():
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "")
+    if visible not in {"0", "1"}:
+        raise SystemExit(f"smoke must use physical GPU 0 or 1, got {visible!r}")
+    if torch.cuda.device_count() != 1:
+        raise SystemExit(f"expected one visible GPU, saw {torch.cuda.device_count()}")
     raw = json.loads(Path(MODEL, "config.json").read_text())
     t0 = time.time()
     tokenizer, model, image_processor, _ = load_pretrained_model(

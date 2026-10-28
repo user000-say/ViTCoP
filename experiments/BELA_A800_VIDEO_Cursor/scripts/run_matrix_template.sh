@@ -10,6 +10,10 @@ set -euo pipefail
   exit 2
 }
 GPU="$1"
+if [[ "$GPU" != "0" && "$GPU" != "1" ]]; then
+  echo "Only two A800 cards are allowed: physical GPU 0 and GPU 1"
+  exit 2
+fi
 TIER="$2"
 ARM="$3"
 DATASET="$4"
