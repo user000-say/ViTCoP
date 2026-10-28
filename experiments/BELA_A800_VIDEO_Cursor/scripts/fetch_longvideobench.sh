@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # LongVideoBench is gated. Uses the local Hugging Face token file; never prints it.
-set -u
+set -euo pipefail
 PY=/home/xiangyue/envs/vitcop-v100-4model/bin/python
 HF=/home/xiangyue/src/hf_video
 LOG=/home/xiangyue/src/longvideobench_fetch.log
