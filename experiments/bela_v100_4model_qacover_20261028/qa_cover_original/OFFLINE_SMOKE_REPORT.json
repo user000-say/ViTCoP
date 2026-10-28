@@ -1,0 +1,11 @@
+{
+  "offline_synthetic_N": 576,
+  "base_K": 64,
+  "final_K": 64,
+  "swaps": 7,
+  "recovered_synthetic_group": 1,
+  "duplicate_ids": false,
+  "nominal_W_L2": 1024,
+  "nominal_W_E3": 2048,
+  "cpu_demo_elapsed_ms_NOT_TTFT": 52.75
+}

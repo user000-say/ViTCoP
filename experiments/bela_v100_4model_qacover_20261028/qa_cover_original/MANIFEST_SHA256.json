@@ -1,0 +1,17 @@
+{
+  "OFFLINE_SMOKE_REPORT.json": "f55561af40342894bf0fa6df0c0a624047854efc4fba22121c3fdc0244e7cb73",
+  "OFFLINE_VALIDATION.json": "90233b0043a17c14a34b03658c03eae4d4ba47bdd9b19966a0bce42d835fb739",
+  "OFFLINE_VALIDATION_FINAL.json": "3ef1fe3e59ad3337d6f9c3b9fc4795b500fe72e92e2888ce15e44892a79382f2",
+  "README.md": "74998563c77b3f0e9970a0af098d6bd6fe4853d86d7ad46d849c1f03122dfc56",
+  "configs/S1_QANCHOR_CONTROLS.json": "b46445a808f0560af05cc353e2da78f9eeffe05089d927ff8f0636ebfde6ee06",
+  "configs/S1_QANCHOR_L2.json": "263dc732586931e640068f706b0003b23dc4e5957b69f86a1f2e8a06d4a9b785",
+  "docs/CURSOR_HANDOFF.md": "ed23dcd63031e11ac34c2793f9d8849b6a11f17f02f1c6c35196cd5ffe792d94",
+  "docs/CURSOR_HANDOFF_FINAL.md": "eb127797f6d04157071460935902d3aee4fb23a8a18726c8b903e15766a80113",
+  "experiments/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "experiments/bela_query_anchor/__init__.py": "e26a74fe9e3cb559483f06c2dc9886632791da254954b13218ab9eb64e29c310",
+  "experiments/bela_query_anchor/llava_adapter.py": "36760f3eafff46c6010363ea0259a4a910b8f3d454fc2a6d6286aefd43a03613",
+  "experiments/bela_query_anchor/make_shuffle_map.py": "93a42cefc45a884652caa80a1682944952256d4d7bbb0a1cfee17eeef732eb82",
+  "experiments/bela_query_anchor/pope_audit.py": "ed9f9eb128cb8b456879e8be39d1763125a3da8fd5822202713abae99a1e6dab",
+  "experiments/bela_query_anchor/query_anchor.py": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+  "tests/test_query_anchor.py": "d9fdfc297db7328f8f4dac2ec99be654bd9904d32c7b748dffd6cec4d9303544"
+}

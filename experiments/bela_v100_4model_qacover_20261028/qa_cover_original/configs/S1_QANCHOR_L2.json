@@ -1,0 +1,41 @@
+{
+  "arm": "S1_QANCHOR_L2",
+  "stage1": "native_bela_dual_cover_then_query_anchor",
+  "query_provider": "existing_mm_projector_plus_question_only_llm_embeddings",
+  "requires_checked_query_alignment": true,
+  "entry_k": 64,
+  "schedule": [
+    [
+      64,
+      12
+    ],
+    [
+      17,
+      8
+    ],
+    [
+      10,
+      12
+    ]
+  ],
+  "expected_W": 1024,
+  "stage2": "native_bela_rdrift_unchanged",
+  "anchor": {
+    "max_swaps": 8,
+    "donor_pool": 16,
+    "drop_pool": 12,
+    "min_raw_std": 0.008,
+    "min_query_gain": 0.08,
+    "min_novelty": 0.05,
+    "max_coverage_loss": 0.005,
+    "coverage_weight": 0.5,
+    "saliency_guard_slots": 0
+  },
+  "note": "Predeclared pilot defaults; not tuned or measured; production adapter required",
+  "query_text_protocol": {
+    "question_only": true,
+    "content_token_mask": "recommended; must not use target or assistant text",
+    "embedding_alignment": "unverified proxy; matched-shuffle and random controls required",
+    "no_new_clip_text_tower": true
+  }
+}

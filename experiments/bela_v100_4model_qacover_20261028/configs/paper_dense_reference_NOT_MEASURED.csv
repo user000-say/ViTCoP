@@ -1,0 +1,33 @@
+model,benchmark,reported_score,paper,source_url,notes
+llava-next-7b,GQA,62.5,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-7b,POPE,86.8,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-7b,MME,1511.8,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-7b,MMBench-EN,65.8,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-7b,ScienceQA-IMG,67.5,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-7b,TextVQA-OCR,60.3,STAR-Pro 2026 Table 8 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,GQA,64.4,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,POPE,85.3,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,MME,1539.5,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,MMBench-EN,68.5,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,ScienceQA-IMG,73.1,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+llava-next-13b,TextVQA-OCR,63.2,STAR-Pro 2026 Table 9 Dense,https://arxiv.org/html/2609.05916,Published TextVQA may not match BELA TextVQA-OCR parser; 2880 standardized visual-token protocol
+qwen3-vl-8b,MME,2406,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3-vl-8b,MMBench-EN,86.3,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3-vl-8b,POPE,89.7,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3-vl-8b,TextVQA-OCR,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3-vl-8b,GQA,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3-vl-8b,ScienceQA-IMG,94.6,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3-vl-8b,AI2D,84.1,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3-vl-8b,ChartQA,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3-vl-8b,OCRBench,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3-vl-8b,MMStar,67.1,STAR-Pro 2026 Table 3 Dense,https://arxiv.org/html/2609.05916,Reference has 1296 post-merger visual tokens; unreported fields remain blank
+qwen3.5-9b,MME,2411.8,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,MMBench-EN,84.3,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,POPE,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3.5-9b,TextVQA-OCR,83.8,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,GQA,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3.5-9b,ScienceQA-IMG,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense
+qwen3.5-9b,AI2D,85.3,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,ChartQA,87.0,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,OCRBench,851,CoRePrune 2026 Table II/S4 Dense,https://arxiv.org/html/2609.26484,Published TextVQA may not match BELA TextVQA-OCR; N1024 fixed in cited paper
+qwen3.5-9b,MMStar,,NOT REPORTED in selected primary reference,,Missing is not zero; measure local dense

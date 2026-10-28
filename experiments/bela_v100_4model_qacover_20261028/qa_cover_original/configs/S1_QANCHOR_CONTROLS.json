@@ -1,0 +1,31 @@
+{
+  "controls": {
+    "L2_NATIVE": {
+      "entry_mode": "off"
+    },
+    "S1_QANCHOR_L2": {
+      "entry_mode": "s1_anchor"
+    },
+    "S1_QUERY_SHUFFLE": {
+      "entry_mode": "s1_anchor",
+      "question_source": "frozen_mismatched_query_permutation",
+      "seed": 17
+    },
+    "S1_MATCHED_RANDOM": {
+      "entry_mode": "matched_random",
+      "question_source": "true_question",
+      "seed": 17
+    }
+  },
+  "must_preserve": [
+    "entry_k",
+    "schedule",
+    "stage2",
+    "dataset_ids",
+    "prompt",
+    "checkpoint",
+    "scorer",
+    "precision"
+  ],
+  "note": "Controls are matched with S1 on sample IDs. Production code has to implement and freeze shuffle map."
+}

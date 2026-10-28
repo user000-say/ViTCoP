@@ -1,0 +1,43 @@
+{
+  "tasks": {
+    "LLaVA": [
+      "GQA",
+      "POPE",
+      "MME",
+      "MMBench-EN",
+      "ScienceQA-IMG",
+      "TextVQA-OCR"
+    ],
+    "Qwen": [
+      "MME",
+      "MMBench-EN",
+      "POPE",
+      "TextVQA-OCR",
+      "GQA",
+      "ScienceQA-IMG",
+      "AI2D",
+      "ChartQA",
+      "OCRBench",
+      "MMStar"
+    ]
+  },
+  "metric": {
+    "GQA": "accuracy/exact_match_pct",
+    "POPE": "f1_pct",
+    "MME": "sum_perception_cognition_points",
+    "MMBench-EN": "accuracy_pct",
+    "ScienceQA-IMG": "accuracy_pct",
+    "TextVQA-OCR": "vqa_accuracy_pct",
+    "AI2D": "accuracy_pct",
+    "ChartQA": "relaxed_accuracy_pct",
+    "OCRBench": "ocrbench_points_0_to_1000",
+    "MMStar": "accuracy_pct"
+  },
+  "protocol": [
+    "freeze checkpoint and processor commit",
+    "same image IDs in all arms",
+    "official metric, no cross-model dense normalization",
+    "report raw N, W, p50/p90 TTFT, selector overhead, peak VRAM",
+    "no labels in Stage1 question query"
+  ]
+}

@@ -1,0 +1,7 @@
+model,budget,task,L2_native,QACOVER,delta,source_quality
+llava-1.5-7b,W1024,GQA,55.57,56.52,0.95,USER_REPORTED_not_independent_GPU_reproduction
+llava-1.5-7b,W1024,POPE,82.21,86.16,3.95,USER_REPORTED_not_independent_GPU_reproduction
+llava-1.5-7b,W1024,MME,1651.78,1715.68,63.9,USER_REPORTED_not_independent_GPU_reproduction
+llava-1.5-7b,W1024,MMBench-EN,61.34,61.77,0.43,USER_REPORTED_not_independent_GPU_reproduction
+llava-1.5-7b,W1024,ScienceQA-IMG,68.91,69.61,0.7,USER_REPORTED_not_independent_GPU_reproduction
+llava-1.5-7b,W1024,TextVQA-OCR,53.41,53.06,-0.35,USER_REPORTED_not_independent_GPU_reproduction

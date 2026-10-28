@@ -1,0 +1,12 @@
+{
+  "unit_tests": "PASS",
+  "test_cases": 23,
+  "synthetic_576_k64": "PASS",
+  "synthetic_swaps": 1,
+  "synthetic_entered_query_cluster": 1,
+  "flat_query_fallback": true,
+  "l2_nominal_W": 1024,
+  "e3_nominal_W": 2048,
+  "real_model_integrated": false,
+  "real_GPU_accuracy_measured": false
+}

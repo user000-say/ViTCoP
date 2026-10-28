@@ -1,0 +1,70 @@
+{
+  "measured": "2026-10-28T13:02+08",
+  "cards": [
+    {
+      "index": 0,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 32490,
+      "used_mib": 5,
+      "project_gpu": true
+    },
+    {
+      "index": 1,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 9962,
+      "used_mib": 22533,
+      "project_gpu": false
+    },
+    {
+      "index": 2,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 32490,
+      "used_mib": 5,
+      "project_gpu": true
+    },
+    {
+      "index": 3,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 9962,
+      "used_mib": 22533,
+      "project_gpu": false
+    },
+    {
+      "index": 4,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 32490,
+      "used_mib": 5,
+      "project_gpu": true
+    },
+    {
+      "index": 5,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 9962,
+      "used_mib": 22533,
+      "project_gpu": false
+    },
+    {
+      "index": 6,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 9962,
+      "used_mib": 22533,
+      "project_gpu": false
+    },
+    {
+      "index": 7,
+      "name": "Tesla V100-PCIE-32GB",
+      "total_mib": 32768,
+      "free_mib": 32490,
+      "used_mib": 5,
+      "project_gpu": true
+    }
+  ],
+  "note": "Project jobs may use 0/2/4/7 only. 1/3/5/6 were occupied."
+}

@@ -1,0 +1,162 @@
+{
+  "llava-next-7b": {
+    "model_id": "llava-hf/llava-v1.6-vicuna-7b-hf",
+    "model_type": "llava_next",
+    "decoder_layers": 32,
+    "reference_n": 2880,
+    "vision_groups": "base thumbnail + tiled crops; image-newline markers excluded",
+    "deepstack": false,
+    "hybrid_attention": false,
+    "budgets": {
+      "moderate": {
+        "kind": "layer_average",
+        "target_t": 320,
+        "cuts": [
+          12,
+          20
+        ],
+        "counts": [
+          640,
+          182,
+          92
+        ],
+        "paper": "STAR-Pro Table 5"
+      },
+      "stress": {
+        "kind": "layer_average",
+        "target_t": 160,
+        "cuts": [
+          12,
+          20
+        ],
+        "counts": [
+          320,
+          91,
+          46
+        ],
+        "paper": "STAR-Pro Table 5"
+      }
+    }
+  },
+  "llava-next-13b": {
+    "model_id": "llava-hf/llava-v1.6-vicuna-13b-hf",
+    "model_type": "llava_next",
+    "decoder_layers": 40,
+    "reference_n": 2880,
+    "vision_groups": "base thumbnail + tiled crops; image-newline markers excluded",
+    "deepstack": false,
+    "hybrid_attention": false,
+    "budgets": {
+      "moderate": {
+        "kind": "layer_average",
+        "target_t": 320,
+        "cuts": [
+          15,
+          30
+        ],
+        "counts": [
+          640,
+          160,
+          80
+        ],
+        "paper": "STAR-Pro Table 5"
+      },
+      "stress": {
+        "kind": "layer_average",
+        "target_t": 160,
+        "cuts": [
+          15,
+          30
+        ],
+        "counts": [
+          320,
+          80,
+          40
+        ],
+        "paper": "STAR-Pro Table 5"
+      }
+    }
+  },
+  "qwen3-vl-8b": {
+    "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+    "model_type": "qwen3_vl",
+    "decoder_layers": 36,
+    "reference_n": 1296,
+    "vision_groups": "post-merger image units; DeepStack aligned to selected visual IDs",
+    "deepstack": true,
+    "hybrid_attention": false,
+    "budgets": {
+      "moderate": {
+        "kind": "layer_average",
+        "target_t": 256,
+        "cuts": [
+          14,
+          24
+        ],
+        "counts": [
+          512,
+          128,
+          64
+        ],
+        "paper": "STAR-Pro Table 5"
+      },
+      "stress": {
+        "kind": "layer_average",
+        "target_t": 128,
+        "cuts": [
+          14,
+          24
+        ],
+        "counts": [
+          256,
+          64,
+          32
+        ],
+        "paper": "STAR-Pro Table 5"
+      },
+      "exploratory_94p4": {
+        "kind": "layer_average",
+        "target_t": 72,
+        "cuts": [
+          14,
+          24
+        ],
+        "counts": [
+          144,
+          36,
+          18
+        ],
+        "paper": "BELA planning derived mathematically; NOT in STAR-Pro"
+      }
+    }
+  },
+  "qwen3.5-9b": {
+    "model_id": "Qwen/Qwen3.5-9B",
+    "model_type": "qwen3_5",
+    "decoder_layers": 32,
+    "reference_n": 1024,
+    "vision_groups": "post-merger; Gated DeltaNet state, do NOT apply LLaVA RDRIFT",
+    "deepstack": false,
+    "hybrid_attention": true,
+    "budgets": {
+      "moderate": {
+        "kind": "stage1_only",
+        "target_k": 128,
+        "cuts": [],
+        "counts": [
+          128
+        ],
+        "paper": "CoRePrune matching final-K category; this is a different stage1-only protocol"
+      },
+      "stress": {
+        "kind": "stage1_only",
+        "target_k": 64,
+        "cuts": [],
+        "counts": [
+          64
+        ],
+        "paper": "CoRePrune matching final-K category; this is a different stage1-only protocol"
+      }
+    }
+  }
+}

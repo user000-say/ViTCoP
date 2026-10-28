@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-28",
+  "cross_backbone_unit_tests": 16,
+  "original_QACOVER_unit_tests": 23,
+  "all_unit_tests_passed": true,
+  "provenance_csv_rows": 192,
+  "paper_references_24_fields": 24,
+  "GPU_backend_tests_run": false,
+  "four_model_accuracy_measured": false,
+  "runtime_integration_completed": false,
+  "warning": "All selector/token-ID tests are synthetic CPU only, NOT GPU accuracy."
+}
