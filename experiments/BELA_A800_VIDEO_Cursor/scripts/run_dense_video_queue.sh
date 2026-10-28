@@ -17,9 +17,9 @@ export TOKENIZERS_PARALLELISM=false
 export TMPDIR=$ROOT/tmp
 MODEL=$ROOT/models/LLaVA-Video-7B-Qwen2
 ARGS="pretrained=${MODEL},conv_template=qwen_1_5,max_frames_num=64,mm_spatial_pool_mode=average,mm_spatial_pool_stride=2,attn_implementation=sdpa,force_sample=True,add_time_instruction=True,torch_dtype=bfloat16,video_decode_backend=decord"
-# LongVideoBench stays out: the saved Hugging Face account is not allowed to download it.
-TASKS=(videomme mlvu_dev mvbench)
-READY_FOR=(videomme mlvu mvbench)
+# Official Dense only. LongVideoBench val starts after its videos are unpacked.
+TASKS=(videomme mlvu_dev mvbench longvideobench_val_v)
+READY_FOR=(videomme mlvu mvbench longvideobench)
 declare -A PID GPU_OF ANN_OF PENDING
 ANN_OF[videomme]=$ROOT/hf/ann/videomme
 for task in "${TASKS[@]}"; do PENDING[$task]=1; done
@@ -57,7 +57,7 @@ while [[ ${#PENDING[@]} -gt 0 || ${#PID[@]} -gt 0 ]]; do
       rc=$?
       echo "DONE $task rc=$rc $(date -Is)" | tee -a "$LOG"
       unset "PID[$task]"
-      if [[ $rc -ne 0 ]]; then
+      if [[ $rc -ne 0 ]] || grep -q "Error during evaluation" "$OUT/${task}.log"; then
         echo "RETRY $task $(date -Is)" | tee -a "$LOG"
         PENDING[$task]=1
       fi
