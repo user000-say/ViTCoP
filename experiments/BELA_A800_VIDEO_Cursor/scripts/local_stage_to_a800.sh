@@ -30,12 +30,13 @@ if [[ ! -f $WHEEL/torch-2.1.2+cu121-cp310-cp310-linux_x86_64.whl ]]; then
   "$PY" -m pip download -d "$WHEEL" torch==2.1.2+cu121 torchvision==0.16.2+cu121 \
     --index-url https://download.pytorch.org/whl/cu121
 fi
-"$PY" -m pip download -d "$WHEEL" \
-  transformers==4.40.2 tokenizers==0.15.2 accelerate==0.29.3 \
+"$PY" -m pip download --no-deps -d "$WHEEL" \
+  transformers==4.40.2 tokenizers==0.19.1 accelerate==0.29.3 \
   sentencepiece==0.1.99 'numpy==1.26.4' einops==0.6.1 einops-exts==0.0.4 \
-  decord av pillow shortuuid safetensors huggingface_hub \
-  protobuf pyyaml tqdm requests ftfy opencv-python-headless \
-  setuptools wheel pip packaging
+  decord av pillow shortuuid safetensors==0.4.3 'huggingface_hub==0.23.5' \
+  'protobuf==4.25.3' pyyaml tqdm requests ftfy 'opencv-python-headless==4.10.0.84' \
+  setuptools wheel pip packaging regex filelock fsspec certifi charset-normalizer idna urllib3 typing-extensions \
+  psutil wcwidth
 echo "WHEELS_READY $(date -Is)"
 copy "$WHEEL/" "$REMOTE:/data1/xiangyue/wheels/"
 setsid ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no \

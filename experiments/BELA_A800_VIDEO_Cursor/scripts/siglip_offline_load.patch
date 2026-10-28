@@ -1,0 +1,19 @@
+diff --git a/llava/model/multimodal_encoder/siglip_encoder.py b/llava/model/multimodal_encoder/siglip_encoder.py
+index f1e101a..4b38fe8 100755
+--- a/llava/model/multimodal_encoder/siglip_encoder.py
++++ b/llava/model/multimodal_encoder/siglip_encoder.py
+@@ -565,7 +565,13 @@ def load_model(self, device_map=None):
+             rank0_print("{} is already loaded, `load_model` called again, skipping.".format(self.vision_tower_name))
+             return
+ 
+-        self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
++        if os.path.isdir(self.vision_tower_name):
++            self.vision_tower = SigLipVisionModel.from_pretrained(self.vision_tower_name, device_map=device_map)
++        else:
++            # LLaVA-Video stores the trained vision weights in its own checkpoint.
++            # Build the SO400M tower locally when the original repo cannot be fetched.
++            rank0_print(f"Building vision tower from local config: {self.vision_tower_name}")
++            self.vision_tower = SigLipVisionModel(self.config)
+ 
+         del self.vision_tower.vision_model.encoder.layers[-1:]
+         self.vision_tower.vision_model.head = nn.Identity()

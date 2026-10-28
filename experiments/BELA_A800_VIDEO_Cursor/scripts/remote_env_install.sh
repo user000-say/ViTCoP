@@ -14,17 +14,26 @@ export HUGGINGFACE_HUB_CACHE=$ROOT/hf/hub
 export TRANSFORMERS_CACHE=$ROOT/hf/transformers
 export XDG_CACHE_HOME=$ROOT/cache
 export TORCH_HOME=$ROOT/torch
-if [[ ! -x $ENV/bin/python ]]; then
-  python3 -m venv "$ENV"
+if ! "$ENV/bin/python" -m pip --version >/dev/null 2>&1; then
+  rm -rf "$ENV"
+  python3 -m venv --without-pip "$ENV"
+  boot=$(mktemp -d "$ROOT/tmp/pipboot.XXXX")
+  python3 - "$WHEEL"/pip-*.whl "$boot" << 'PY'
+import sys, zipfile
+zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])
+PY
+  PYTHONPATH="$boot" "$ENV/bin/python" -m pip install --ignore-installed --no-index --find-links "$WHEEL" pip setuptools wheel
+  rm -rf "$boot"
 fi
-"$ENV/bin/python" -m pip install --no-index --find-links "$WHEEL" --upgrade pip setuptools wheel
 "$ENV/bin/python" -m pip install --no-index --find-links "$WHEEL" \
   torch==2.1.2+cu121 torchvision==0.16.2+cu121
 "$ENV/bin/python" -m pip install --no-index --find-links "$WHEEL" \
-  transformers==4.40.2 tokenizers==0.15.2 accelerate==0.29.3 \
+  transformers==4.40.2 tokenizers==0.19.1 accelerate==0.29.3 \
   sentencepiece==0.1.99 numpy==1.26.4 einops==0.6.1 einops-exts==0.0.4 \
-  decord av pillow shortuuid safetensors huggingface_hub \
-  protobuf pyyaml tqdm requests ftfy opencv-python-headless
+  decord av pillow shortuuid safetensors==0.4.3 huggingface_hub==0.23.5 \
+  protobuf==4.25.3 pyyaml tqdm requests ftfy opencv-python-headless==4.10.0.84 \
+  packaging regex filelock fsspec certifi charset-normalizer idna urllib3 typing-extensions \
+  psutil wcwidth
 "$ENV/bin/python" -m pip install --no-index --find-links "$WHEEL" --no-deps -e "$LLAVA"
 export CUDA_VISIBLE_DEVICES=0,1
 "$ENV/bin/python" - << 'PY'
