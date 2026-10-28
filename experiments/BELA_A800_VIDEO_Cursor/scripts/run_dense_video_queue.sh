@@ -19,9 +19,9 @@ MODEL=$ROOT/models/LLaVA-Video-7B-Qwen2
 ARGS="pretrained=${MODEL},conv_template=qwen_1_5,max_frames_num=64,mm_spatial_pool_mode=average,mm_spatial_pool_stride=2,attn_implementation=sdpa,force_sample=True,add_time_instruction=True,torch_dtype=bfloat16,video_decode_backend=decord"
 TASKS=(videomme longvideobench_val_v mlvu_dev mvbench)
 READY_FOR=(videomme longvideobench mlvu mvbench)
-declare -A PID GPU_OF ANN_OF
+declare -A PID GPU_OF ANN_OF PENDING
 ANN_OF[videomme]=$ROOT/hf/ann/videomme
-idx=0
+for task in "${TASKS[@]}"; do PENDING[$task]=1; done
 media_count() {
   find "$1" \( -name '*.mp4' -o -name '*.mkv' -o -name '*.webm' \) 2>/dev/null | wc -l
 }
@@ -49,7 +49,7 @@ data_ready() {
   esac
 }
 echo "QUEUE_START $(date -Is)" | tee -a "$LOG"
-while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
+while [[ ${#PENDING[@]} -gt 0 || ${#PID[@]} -gt 0 ]]; do
   for task in "${!PID[@]}"; do
     if ! kill -0 "${PID[$task]}" 2>/dev/null; then
       wait "${PID[$task]}"
@@ -57,16 +57,17 @@ while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
       unset "PID[$task]"
     fi
   done
-  while [[ $idx -lt ${#TASKS[@]} ]]; do
-    task=${TASKS[$idx]}
-    flag=$ROOT/datasets/READY_${READY_FOR[$idx]}
+  for i in "${!TASKS[@]}"; do
+    task=${TASKS[$i]}
+    [[ -n ${PENDING[$task]+x} ]] || continue
+    flag=$ROOT/datasets/READY_${READY_FOR[$i]}
     if ! data_ready "$task" "$flag"; then
       echo "WAIT_DATA $task $(date -Is)" | tee -a "$LOG"
-      break
+      continue
     fi
     if compgen -G "$OUT/$task/**/results.json" > /dev/null || compgen -G "$OUT/$task/*results*.json" > /dev/null; then
       echo "HAVE $task" | tee -a "$LOG"
-      idx=$((idx+1))
+      unset "PENDING[$task]"
       continue
     fi
     free=""
@@ -80,7 +81,7 @@ while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
         if [[ ${used:-99999} -lt 800 ]]; then free=$g; break; fi
       fi
     done
-    [[ -z $free ]] && break
+    [[ -z $free ]] && continue
     echo "START gpu=$free $task $(date -Is)" | tee -a "$LOG"
     mkdir -p "$OUT/$task"
     local_ann=${ANN_OF[$task]:-}
@@ -92,7 +93,7 @@ while [[ $idx -lt ${#TASKS[@]} || ${#PID[@]} -gt 0 ]]; do
       > "$OUT/${task}.log" 2>&1 &
     PID[$task]=$!
     GPU_OF[$task]=$free
-    idx=$((idx+1))
+    unset "PENDING[$task]"
   done
   sleep 30
 done
