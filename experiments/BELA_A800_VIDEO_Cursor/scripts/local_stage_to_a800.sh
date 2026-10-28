@@ -18,6 +18,8 @@ mkdir -p "$WHEEL" "$MODEL" /home/xiangyue/src/videos
 copy() {
   setsid rsync -a --info=stats2 -e "$RSH" "$@"
 }
+setsid ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no \
+  "$REMOTE" 'mkdir -p /data1/xiangyue/ViTCoP/experiments /data1/xiangyue/src /data1/xiangyue/wheels /data1/xiangyue/models /data1/xiangyue/videos /data1/xiangyue/logs'
 
 copy --exclude .git --exclude playground --exclude '__pycache__' --exclude '*.pyc' \
   /home/xiangyue/src/LLaVA-NeXT/ "$REMOTE:/data1/xiangyue/src/LLaVA-NeXT/"
