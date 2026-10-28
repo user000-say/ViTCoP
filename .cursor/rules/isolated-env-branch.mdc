@@ -1,0 +1,14 @@
+---
+description: Environment changes stay on their own branch and in their own virtualenv
+alwaysApply: true
+---
+
+# Isolated environments
+
+Any install or upgrade of Python, PyTorch, Transformers, or other packages goes in a new virtual environment. Do not pip-install or conda-install into `vitcopreback`, `starpro`, or another environment that already runs LLaVA-1.5 or an earlier campaign.
+
+Put the code and configs for that environment on a new git branch. Do not mix those commits onto `main` while the environment work is unfinished.
+
+After the checkpoints and that isolated environment can load, run full-dataset accuracy one model at a time. Finish or stop a model before starting the next. Keep using physical GPUs 0, 2, 4, and 7 only.
+
+If a finished run does not score worse than its same-budget baseline, commit the score record and push it.
