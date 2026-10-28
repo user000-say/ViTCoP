@@ -1,0 +1,165 @@
+{
+  "note": "Official e014 metrics. Relative ACC uses the frozen project Dense refs. Not a new run.",
+  "W1024": {
+    "arm": "S1_QANCHOR_L2",
+    "baseline": "L2_LATE_64_17_10",
+    "mean6": 95.34,
+    "tasks": [
+      {
+        "task": "gqa",
+        "n": 12578,
+        "qa": 56.5193,
+        "baseline": 55.5653,
+        "delta": 0.954,
+        "relative": 91.31,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/gqa/metrics.json"
+      },
+      {
+        "task": "pope",
+        "n": 9000,
+        "qa": 86.1636,
+        "baseline": 82.2142,
+        "delta": 3.9494,
+        "relative": 100.42,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/pope/metrics.json"
+      },
+      {
+        "task": "mme",
+        "n": 2374,
+        "qa": 1715.6754,
+        "baseline": 1651.7823,
+        "delta": 63.8931,
+        "relative": 92.64,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/mme/metrics.json",
+        "perception": 1396.03,
+        "cognition": 319.64
+      },
+      {
+        "task": "mmbench_en_dev",
+        "n": 4329,
+        "qa": 61.7698,
+        "baseline": 61.3402,
+        "delta": 0.4296,
+        "relative": 96.36,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/mmbench_en_dev/metrics.json"
+      },
+      {
+        "task": "scienceqa_img",
+        "n": 2017,
+        "qa": 69.6083,
+        "baseline": 68.9142,
+        "delta": 0.6941,
+        "relative": 100.14,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/scienceqa_img/metrics.json"
+      },
+      {
+        "task": "textvqa_val_ocr",
+        "n": 5000,
+        "qa": 53.062,
+        "baseline": 53.41,
+        "delta": -0.348,
+        "relative": 91.17,
+        "entry_k": "64",
+        "final_k": "10",
+        "events": "11:17,19:10",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2/textvqa_val_ocr/metrics.json"
+      }
+    ]
+  },
+  "W2048": {
+    "arm": "S1_QANCHOR_E3",
+    "baseline": "E3_RET24_TO16",
+    "mean6": 97.06,
+    "tasks": [
+      {
+        "task": "gqa",
+        "n": 12578,
+        "qa": 58.0219,
+        "baseline": 57.7596,
+        "delta": 0.2624,
+        "relative": 93.73,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/gqa/metrics.json"
+      },
+      {
+        "task": "pope",
+        "n": 9000,
+        "qa": 86.2155,
+        "baseline": 85.4563,
+        "delta": 0.7592,
+        "relative": 100.48,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/pope/metrics.json"
+      },
+      {
+        "task": "mme",
+        "n": 2374,
+        "qa": 1781.661,
+        "baseline": 1779.1199,
+        "delta": 2.541,
+        "relative": 96.2,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/mme/metrics.json",
+        "perception": 1445.95,
+        "cognition": 335.71
+      },
+      {
+        "task": "mmbench_en_dev",
+        "n": 4329,
+        "qa": 63.4021,
+        "baseline": 63.3162,
+        "delta": 0.0859,
+        "relative": 98.91,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/mmbench_en_dev/metrics.json"
+      },
+      {
+        "task": "scienceqa_img",
+        "n": 2017,
+        "qa": 68.7655,
+        "baseline": 68.5672,
+        "delta": 0.1983,
+        "relative": 98.93,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/scienceqa_img/metrics.json"
+      },
+      {
+        "task": "textvqa_val_ocr",
+        "n": 5000,
+        "qa": 54.756,
+        "baseline": 55.13,
+        "delta": -0.374,
+        "relative": 94.08,
+        "entry_k": "172",
+        "final_k": "16",
+        "events": "3:120,11:24,21:16",
+        "metrics": "/home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_E3/textvqa_val_ocr/metrics.json"
+      }
+    ]
+  }
+}
