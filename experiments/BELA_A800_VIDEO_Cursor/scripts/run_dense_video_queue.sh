@@ -54,8 +54,13 @@ while [[ ${#PENDING[@]} -gt 0 || ${#PID[@]} -gt 0 ]]; do
   for task in "${!PID[@]}"; do
     if ! kill -0 "${PID[$task]}" 2>/dev/null; then
       wait "${PID[$task]}"
-      echo "DONE $task rc=$? $(date -Is)" | tee -a "$LOG"
+      rc=$?
+      echo "DONE $task rc=$rc $(date -Is)" | tee -a "$LOG"
       unset "PID[$task]"
+      if [[ $rc -ne 0 ]]; then
+        echo "RETRY $task $(date -Is)" | tee -a "$LOG"
+        PENDING[$task]=1
+      fi
     fi
   done
   for i in "${!TASKS[@]}"; do
