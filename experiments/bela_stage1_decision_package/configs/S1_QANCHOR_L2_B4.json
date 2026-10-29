@@ -1,0 +1,54 @@
+{
+  "id": "S1_QANCHOR_L2_B4",
+  "phase": "cvpr2027_stage1_qacover",
+  "method": {
+    "original_tokens": 576,
+    "depth": 32,
+    "budget": 1024,
+    "schedule": {
+      "counts": [
+        64,
+        17,
+        10
+      ],
+      "lengths": [
+        12,
+        8,
+        12
+      ]
+    },
+    "stage1": {
+      "guide": "dual",
+      "cover_family": "legacy_native",
+      "cover": true,
+      "beta": 0.5,
+      "score_guide": "same",
+      "payload": "pen",
+      "saliency": "BIND_ORIGINAL_SAME_RULE"
+    },
+    "stage2": {
+      "first_selector": "RDRIFT",
+      "later_selector": "Q_ATTN"
+    },
+    "cache_mode": "native",
+    "merge": false,
+    "learned": false,
+    "qa_cover": {
+      "entry_mode": "s1_anchor",
+      "question_source": "actual",
+      "anchor": {
+        "max_swaps": 4,
+        "donor_pool": 16,
+        "drop_pool": 12,
+        "min_raw_std": 0.008,
+        "min_query_gain": 0.08,
+        "min_novelty": 0.05,
+        "max_coverage_loss": 0.005,
+        "coverage_weight": 0.5,
+        "saliency_guard_slots": 0
+      },
+      "content_mask": "frozen_template_pieces_v1",
+      "seed": 17
+    }
+  }
+}

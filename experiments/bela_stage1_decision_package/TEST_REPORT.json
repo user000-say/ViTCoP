@@ -1,0 +1,83 @@
+{
+  "created_at": "2026-10-29",
+  "test_environment": "local CPU PyTorch; no V100/A800 inference",
+  "historical_reference_source": "uploaded chat export, round 14 QA-COVER code block",
+  "all_unittests_passed": true,
+  "number_of_unittests": 12,
+  "full_patch_synthetic_behavior": {
+    "0": {
+      "accepted_swaps": 0,
+      "entry_k": 64,
+      "unique_patch_ids": 64,
+      "net_new": 0
+    },
+    "8": {
+      "accepted_swaps": 8,
+      "entry_k": 64,
+      "unique_patch_ids": 64,
+      "net_new": 8
+    },
+    "16": {
+      "accepted_swaps": 16,
+      "entry_k": 64,
+      "unique_patch_ids": 64,
+      "net_new": 16
+    }
+  },
+  "symbolic_budget_checks": {
+    "L2_64x12_17x8_10x12": 1024,
+    "E3_172x4_120x8_24x10_16x10": 2048
+  },
+  "pope_history_confusion": {
+    "L2": {
+      "TP": 3312,
+      "FP": 245,
+      "FN": 1188,
+      "TN": 4255
+    },
+    "QA_B8": {
+      "TP": 3671,
+      "FP": 350,
+      "FN": 829,
+      "TN": 4150
+    }
+  },
+  "pope_history_verified": {
+    "L2": {
+      "precision_pct": 93.11217317964577,
+      "recall_pct": 73.6,
+      "f1_pct": 82.21422365644781,
+      "accuracy_pct": 84.07777777777778,
+      "yes_rate_pct": 39.522222222222226
+    },
+    "QA_B8": {
+      "precision_pct": 91.29569758766476,
+      "recall_pct": 81.57777777777778,
+      "f1_pct": 86.1635958220866,
+      "accuracy_pct": 86.9,
+      "yes_rate_pct": 44.67777777777778
+    }
+  },
+  "hard_cap_interpretation": {
+    "min_positive_proxy_gain_per_accepted_swap": 0.0015,
+    "B8_original_64_token_minimum_overlap": 56,
+    "max_cumulative_coverage_drop_from_per_step_guard_if_8_accepted": 0.04,
+    "not_an_accuracy_result": true
+  },
+  "missing_inputs": [
+    "production COVER+RDRIFT code",
+    "current GPU checkpoint and commit",
+    "raw GQA and POPE per-sample predictions",
+    "per-sample Stage1/Stage2 ID traces",
+    "full latency/profiler logs",
+    "W2048 QA results"
+  ],
+  "same_total_budget_pass_test": {
+    "synthetic_scale": "N144 K32 fixed scores",
+    "one_pass": "B8 accepted 8",
+    "two_passes": "B4+B4 accepted 4+4",
+    "three_passes": "B3+B3+B2 accepted 3+3+2",
+    "identical_final_patch_id_sets_in_this_fixture": true,
+    "no_claim_about_real_accuracy_or_general_equivalence": true
+  }
+}

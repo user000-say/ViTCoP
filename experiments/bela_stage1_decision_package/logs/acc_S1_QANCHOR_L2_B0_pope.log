@@ -1,0 +1,2 @@
+[eval] lmms_eval --model llava --model_args pretrained=liuhaotian/llava-v1.5-7b --tasks pope --batch_size 1 --log_samples --output_path /home/xiangyue/ViTCoP/logs/e014_aee/full/bela_stage1_decision_20261029/S1_QANCHOR_L2_B0/pope
+[32m2026-10-29 21:07:41.458[0m | [1mINFO    [0m | [36m__main__[0m:[36mcli_evaluate[0m:[36m295[0m - [1mVerbosity set to INFO[0m

@@ -329,6 +329,53 @@ def _apply_qa_cover(keep, selected, pen, pen_scores):
     return new_keep
 
 
+def _stage1_alt_init(init, keep, selected, pen, pen_scores, entry_k):
+    """S3/S4/S5 Stage1 substitutes. Labeled surrogates — not Dual COVER."""
+    import sys
+    from pathlib import Path as _Path
+
+    root = str(_Path("/home/xiangyue/ViTCoP/experiments"))
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from bela_query_anchor.request_context import current
+    import torch.nn.functional as F
+
+    req = current()
+    if req is None or req.mm_projector is None or req.embed_tokens is None:
+        raise RuntimeError(f"{init} needs request-local question/modules")
+    if req.question_ids is None or req.question_ids.numel() == 0:
+        raise RuntimeError(f"{init} got empty question ids")
+    q_ids = req.question_ids
+    if req.content_mask is not None:
+        q_ids = q_ids[req.content_mask]
+    if q_ids.numel() == 0:
+        raise RuntimeError(f"{init} content mask removed all question tokens")
+    projected = req.mm_projector(pen)
+    q_emb = req.embed_tokens(q_ids.to(req.embed_tokens.weight.device))
+    # Match QA-COVER proxy: mean question embed vs projected patches.
+    q = F.normalize(q_emb.detach().float().mean(0, keepdim=True), dim=-1, eps=1e-12)
+    v = F.normalize(projected.detach().float(), dim=-1, eps=1e-12)
+    raw = (v @ q.T).squeeze(-1)
+    if init == "query_topk":
+        out = torch.topk(raw, k=entry_k, largest=True).indices
+        out, _ = torch.sort(out)
+        return out.to(device=keep.device, dtype=torch.long)
+
+    # Joint surrogate from decision kit (NumPy).
+    sys.path.insert(0, str(_Path("/home/xiangyue/ViTCoP/experiments/bela_stage1_decision_package")))
+    from joint_baseline import joint_greedy
+
+    metric = selected["metric"].detach().float()
+    metric_n = F.normalize(metric, dim=-1, eps=1e-12)
+    sim = (metric_n @ metric_n.T).clamp(0, 1).cpu().numpy()
+    q_np = raw.detach().float().cpu().numpy()
+    native = keep.detach().cpu().numpy()
+    max_new = 8 if init == "joint_cap8" else None
+    weight = float(os.environ.get("BELA_JOINT_WEIGHT", "0.5"))
+    chosen = joint_greedy(sim, q_np, entry_k, weight, native_ids=native if max_new is not None else None, max_new=max_new)
+    return torch.as_tensor(chosen, device=keep.device, dtype=torch.long)
+
+
 def select_existing_forward(image_forward_outs, tokens_0):
     config = json.loads(Path(os.environ["ELVA_R3_CONFIG"]).read_text())
     hidden = image_forward_outs.hidden_states
@@ -359,10 +406,30 @@ def select_existing_forward(image_forward_outs, tokens_0):
         native_cover=cover, backend="torch")
     keep = selected["keep"]
     audit = selected["stage1_audit"]
+    # Decision-kit Stage1 init overrides (S2/S5/S3/S4). Default "cover" = production.
+    init = os.environ.get("BELA_STAGE1_INIT", "cover").strip().lower() or "cover"
+    entry_k = int(keep.numel())
+    if init not in ("cover", "salient_topk", "query_topk", "joint", "joint_cap8"):
+        raise RuntimeError(f"unknown BELA_STAGE1_INIT={init}")
+    if init == "salient_topk":
+        # S2: Dual-salient Top-K replaces COVER IDs; QA may still run after.
+        keep = torch.topk(pen_scores.float(), k=entry_k, largest=True).indices
+        keep, _ = torch.sort(keep)
+        audit = dict(audit)
+        audit["stage1_init"] = "salient_topk"
+    elif init in ("joint", "joint_cap8", "query_topk"):
+        # Need question-conditioned scores; reuse QA projector path without swaps first.
+        if _qa_mode() == "off" and init != "query_topk":
+            raise RuntimeError(f"{init} requires BELA_QA_ENTRY_MODE on to build query scores")
+        keep = _stage1_alt_init(init, keep, selected, pen, pen_scores, entry_k)
+        audit = dict(audit)
+        audit["stage1_init"] = init
     if _qa_mode() != "off":
         if admission_cap > 0:
             raise RuntimeError("QA-COVER refuses to stack with bounded admission")
-        keep = _apply_qa_cover(keep, selected, pen, pen_scores)
+        # S3/S4/S5 replace the Stage1 set; do not stack another residual QA pass.
+        if init not in ("query_topk", "joint", "joint_cap8"):
+            keep = _apply_qa_cover(keep, selected, pen, pen_scores)
     if admission_cap > 0:
         if early is None or early_scores is None:
             raise RuntimeError("admission_cap>0 requires L9 features/scores")
