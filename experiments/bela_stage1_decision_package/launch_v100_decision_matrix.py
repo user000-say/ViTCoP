@@ -18,13 +18,21 @@ REPO = Path("/home/xiangyue/ViTCoP")
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "experiments"))
 sys.path.insert(0, str(REPO / "experiments/bela_query_anchor"))
-from gpu_exclusive import PROJECT_GPUS, release, try_acquire  # noqa: E402
+from gpu_exclusive import PROJECT_GPUS as _DEFAULT_GPUS, release, try_acquire  # noqa: E402
 from launch_qacover_pilot import PY, R3, PKG as QA_PKG, env_for, write_run_meta  # noqa: E402
 
 DEC = REPO / "experiments/bela_stage1_decision_package"
 OUT_ROOT = REPO / "logs/e014_aee/full/bela_stage1_decision_20261029"
 LOG_DIR = DEC / "logs"
 CFG_DIR = DEC / "configs"
+
+# Optional override (e.g. VITCOP_DECISION_GPUS=0,2,4,6,7) to occupy a free
+# non-project card when the user explicitly authorizes that card.
+_env_gpus = os.environ.get("VITCOP_DECISION_GPUS", "").strip()
+if _env_gpus:
+    PROJECT_GPUS = tuple(int(x) for x in _env_gpus.split(",") if x.strip() != "")
+else:
+    PROJECT_GPUS = _DEFAULT_GPUS
 
 # P1 B-scan on GQA+POPE (B8 already measured as S1_QANCHOR_L2 — skip).
 B_SCAN = [0, 4, 12, 16, 24]
@@ -51,34 +59,68 @@ def _have(root: Path, task: str) -> bool:
     return (root / task / "metrics.json").exists()
 
 
+def _live_outputs() -> set[str]:
+    """Output dirs already owned by a live e014_boot (avoid double-spawn)."""
+    live: set[str] = set()
+    try:
+        out = subprocess.check_output(["ps", "-eo", "args="], text=True)
+    except Exception:
+        return live
+    needle = str(OUT_ROOT) + "/"
+    for line in out.splitlines():
+        if "e014_boot.py" not in line or "--output" not in line:
+            continue
+        parts = line.split()
+        for i, p in enumerate(parts):
+            if p == "--output" and i + 1 < len(parts):
+                path = parts[i + 1]
+                if path.startswith(needle):
+                    live.add(path.rstrip("/"))
+                break
+    return live
+
+
 def _jobs():
     jobs = []
+    live = _live_outputs()
     for b in B_SCAN:
         arm = f"S1_QANCHOR_L2_B{b}"
         cfg = CFG_DIR / f"{arm}.json"
         root = OUT_ROOT / arm
         for task in CORE:
+            out = root / task
             if _have(root, task):
                 print(f"HAVE {arm}/{task}", flush=True)
                 continue
-            jobs.append((cfg, arm, task, root / task))
+            if str(out) in live:
+                print(f"LIVE {arm}/{task}", flush=True)
+                continue
+            jobs.append((cfg, arm, task, out))
     for arm in STRUCT:
         cfg = CFG_DIR / f"{arm}.json"
         root = OUT_ROOT / arm
         for task in CORE:
+            out = root / task
             if _have(root, task):
                 print(f"HAVE {arm}/{task}", flush=True)
                 continue
-            jobs.append((cfg, arm, task, root / task))
+            if str(out) in live:
+                print(f"LIVE {arm}/{task}", flush=True)
+                continue
+            jobs.append((cfg, arm, task, out))
     for arm, cfg, tasks in FINISH:
         # Prefer historical dir if already complete; else write under decision root.
         hist = REPO / "logs/e014_aee/full/bela_stage1_queryanchor_20261027" / arm
         root = OUT_ROOT / arm
         for task in tasks:
+            out = root / task
             if _have(hist, task) or _have(root, task):
                 print(f"HAVE {arm}/{task}", flush=True)
                 continue
-            jobs.append((cfg, arm, task, root / task))
+            if str(out) in live:
+                print(f"LIVE {arm}/{task}", flush=True)
+                continue
+            jobs.append((cfg, arm, task, out))
     return jobs
 
 
