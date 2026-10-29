@@ -2,8 +2,13 @@
 """V100 Stage1 decision matrix from BELA_CVPR2027_STAGE1_DECISION_EXPERIMENT_KIT.
 
 Reuses production elva_r3 + bela_query_anchor host (vitcopreback).
-GPUs: only free cards from {0,2,4,7}. Skips busy / foreign jobs.
-Does not regenerate completed S1_QANCHOR_L2 six-task metrics.
+
+B-scan (priority): B4..B24 step 2, six-task ACC.
+Early drop: after GQA+POPE, discard a B if GQA < 55 or POPE F1 < 83.8
+(no MME/MMBench/SciQA/TextVQA for that B).
+
+Hist B8 six-task under bela_stage1_queryanchor_20261027/S1_QANCHOR_L2 is reused.
+STRUCT/FINISH only if VITCOP_DECISION_INCLUDE_STRUCT=1.
 """
 from __future__ import annotations
 
@@ -23,20 +28,28 @@ from launch_qacover_pilot import PY, R3, PKG as QA_PKG, env_for, write_run_meta 
 
 DEC = REPO / "experiments/bela_stage1_decision_package"
 OUT_ROOT = REPO / "logs/e014_aee/full/bela_stage1_decision_20261029"
+HIST_ROOT = REPO / "logs/e014_aee/full/bela_stage1_queryanchor_20261027"
 LOG_DIR = DEC / "logs"
 CFG_DIR = DEC / "configs"
 
-# Optional override (e.g. VITCOP_DECISION_GPUS=0,2,4,6,7) to occupy a free
-# non-project card when the user explicitly authorizes that card.
 _env_gpus = os.environ.get("VITCOP_DECISION_GPUS", "").strip()
 if _env_gpus:
     PROJECT_GPUS = tuple(int(x) for x in _env_gpus.split(",") if x.strip() != "")
 else:
     PROJECT_GPUS = _DEFAULT_GPUS
 
-# P1 B-scan on GQA+POPE (B8 already measured as S1_QANCHOR_L2 — skip).
-B_SCAN = [0, 4, 12, 16, 24]
-# Structure arms that need new runs (S0/S1/S6 partially on disk).
+INCLUDE_STRUCT = os.environ.get("VITCOP_DECISION_INCLUDE_STRUCT", "0") == "1"
+
+# B4..B24 every 2 (user denser scan). B8 hist reused.
+B_SCAN = list(range(4, 26, 2))
+GATE_TASKS = ("gqa", "pope")
+EXTRA_TASKS = ("mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")
+SIX_TASKS = GATE_TASKS + EXTRA_TASKS
+
+# Absolute floors (GQA exact_match %; POPE F1 %). Below → drop remaining extras.
+GQA_MIN = float(os.environ.get("VITCOP_BSCAN_GQA_MIN", "55.0"))
+POPE_F1_MIN = float(os.environ.get("VITCOP_BSCAN_POPE_F1_MIN", "83.8"))
+
 STRUCT = [
     "S2_SALIENT_QA_B8",
     "S3_JOINT",
@@ -46,13 +59,11 @@ STRUCT = [
     "S8_NO_COVERAGE",
     "S8_QUERY_ONLY_GAIN",
 ]
-# Finish incomplete historical controls under the decision out root (copy-or-run).
 FINISH = [
     ("L2_NATIVE", QA_PKG / "configs/L2_NATIVE.json", ("mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")),
     ("S1_MATCHED_RANDOM", QA_PKG / "configs/S1_MATCHED_RANDOM.json", ("mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")),
     ("S1_QUERY_SHUFFLE", QA_PKG / "configs/S1_QUERY_SHUFFLE.json", ("pope", "mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")),
 ]
-CORE = ("gqa", "pope")
 
 
 def _have(root: Path, task: str) -> bool:
@@ -60,7 +71,6 @@ def _have(root: Path, task: str) -> bool:
 
 
 def _live_outputs() -> set[str]:
-    """Output dirs already owned by a live e014_boot (avoid double-spawn)."""
     live: set[str] = set()
     try:
         out = subprocess.check_output(["ps", "-eo", "args="], text=True)
@@ -80,47 +90,134 @@ def _live_outputs() -> set[str]:
     return live
 
 
-def _jobs():
-    jobs = []
+def _arm_roots(b: int) -> tuple[str, Path, Path | None]:
+    """Return (arm_id, write_root, hist_root_or_None). B8 reads hist S1_QANCHOR_L2."""
+    arm = f"S1_QANCHOR_L2_B{b}"
+    write = OUT_ROOT / arm
+    if b == 8:
+        return arm, write, HIST_ROOT / "S1_QANCHOR_L2"
+    return arm, write, None
+
+
+def _metric_path(write: Path, hist: Path | None, task: str) -> Path | None:
+    for root in (write, hist) if hist is not None else (write,):
+        if root is None:
+            continue
+        p = root / task / "metrics.json"
+        if p.exists():
+            return p
+    return None
+
+
+def _gqa_pct(metrics_path: Path) -> float | None:
+    m = json.loads(metrics_path.read_text())
+    v = m.get("exact_match")
+    rj = m.get("results_json")
+    if rj and Path(rj).exists():
+        d = json.loads(Path(rj).read_text())
+        g = (d.get("results") or {}).get("gqa") or {}
+        v = g.get("exact_match,none", g.get("exact_match", v))
+    if v is None:
+        return None
+    v = float(v)
+    return v * 100.0 if v <= 1.5 else v
+
+
+def _pope_f1(metrics_path: Path) -> float | None:
+    m = json.loads(metrics_path.read_text())
+    rj = m.get("results_json")
+    f1 = None
+    if rj and Path(rj).exists():
+        d = json.loads(Path(rj).read_text())
+        p = (d.get("results") or {}).get("pope") or {}
+        for k, val in p.items():
+            if "f1" in k.lower() and isinstance(val, (int, float)):
+                f1 = float(val)
+                break
+    if f1 is None:
+        return None
+    return f1 * 100.0 if f1 <= 1.5 else f1
+
+
+def _gate_status(write: Path, hist: Path | None) -> tuple[str, float | None, float | None]:
+    """Return (pending|pass|drop, gqa_pct, pope_f1)."""
+    gp = _metric_path(write, hist, "gqa")
+    pp = _metric_path(write, hist, "pope")
+    if gp is None or pp is None:
+        return "pending", None, None
+    gqa = _gqa_pct(gp)
+    f1 = _pope_f1(pp)
+    if gqa is None or f1 is None:
+        return "pending", gqa, f1
+    if gqa < GQA_MIN or f1 < POPE_F1_MIN:
+        return "drop", gqa, f1
+    return "pass", gqa, f1
+
+
+def _jobs(running_names: set[str] | None = None) -> list[tuple[Path, str, str, Path]]:
+    running_names = running_names or set()
+    jobs: list[tuple[Path, str, str, Path]] = []
     live = _live_outputs()
+
+    def maybe_add(cfg: Path, arm: str, task: str, out: Path) -> None:
+        key = f"{arm}:{task}"
+        if key in running_names:
+            return
+        write_root = out.parent
+        arm_b = None
+        if arm.startswith("S1_QANCHOR_L2_B") and arm[len("S1_QANCHOR_L2_B") :].isdigit():
+            arm_b = int(arm[len("S1_QANCHOR_L2_B") :])
+        hist = HIST_ROOT / "S1_QANCHOR_L2" if arm_b == 8 else None
+        if _metric_path(write_root, hist, task) is not None:
+            print(f"HAVE {arm}/{task}", flush=True)
+            return
+        if str(out) in live:
+            print(f"LIVE {arm}/{task}", flush=True)
+            return
+        jobs.append((cfg, arm, task, out))
+
     for b in B_SCAN:
-        arm = f"S1_QANCHOR_L2_B{b}"
+        arm, write, hist = _arm_roots(b)
         cfg = CFG_DIR / f"{arm}.json"
-        root = OUT_ROOT / arm
-        for task in CORE:
-            out = root / task
-            if _have(root, task):
-                print(f"HAVE {arm}/{task}", flush=True)
-                continue
-            if str(out) in live:
-                print(f"LIVE {arm}/{task}", flush=True)
-                continue
-            jobs.append((cfg, arm, task, out))
-    for arm in STRUCT:
-        cfg = CFG_DIR / f"{arm}.json"
-        root = OUT_ROOT / arm
-        for task in CORE:
-            out = root / task
-            if _have(root, task):
-                print(f"HAVE {arm}/{task}", flush=True)
-                continue
-            if str(out) in live:
-                print(f"LIVE {arm}/{task}", flush=True)
-                continue
-            jobs.append((cfg, arm, task, out))
-    for arm, cfg, tasks in FINISH:
-        # Prefer historical dir if already complete; else write under decision root.
-        hist = REPO / "logs/e014_aee/full/bela_stage1_queryanchor_20261027" / arm
-        root = OUT_ROOT / arm
-        for task in tasks:
-            out = root / task
-            if _have(hist, task) or _have(root, task):
-                print(f"HAVE {arm}/{task}", flush=True)
-                continue
-            if str(out) in live:
-                print(f"LIVE {arm}/{task}", flush=True)
-                continue
-            jobs.append((cfg, arm, task, out))
+        if not cfg.exists():
+            print(f"MISSING_CFG {cfg}", flush=True)
+            continue
+        # Always finish gate tasks first (order gqa then pope).
+        for task in GATE_TASKS:
+            maybe_add(cfg, arm, task, write / task)
+        status, gqa, f1 = _gate_status(write, hist)
+        if status == "drop":
+            print(
+                f"DROP {arm} gqa={gqa:.2f}<{GQA_MIN} or pope_f1={f1:.2f}<{POPE_F1_MIN} — skip extras",
+                flush=True,
+            )
+            continue
+        if status == "pending":
+            print(f"GATE_WAIT {arm} (need GQA+POPE before extras)", flush=True)
+            continue
+        print(f"GATE_PASS {arm} gqa={gqa:.2f} pope_f1={f1:.2f} — queue extras", flush=True)
+        for task in EXTRA_TASKS:
+            maybe_add(cfg, arm, task, write / task)
+
+    if INCLUDE_STRUCT:
+        for arm in STRUCT:
+            cfg = CFG_DIR / f"{arm}.json"
+            root = OUT_ROOT / arm
+            for task in GATE_TASKS:
+                maybe_add(cfg, arm, task, root / task)
+        for arm, cfg, tasks in FINISH:
+            hist = HIST_ROOT / arm
+            root = OUT_ROOT / arm
+            for task in tasks:
+                if _have(hist, task) or _have(root, task):
+                    print(f"HAVE {arm}/{task}", flush=True)
+                    continue
+                out = root / task
+                key = f"{arm}:{task}"
+                if key in running_names or str(out) in live:
+                    print(f"LIVE {arm}/{task}", flush=True)
+                    continue
+                jobs.append((cfg, arm, task, out))
     return jobs
 
 
@@ -130,7 +227,6 @@ def _child_env(cfg_path: Path, out: Path) -> dict:
     cfg = json.loads(cfg_path.read_text())
     init = cfg.get("method", {}).get("stage1_init", "cover")
     child["BELA_STAGE1_INIT"] = init
-    # Prefer project GPUs that are free; caller sets CUDA_VISIBLE_DEVICES.
     child["PYTHONPATH"] = (
         f"{REPO}:{REPO / 'experiments'}:{R3}:{QA_PKG}:{DEC}:{REPO / 'LLaVA'}:{REPO / 'e020_lib'}"
     )
@@ -144,9 +240,12 @@ def _child_env(cfg_path: Path, out: Path) -> dict:
 def main() -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     OUT_ROOT.mkdir(parents=True, exist_ok=True)
-    jobs = _jobs()
-    print(f"DECISION_MATRIX pending {len(jobs)} on {PROJECT_GPUS}", flush=True)
-    # Avoid GPUs already held by our Dense queue / other users (>800 MiB).
+    print(
+        f"DECISION_MATRIX B_SCAN={B_SCAN} gate GQA>={GQA_MIN} POPE_F1>={POPE_F1_MIN} "
+        f"gpus={PROJECT_GPUS} struct={INCLUDE_STRUCT}",
+        flush=True,
+    )
+
     def free_project_gpus():
         out = []
         for g in PROJECT_GPUS:
@@ -169,7 +268,7 @@ def main() -> None:
         return out
 
     running: list[tuple[subprocess.Popen, object, str]] = []
-    while jobs or running:
+    while True:
         still = []
         for proc, lease, name in running:
             if proc.poll() is None:
@@ -178,6 +277,13 @@ def main() -> None:
                 release(lease)  # type: ignore[arg-type]
                 print(f"DONE {name} rc={proc.returncode}", flush=True)
         running = still
+        running_names = {name for _, _, name in running}
+        jobs = _jobs(running_names)
+        # Prefer unfinished gate tasks (gqa/pope) before extras / later B extras.
+        jobs.sort(key=lambda j: (0 if j[2] in GATE_TASKS else 1, B_SCAN.index(int(j[1].split("_B")[-1])) if "_B" in j[1] and j[1].split("_B")[-1].isdigit() else 99, j[2]))
+        print(f"PENDING {len(jobs)} running={sorted(running_names)}", flush=True)
+        if not jobs and not running:
+            break
         free = free_project_gpus()
         while jobs:
             leased = None
