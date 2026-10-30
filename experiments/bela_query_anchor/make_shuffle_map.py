@@ -20,7 +20,14 @@ def make_shuffle_map(rows, seed: int = 17):
     for row in rows:
         sid, iid = str(row["sample_id"]), str(row["image_id"])
         if sid in seen:
-            raise ValueError("duplicate sample_id")
+            # Interface/identity error — not a model-quality failure. POPE's
+            # question_id repeats across random/popular/adversarial; callers
+            # must use a unique key (e.g. f"{row_index}|{question_id}").
+            raise ValueError(
+                "duplicate sample_id "
+                f"{sid!r}: shuffle map requires unique sample_id per row "
+                "(POPE question_id alone is not unique across subsets)"
+            )
         seen.add(sid)
         by_image[iid].append(sid)
     images = sorted(by_image)

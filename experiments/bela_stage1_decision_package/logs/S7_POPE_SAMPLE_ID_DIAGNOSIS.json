@@ -1,0 +1,159 @@
+{
+  "n_rows": 9000,
+  "unique_question_id": 3000,
+  "duplicated_question_ids": 3000,
+  "max_dup_count": 3,
+  "category_sizes": {
+    "adversarial": 3000,
+    "popular": 3000,
+    "random": 3000
+  },
+  "error_site": "bela_query_anchor.make_shuffle_map.make_shuffle_map line 22-23",
+  "call_site": "e006_lmms_patch._freeze_shuffle via BELA_QA_QUESTION_SOURCE=frozen_mismatched_query_permutation",
+  "root_cause": "e006 _sample_id preferred raw question_id; POPE reuses question_id across random/popular/adversarial",
+  "fix": "sample_id = f'{index}|{question_id}' in shuffle freeze/lookup only",
+  "old_map_raises": true,
+  "new_map_ok": true,
+  "examples": [
+    {
+      "qid": "1",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        0,
+        3000,
+        6000
+      ]
+    },
+    {
+      "qid": "2",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        1,
+        3001,
+        6001
+      ]
+    },
+    {
+      "qid": "3",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        2,
+        3002,
+        6002
+      ]
+    },
+    {
+      "qid": "4",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        3,
+        3003,
+        6003
+      ]
+    },
+    {
+      "qid": "5",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        4,
+        3004,
+        6004
+      ]
+    },
+    {
+      "qid": "6",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        5,
+        3005,
+        6005
+      ]
+    },
+    {
+      "qid": "7",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        6,
+        3006,
+        6006
+      ]
+    },
+    {
+      "qid": "8",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        7,
+        3007,
+        6007
+      ]
+    },
+    {
+      "qid": "9",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        8,
+        3008,
+        6008
+      ]
+    },
+    {
+      "qid": "10",
+      "count": 3,
+      "categories": [
+        "adversarial",
+        "popular",
+        "random"
+      ],
+      "indices": [
+        9,
+        3009,
+        6009
+      ]
+    }
+  ]
+}

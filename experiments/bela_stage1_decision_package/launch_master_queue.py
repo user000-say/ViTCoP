@@ -125,13 +125,44 @@ def _is_skipped(arm: str, task: str) -> bool:
 def _bump_fail(arm: str, task: str, rc: int) -> int:
     FAIL_DIR.mkdir(parents=True, exist_ok=True)
     SKIP_DIR.mkdir(parents=True, exist_ok=True)
+    # Never auto-skip known interface/identity errors — hold for human fix.
+    log = LOG_DIR / f"acc_{arm}_{task}.log"
+    if log.exists():
+        try:
+            tail = log.read_text(errors="ignore")[-8000:]
+        except Exception:
+            tail = ""
+        if "duplicate sample_id" in tail:
+            sp = _skip_path(arm, task)
+            sp.write_text(
+                json.dumps(
+                    {
+                        "arm": arm,
+                        "task": task,
+                        "kind": "HOLD_INTERFACE",
+                        "reason": "duplicate sample_id — identity/eval interface bug, not effect failure",
+                        "last_rc": rc,
+                        "ts": time.time(),
+                    },
+                    indent=2,
+                )
+                + "\n"
+            )
+            print(f"HOLD_INTERFACE {arm}:{task} (duplicate sample_id) — paused, not counted as ACC fail", flush=True)
+            return 0
     p = _fail_path(arm, task)
     n = int(p.read_text().strip() or "0") if p.exists() else 0
     n += 1
     p.write_text(str(n) + "\n")
     if n >= MAX_FAIL:
         sp = _skip_path(arm, task)
-        sp.write_text(json.dumps({"arm": arm, "task": task, "fails": n, "last_rc": rc, "ts": time.time()}) + "\n")
+        sp.write_text(
+            json.dumps(
+                {"arm": arm, "task": task, "kind": "SKIP_FAIL", "fails": n, "last_rc": rc, "ts": time.time()},
+                indent=2,
+            )
+            + "\n"
+        )
         print(f"SKIP_FAIL {arm}:{task} after {n} fails rc={rc}", flush=True)
     return n
 
