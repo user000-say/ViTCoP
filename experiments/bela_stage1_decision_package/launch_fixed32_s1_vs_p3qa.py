@@ -23,8 +23,8 @@ sys.path.insert(0, str(QA))
 
 from launch_qacover_pilot import PY, env_for, write_run_meta  # noqa: E402
 
-PYBENCH = str(REPO / "experiments/e014_latency_fair_256/bin/python")
-BENCH = REPO / "experiments/e014_latency_fair_256/scripts/benchmark_llava_e2e_anygpu.py"
+# QA-COVER needs begin_question; stock fair-256 bench has no request bind.
+BENCH = DEC / "bench_llava_qa_fixed32.py"
 PANEL = REPO / "experiments/e014_latency_fair_256/panel/speed_256.jsonl"
 MODEL = REPO / "experiments/e014_latency_fair_256/models_llava"
 OUT_ROOT = DEC / "latency"
@@ -90,7 +90,7 @@ def main() -> None:
         )
         log = LOG_DIR / f"ttft_{arm_id}.log"
         cmd = [
-            PYBENCH,
+            PY,
             str(BENCH),
             "--repo-root",
             str(REPO),

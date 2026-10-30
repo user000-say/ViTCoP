@@ -63,7 +63,17 @@ def apply_llava_query_anchor(
     if projected_full_vision is None:
         # IMPORTANT: this full-grid projector invocation may add computation.
         # Never attribute this overhead to the pre-existing BELA baseline.
-        projected = mm_projector(full_vision_features_for_projector)
+        # Match projector param dtype (ACC path is usually fp16; fair-256 bench can hand fp32).
+        # ACC wraps mm_projector in _TimedProjector (no .parameters); unwrap if needed.
+        proj_mod = getattr(mm_projector, "module", mm_projector)
+        try:
+            proj_dtype = next(proj_mod.parameters()).dtype
+        except Exception:
+            proj_dtype = full_vision_features_for_projector.dtype
+        features = full_vision_features_for_projector
+        if features.dtype != proj_dtype:
+            features = features.to(dtype=proj_dtype)
+        projected = mm_projector(features)
     else:
         projected = projected_full_vision
     if projected.ndim != 2:
