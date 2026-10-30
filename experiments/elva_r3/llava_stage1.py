@@ -256,8 +256,17 @@ def _apply_qa_cover(keep, selected, pen, pen_scores):
 
     projector = _TimedProjector(req.mm_projector)
     guard = int(os.environ.get("BELA_QA_SALIENCY_GUARD", "0"))
-    config = AnchorConfig(
-        max_swaps=int(os.environ.get("BELA_QA_MAX_SWAPS", "8")),
+    # Handoff §E.1: optional sequential caps e.g. "4,4" or "3,3,2" (same frozen
+    # query/metric inputs; each pass starts from the previous keep). Default:
+    # single pass with BELA_QA_MAX_SWAPS.
+    pass_raw = os.environ.get("BELA_QA_PASS_CAPS", "").strip()
+    if pass_raw:
+        pass_caps = [int(x) for x in pass_raw.split(",") if x.strip() != ""]
+        if not pass_caps or any(c < 0 for c in pass_caps):
+            raise RuntimeError(f"invalid BELA_QA_PASS_CAPS={pass_raw!r}")
+    else:
+        pass_caps = [int(os.environ.get("BELA_QA_MAX_SWAPS", "8"))]
+    base_kw = dict(
         donor_pool=int(os.environ.get("BELA_QA_DONOR_POOL", "16")),
         drop_pool=int(os.environ.get("BELA_QA_DROP_POOL", "12")),
         min_raw_std=float(os.environ.get("BELA_QA_MIN_RAW_STD", "0.008")),
@@ -268,24 +277,47 @@ def _apply_qa_cover(keep, selected, pen, pen_scores):
         saliency_guard_slots=guard,
     )
     started = time.perf_counter()
-    result = apply_llava_query_anchor(
-        mode=mode,
-        native_keep_ids=keep,
-        dual_metric=metric,
-        full_vision_features_for_projector=pen,
-        question_only_ids=req.question_ids,
-        question_content_mask=req.content_mask,
-        native_saliency=pen_scores if guard else None,
-        mm_projector=projector,
-        llm_input_embeddings=req.embed_tokens,
-        config=config,
-        random_seed=int(os.environ.get("BELA_QA_SEED", "17")),
-        diagnostics=os.environ.get("BELA_QA_TRACE", "False") == "True",
-    )
+    cur = keep
+    result = None
+    all_records = []
+    total_swaps = 0
+    last_reason = ""
+    origin_native = keep.detach().cpu().tolist()
+    for cap in pass_caps:
+        config = AnchorConfig(max_swaps=cap, **base_kw)
+        result = apply_llava_query_anchor(
+            mode=mode,
+            native_keep_ids=cur,
+            dual_metric=metric,
+            full_vision_features_for_projector=pen,
+            question_only_ids=req.question_ids,
+            question_content_mask=req.content_mask,
+            native_saliency=pen_scores if guard else None,
+            mm_projector=projector,
+            llm_input_embeddings=req.embed_tokens,
+            config=config,
+            random_seed=int(os.environ.get("BELA_QA_SEED", "17")),
+            diagnostics=os.environ.get("BELA_QA_TRACE", "False") == "True",
+        )
+        cur = result.keep_ids.to(device=keep.device, dtype=torch.long)
+        total_swaps += int(result.swaps)
+        last_reason = result.reason
+        if result.records:
+            all_records.extend(list(result.records))
     if torch.cuda.is_available() and pen.is_cuda:
         torch.cuda.synchronize()
     selector_ms = (time.perf_counter() - started) * 1000.0
-    new_keep = result.keep_ids.to(device=keep.device, dtype=torch.long)
+    new_keep = cur
+    # Expose cumulative audit fields expected below.
+    class _Agg:
+        pass
+    agg = _Agg()
+    agg.keep_ids = new_keep
+    agg.native_ids = torch.as_tensor(origin_native, dtype=torch.long)
+    agg.swaps = total_swaps
+    agg.reason = f"{last_reason}|passes={pass_caps}|sum_swaps={total_swaps}"
+    agg.records = all_records
+    result = agg
     if int(new_keep.numel()) != int(keep.numel()) or int(new_keep.unique().numel()) != int(keep.numel()):
         raise RuntimeError("QA-COVER broke the fixed-K unique-id contract")
     if not torch.equal(new_keep, new_keep.sort().values):

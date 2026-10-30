@@ -53,17 +53,28 @@ FILL3 = ("mmmu_val", "ai2d", "vizwiz_vqa_val")
 TOP_B = (6, 8, 10)
 
 P2_ARMS: list[tuple[str, Path, str | None]] = [
-    ("L2_NATIVE", QA_PKG / "configs/L2_NATIVE.json", "L2_NATIVE"),
-    ("S1_QANCHOR_L2", QA_PKG / "configs/S1_QANCHOR_L2.json", "S1_QANCHOR_L2"),
+    ("L2_NATIVE", QA_PKG / "configs/L2_NATIVE.json", "L2_NATIVE"),  # S0 Native+RDRIFT
+    ("S1_QANCHOR_L2", QA_PKG / "configs/S1_QANCHOR_L2.json", "S1_QANCHOR_L2"),  # S1 QA+RDRIFT
     ("S2_SALIENT_QA_B8", CFG_DIR / "S2_SALIENT_QA_B8.json", None),
     ("S3_JOINT", CFG_DIR / "S3_JOINT.json", None),
     ("S4_JOINT_CAP8", CFG_DIR / "S4_JOINT_CAP8.json", None),
     ("S5_QUERY_TOPK", CFG_DIR / "S5_QUERY_TOPK.json", None),
-    ("S1_MATCHED_RANDOM", QA_PKG / "configs/S1_MATCHED_RANDOM.json", "S1_MATCHED_RANDOM"),
-    ("S1_QUERY_SHUFFLE", QA_PKG / "configs/S1_QUERY_SHUFFLE.json", "S1_QUERY_SHUFFLE"),
+    ("S1_MATCHED_RANDOM", QA_PKG / "configs/S1_MATCHED_RANDOM.json", "S1_MATCHED_RANDOM"),  # S6 seed17
+    ("S1_QUERY_SHUFFLE", QA_PKG / "configs/S1_QUERY_SHUFFLE.json", "S1_QUERY_SHUFFLE"),  # S7
     ("S8_NO_NOVELTY", CFG_DIR / "S8_NO_NOVELTY.json", None),
     ("S8_NO_COVERAGE", CFG_DIR / "S8_NO_COVERAGE.json", None),
     ("S8_QUERY_ONLY_GAIN", CFG_DIR / "S8_QUERY_ONLY_GAIN.json", None),
+    # Handoff §E.1 pass schedules (cumulative B=8)
+    ("S1_QA_PASSES_4_4", CFG_DIR / "S1_QA_PASSES_4_4.json", None),
+    ("S1_QA_PASSES_3_3_2", CFG_DIR / "S1_QA_PASSES_3_3_2.json", None),
+    # Handoff §F P3: Stage2 selector swap (Q_ATTN vs RDRIFT already in S0/S1)
+    ("P3_NATIVE_QATTN", CFG_DIR / "P3_NATIVE_QATTN.json", None),
+    ("P3_QA_QATTN", CFG_DIR / "P3_QA_QATTN.json", None),
+    # Handoff S6 ≥5 seeds (17 covered by S1_MATCHED_RANDOM)
+    ("S6_MATCHED_RANDOM_S23", CFG_DIR / "S6_MATCHED_RANDOM_S23.json", None),
+    ("S6_MATCHED_RANDOM_S29", CFG_DIR / "S6_MATCHED_RANDOM_S29.json", None),
+    ("S6_MATCHED_RANDOM_S31", CFG_DIR / "S6_MATCHED_RANDOM_S31.json", None),
+    ("S6_MATCHED_RANDOM_S37", CFG_DIR / "S6_MATCHED_RANDOM_S37.json", None),
 ]
 
 
@@ -191,6 +202,12 @@ def _child_env(cfg_path: Path, out: Path) -> dict:
     cfg = json.loads(cfg_path.read_text())
     init = cfg.get("method", {}).get("stage1_init", "cover")
     child["BELA_STAGE1_INIT"] = init
+    qa = (cfg.get("method") or {}).get("qa_cover") or {}
+    caps = qa.get("pass_caps")
+    if caps:
+        child["BELA_QA_PASS_CAPS"] = ",".join(str(int(x)) for x in caps)
+    else:
+        child.pop("BELA_QA_PASS_CAPS", None)
     child["PYTHONPATH"] = (
         f"{REPO}:{REPO / 'experiments'}:{R3}:{QA_PKG}:{DEC}:{REPO / 'LLaVA'}:{REPO / 'e020_lib'}"
     )

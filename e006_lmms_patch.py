@@ -82,7 +82,9 @@ def _freeze_shuffle(task_docs, seed: int):
     by_sid = {}
     for index in range(len(view)):
         doc = view[index]
-        sid = _sample_id(doc, index)
+        # POPE question_id repeats across random/popular/adversarial; index must
+        # be part of the key (handoff: question_id is NOT a unique sample_id).
+        sid = f"{index}|{_sample_id(doc, index)}"
         iid = _image_key(doc)
         question = str(doc.get("question") or "")
         if not question:
@@ -126,7 +128,7 @@ def _begin_qa_request(self, task, split, doc_id, contexts, question_input, input
                 self.task_dict[task][split], int(os.environ.get("BELA_QA_SEED", "17"))
             )
         mapping, by_sid = _SHUFFLE[key]
-        sid = _sample_id(doc, doc_id[0])
+        sid = f"{int(doc_id[0])}|{_sample_id(doc, doc_id[0])}"
         if sid not in mapping:
             raise RuntimeError(f"shuffle map has no sample {sid}")
         donor_sid = mapping[sid]
@@ -143,7 +145,11 @@ def _begin_qa_request(self, task, split, doc_id, contexts, question_input, input
     if os.environ.get("BELA_QA_CONTENT_MASK", "1") != "0":
         pieces = [self.tokenizer.decode([int(tok)], skip_special_tokens=False) for tok in ids.tolist()]
         mask = torch.tensor(content_mask_from_decodes(pieces), dtype=torch.bool)
-    sid = _sample_id(doc, doc_id[0])
+    sid = (
+        f"{int(doc_id[0])}|{_sample_id(doc, doc_id[0])}"
+        if source == "frozen_mismatched_query_permutation"
+        else _sample_id(doc, doc_id[0])
+    )
     try:
         image_id = _image_key(doc)
     except RuntimeError:
