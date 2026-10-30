@@ -381,7 +381,9 @@ def _stage1_alt_init(init, keep, selected, pen, pen_scores, entry_k):
     if req.content_mask is not None:
         q_ids = q_ids[req.content_mask]
     if q_ids.numel() == 0:
-        raise RuntimeError(f"{init} content mask removed all question tokens")
+        # Match QA adapter empty_question: no content words left → keep native IDs.
+        # Hard-fail here aborted S5 GQA at ~12481/12578 on template-only questions.
+        return keep.detach().long().to(device=keep.device)
     projected = req.mm_projector(pen)
     q_emb = req.embed_tokens(q_ids.to(req.embed_tokens.weight.device))
     # Match QA-COVER proxy: mean question embed vs projected patches.
