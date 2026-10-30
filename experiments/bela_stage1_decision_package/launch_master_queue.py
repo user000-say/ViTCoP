@@ -55,8 +55,18 @@ _PRIORITY_ARMS = {
 
 SIX = ("gqa", "pope", "mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")
 GATE = ("gqa", "pope")
+EXTRAS4 = ("mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")
 FILL3 = ("mmmu_val", "ai2d", "vizwiz_vqa_val")
 TOP_B = (6, 8, 10)
+# User early-stop (2026-10-30): GQA<55 or POPE F1<85 → no extras.
+# Remaining 4 ACC only when both gates pass AND near current L2 best (S1 Dual+QA).
+FLOOR_GQA = float(os.environ.get("VITCOP_FLOOR_GQA", "55"))
+FLOOR_POPE = float(os.environ.get("VITCOP_FLOOR_POPE", "85"))
+NEAR_GQA_DELTA = float(os.environ.get("VITCOP_NEAR_GQA_DELTA", "0.5"))
+NEAR_POPE_DELTA = float(os.environ.get("VITCOP_NEAR_POPE_DELTA", "0.8"))
+# L2 Dual+QA B8 reference (hist S1); updated upward if a finished L2 arm beats it.
+_REF_GQA0 = 56.52
+_REF_POPE0 = 86.16
 
 P2_ARMS: list[tuple[str, Path, str | None]] = [
     ("L2_NATIVE", QA_PKG / "configs/L2_NATIVE.json", "L2_NATIVE"),  # S0 Native+RDRIFT
@@ -179,6 +189,109 @@ def _clear_fail(arm: str, task: str) -> None:
         p.unlink()
 
 
+def _score_pct(metrics_path: Path, task: str) -> float | None:
+    try:
+        d = json.loads(metrics_path.read_text())
+    except Exception:
+        return None
+    if task == "gqa":
+        v = d.get("exact_match")
+        if v is None:
+            v = d.get("accuracy")
+    elif task == "pope":
+        v = d.get("pope_f1_score")
+        if v is None:
+            v = d.get("f1")
+    else:
+        return None
+    if v is None:
+        return None
+    v = float(v)
+    return 100.0 * v if v <= 1.0 else v
+
+
+def _gate_scores(write: Path, hist: str | None) -> tuple[float | None, float | None]:
+    gqa_p = _metric(write, hist, "gqa")
+    pope_p = _metric(write, hist, "pope")
+    gqa = _score_pct(gqa_p, "gqa") if gqa_p else None
+    pope = _score_pct(pope_p, "pope") if pope_p else None
+    return gqa, pope
+
+
+def _l2_ref_best() -> tuple[float, float]:
+    """Near-best bar = frozen L2 Dual+QA B8 (S1), not max over B-scan POPE.
+
+    B-scan can inflate POPE at similar GQA; using that as the bar would skip
+    true near-S1 arms (P3_QA, S5). Override via VITCOP_REF_GQA / VITCOP_REF_POPE.
+    """
+    return (
+        float(os.environ.get("VITCOP_REF_GQA", str(_REF_GQA0))),
+        float(os.environ.get("VITCOP_REF_POPE", str(_REF_POPE0))),
+    )
+
+
+def _mark_skip_extras(arm: str, reason: str, gqa: float | None, pope: float | None) -> None:
+    SKIP_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "arm": arm,
+        "kind": "SKIP_EARLY",
+        "reason": reason,
+        "gqa": gqa,
+        "pope": pope,
+        "floor_gqa": FLOOR_GQA,
+        "floor_pope": FLOOR_POPE,
+        "ts": time.time(),
+    }
+    for task in EXTRAS4:
+        sp = _skip_path(arm, task)
+        if sp.exists():
+            continue
+        sp.write_text(json.dumps({**payload, "task": task}, indent=2) + "\n")
+    print(f"SKIP_EARLY {arm} extras ({reason}) gqa={gqa} pope={pope}", flush=True)
+
+
+def _extras_policy(arm: str, write: Path, hist: str | None) -> str:
+    """Return gate_pending | drop | gate_only | full6."""
+    gqa, pope = _gate_scores(write, hist)
+    if gqa is None or pope is None:
+        return "gate_pending"
+    if gqa < FLOOR_GQA or pope < FLOOR_POPE:
+        _mark_skip_extras(arm, f"floor fail GQA<{FLOOR_GQA} or POPE<{FLOOR_POPE}", gqa, pope)
+        return "drop"
+    def _clear_early_extras() -> None:
+        for task in EXTRAS4:
+            sp = _skip_path(arm, task)
+            if not sp.exists():
+                continue
+            try:
+                kind = json.loads(sp.read_text()).get("kind")
+            except Exception:
+                kind = None
+            if kind == "SKIP_EARLY":
+                sp.unlink()
+
+    # Explicit priority arms (e.g. S5): pass floor → always finish 6ACC.
+    if arm in _PRIORITY_ARMS:
+        _clear_early_extras()
+        return "full6"
+    ref_g, ref_p = _l2_ref_best()
+    # E.1 pass schedules that reproduce S1 gates exactly → no new 6ACC signal.
+    if arm.startswith("S1_QA_PASSES") and abs(gqa - ref_g) < 0.05 and abs(pope - ref_p) < 0.05:
+        _mark_skip_extras(arm, "E.1 gates match S1 Dual+QA; skip redundant extras", gqa, pope)
+        return "gate_only"
+    near = (gqa >= ref_g - NEAR_GQA_DELTA) and (pope >= ref_p - NEAR_POPE_DELTA)
+    if near:
+        _clear_early_extras()
+        return "full6"
+    _mark_skip_extras(
+        arm,
+        f"pass floor but not near L2 best (ref GQA {ref_g:.2f} / POPE {ref_p:.2f})",
+        gqa,
+        pope,
+    )
+    return "gate_only"
+
+
 def _jobs(running_names: set[str]) -> list[tuple[Path, str, str, Path, int]]:
     """Return (cfg, arm, task, out, priority). Lower priority first."""
     live = _live_outputs()
@@ -202,36 +315,68 @@ def _jobs(running_names: set[str]) -> list[tuple[Path, str, str, Path, int]]:
             return
         jobs.append((cfg, arm, task, out, prio))
 
-    # --- 1) P2 structure ---
+    # --- 1) P2/P3/E.1 structure: gates first; extras only if near-best ---
     for arm, cfg, hist in P2_ARMS:
         write = OUT_ROOT / arm
-        for task in SIX:
-            # gates before extras: prio 10 + gate_boost
+        policy = _extras_policy(arm, write, hist)
+        if policy == "gate_pending":
+            tasks = GATE
+        elif policy == "full6":
+            tasks = SIX
+        else:
+            # drop / gate_only: never queue extras
+            tasks = tuple(t for t in GATE if _metric(write, hist, t) is None)
+        for task in tasks:
             gate_boost = 0 if task in GATE else 100
             prio = 10 + gate_boost
-            # User-requested priority arms (e.g. finish P3_QA_QATTN six-task now)
             if arm in _PRIORITY_ARMS:
                 prio = 1 if task in GATE else 2
+            elif policy == "full6" and task in EXTRAS4:
+                prio = 5  # near-best 6ACC ahead of other gates' extras
             add(cfg, arm, task, write / task, hist, prio)
 
-    # --- 2) Top-B L2 fill-three ---
+    # --- 2) Top-B L2 fill-three (pre-chosen B6/B8/B10; need six done + floor) ---
     for b in TOP_B:
         arm = f"S1_QANCHOR_L2_B{b}"
         cfg = CFG_DIR / f"{arm}.json"
         write = OUT_ROOT / arm
+        gqa, pope = _gate_scores(write, None)
+        if gqa is None or pope is None:
+            continue
+        if gqa < FLOOR_GQA or pope < FLOOR_POPE:
+            continue
+        if any(_metric(write, None, t) is None for t in EXTRAS4):
+            continue  # finish / skip six first
         for task in FILL3:
             add(cfg, arm, task, write / task, None, 200)
 
-    # --- 3) Top-B E3 W2048 ---
+    # --- 3) Top-B E3 W2048: gates → early-stop → 6/9 ---
     for b in TOP_B:
         arm = f"S1_QANCHOR_E3_B{b}"
         cfg = CFG_DIR / f"{arm}.json"
         write = OUT_ROOT / arm
         hist = "S1_QANCHOR_E3" if b == 8 else None
-        tasks = FILL3 if b == 8 else ACC_TASKS
+        if b == 8:
+            # hist six reused; only fill-three if hist gates are strong
+            gqa, pope = _gate_scores(HIST / "S1_QANCHOR_E3", None) if hist else (None, None)
+            if gqa is not None and pope is not None and (gqa < FLOOR_GQA or pope < FLOOR_POPE):
+                continue
+            tasks = FILL3
+            base_prio = 350
+        else:
+            pol = _extras_policy(arm, write, hist)
+            if pol == "gate_pending":
+                tasks = GATE
+                base_prio = 300
+            elif pol == "full6":
+                tasks = ACC_TASKS
+                base_prio = 300
+            else:
+                tasks = tuple(t for t in GATE if _metric(write, hist, t) is None)
+                base_prio = 300
         for task in tasks:
             gate_boost = 0 if task in GATE else 50
-            add(cfg, arm, task, write / task, hist, 300 + gate_boost)
+            add(cfg, arm, task, write / task, hist, base_prio + gate_boost)
 
     jobs.sort(key=lambda j: (j[4], j[1], j[2]))
     return jobs
