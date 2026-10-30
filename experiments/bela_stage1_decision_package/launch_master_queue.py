@@ -46,6 +46,12 @@ PROJECT_GPUS = (
 )
 MAX_FAIL = int(os.environ.get("VITCOP_MASTER_MAX_FAIL", "3"))
 IDLE_SLEEP_S = float(os.environ.get("VITCOP_MASTER_SLEEP", "8"))
+# Comma-separated arm ids to run ASAP (still after LIVE skips). Example: P3_QA_QATTN
+_PRIORITY_ARMS = {
+    x.strip()
+    for x in os.environ.get("VITCOP_PRIORITY_ARMS", "").split(",")
+    if x.strip()
+}
 
 SIX = ("gqa", "pope", "mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr")
 GATE = ("gqa", "pope")
@@ -202,7 +208,11 @@ def _jobs(running_names: set[str]) -> list[tuple[Path, str, str, Path, int]]:
         for task in SIX:
             # gates before extras: prio 10 + gate_boost
             gate_boost = 0 if task in GATE else 100
-            add(cfg, arm, task, write / task, hist, 10 + gate_boost)
+            prio = 10 + gate_boost
+            # User-requested priority arms (e.g. finish P3_QA_QATTN six-task now)
+            if arm in _PRIORITY_ARMS:
+                prio = 1 if task in GATE else 2
+            add(cfg, arm, task, write / task, hist, prio)
 
     # --- 2) Top-B L2 fill-three ---
     for b in TOP_B:
