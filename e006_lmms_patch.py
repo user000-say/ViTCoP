@@ -92,7 +92,21 @@ def _freeze_shuffle(task_docs, seed: int):
     from bela_query_anchor.make_shuffle_map import make_shuffle_map
 
     names = list(getattr(task_docs, "column_names", []) or [])
-    wanted = [c for c in ("question_id", "id", "question", "image_source", "imageId", "image_id") if c in names]
+    # Keep category: POPE unique sample_id is index|category|question_id; dropping
+    # category here made freeze keys diverge from lookup keys (shuffle map miss).
+    wanted = [
+        c
+        for c in (
+            "question_id",
+            "id",
+            "question",
+            "image_source",
+            "imageId",
+            "image_id",
+            "category",
+        )
+        if c in names
+    ]
     view = task_docs.select_columns(wanted) if wanted and hasattr(task_docs, "select_columns") else task_docs
     rows = []
     by_sid = {}
