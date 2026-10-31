@@ -1,0 +1,7 @@
+benchmark,native_L2,QA_COVER,delta_from_displayed_values,relative_percent_reported,samples_reported,dense_denominator_explicit,source_lines,status
+GQA,55.57,56.52,+0.95,91.31,12578,61.9,5627-5638,author_reported_not_rerun
+POPE_F1,82.21,86.16,+3.95,100.42,9000,85.8,5627-5638,author_reported_not_rerun
+MME,1651.78,1715.68,+63.90,92.64,2374,,5627-5638,author_reported_not_rerun
+MMBench_EN,61.34,61.77,+0.43,96.36,4329,,5627-5638,author_reported_not_rerun
+ScienceQA_IMG,68.91,69.61,+0.70,100.14,2017,,5627-5638,author_reported_not_rerun
+TextVQA_OCR,53.41,53.06,-0.35,91.17,5000,,5627-5638,author_reported_not_rerun

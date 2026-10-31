@@ -1,0 +1,308 @@
+[
+  {
+    "key": "sparsevlm",
+    "name": "SparseVLM",
+    "title": "SparseVLM: Visual Token Sparsification for Efficient Vision-Language Model Inference",
+    "citation_url": "https://proceedings.mlr.press/v267/zhang25s.html",
+    "primary_pdf_url": "https://arxiv.org/pdf/2410.04417v4",
+    "pdf_pages": 18,
+    "read_pdf_sha256": "ccb0ff92d74d782fdf6aead5580b9c50c224ade23e4f99ed3ab9541f19cb167b",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      4,
+      7,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2410.04417v4, uploaded PDF; cite ICML 2025 formal record"
+  },
+  {
+    "key": "vitcop",
+    "name": "ViTCoP",
+    "title": "ViTCoP: Accelerating Large Vision-Language Models via Visual and Textual Semantic Collaborative Pruning",
+    "citation_url": "https://ojs.aaai.org/index.php/AAAI/article/download/39594/43555",
+    "primary_pdf_url": "https://arxiv.org/pdf/2601.17818v1",
+    "pdf_pages": 15,
+    "read_pdf_sha256": "187ce74f92b28b9dcf73144d1beef55b92b4058d7484a2cf6f4286a09cb8f2ed",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      7
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2601.17818v1, uploaded PDF"
+  },
+  {
+    "key": "autoselect",
+    "name": "autoselect",
+    "title": "The Model Knows Which Tokens Matter: Automatic Token Selection via Noise Gating",
+    "citation_url": "https://arxiv.org/abs/2603.07135",
+    "primary_pdf_url": "https://arxiv.org/pdf/2603.07135v1",
+    "pdf_pages": 14,
+    "read_pdf_sha256": "4b308bf372fd020c12e3867b628b0590a0650a4b544b10d3c3fc71f84c23bc7f",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      5,
+      9,
+      10
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2603.07135v1, uploaded PDF"
+  },
+  {
+    "key": "visionzip",
+    "name": "VisionZip",
+    "title": "VisionZip: Longer is Better but Not Necessary in Vision Language Models",
+    "citation_url": "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.html",
+    "primary_pdf_url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.pdf",
+    "pdf_pages": 11,
+    "read_pdf_sha256": "d4e22f2136ba1b7e95a971d99f008a53141b9dbe1b2dfae5bdfbf8c06778e13d",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      7,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "pyramiddrop",
+    "name": "PyramidDrop",
+    "title": "Conical Visual Concentration for Efficient Large Vision-Language Models",
+    "citation_url": "https://openaccess.thecvf.com/content/CVPR2025/html/Xing_Conical_Visual_Concentration_for_Efficient_Large_Vision-Language_Models_CVPR_2025_paper.html",
+    "primary_pdf_url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Xing_Conical_Visual_Concentration_for_Efficient_Large_Vision-Language_Models_CVPR_2025_paper.pdf",
+    "pdf_pages": 11,
+    "read_pdf_sha256": "3b44722f85df43ce047f67ad9884523c8b50245d1a43bad95f8d6be44345e1f2",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      6,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "divprune",
+    "name": "DivPrune",
+    "title": "DivPrune: Diversity-based Visual Token Pruning for Large Multimodal Models",
+    "citation_url": "https://arxiv.org/abs/2503.02175",
+    "primary_pdf_url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Alvar_DivPrune_Diversity-based_Visual_Token_Pruning_for_Large_Multimodal_Models_CVPR_2025_paper.pdf",
+    "pdf_pages": 10,
+    "read_pdf_sha256": "771cae9c882b26b98cc40ffee9d8e6e5decb17e74f26105c2d2e5e42783d3999",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      5,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "cdpruner",
+    "name": "CDPruner",
+    "title": "Beyond Attention or Similarity: Maximizing Conditional Diversity for Token Pruning in MLLMs",
+    "citation_url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2433fec2144ccf5fea1c9c5ebdbc3924-Abstract-Conference.html",
+    "primary_pdf_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/2433fec2144ccf5fea1c9c5ebdbc3924-Paper-Conference.pdf",
+    "pdf_pages": 31,
+    "read_pdf_sha256": "6867644ad62634bb80b90f4d1c47ef83710af26b9ef88cf21a06ab215f147f1e",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      8,
+      9
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "vispruner",
+    "name": "VisPruner",
+    "title": "Beyond Text-Visual Attention: Exploiting Visual Cues for Effective Token Pruning in VLMs",
+    "citation_url": "https://arxiv.org/abs/2412.01818",
+    "primary_pdf_url": "https://arxiv.org/pdf/2412.01818v2",
+    "pdf_pages": 18,
+    "read_pdf_sha256": "51e8ee1973caa04733c9beafdc97ace074030363f8a9fb6df9381a25734bcbcc",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      6,
+      7
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2412.01818v2; cite ICCV 2025 formal record"
+  },
+  {
+    "key": "dart",
+    "name": "DART",
+    "title": "Stop Looking for “Important Tokens” in Multimodal Language Models: Duplication Matters More",
+    "citation_url": "https://aclanthology.org/2025.emnlp-main.505/",
+    "primary_pdf_url": "https://aclanthology.org/2025.emnlp-main.505.pdf",
+    "pdf_pages": 20,
+    "read_pdf_sha256": "fb0bc86f6f98fa97f5e17705b6d9b80580b57f2c341d962a1be711f3dae1d19c",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      7,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "fitprune",
+    "name": "FitPrune",
+    "title": "Fit and Prune: Fast and Training-free Visual Token Pruning for Multi-modal Large Language Models",
+    "citation_url": "https://ojs.aaai.org/index.php/AAAI/article/view/34366",
+    "primary_pdf_url": "https://ojs.aaai.org/index.php/AAAI/article/download/34366/36521",
+    "pdf_pages": 12,
+    "read_pdf_sha256": "1d2939de617c044a9490458e9c43b0022b86a6a20d1811636c7356f125754e0e",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      7
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "read PDF carries arXiv:2409.10197v2; accessed through AAAI download URL"
+  },
+  {
+    "key": "vflowopt",
+    "name": "VFlowOpt",
+    "title": "VFlowOpt: A Token Pruning Framework for LMMs with Visual Information Flow-Guided Optimization",
+    "citation_url": "https://arxiv.org/abs/2508.05211",
+    "primary_pdf_url": "https://arxiv.org/pdf/2508.05211v2",
+    "pdf_pages": 13,
+    "read_pdf_sha256": "dc66880ed9fe432b4bdb82982fbd2e2d27b3245ba32f9fc38065f844e8b16431",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2508.05211v2; cite ICCV 2025 formal record"
+  },
+  {
+    "key": "mmtok",
+    "name": "MMTok",
+    "title": "MMTok: Multimodal Coverage Maximization for Efficient Inference of VLMs",
+    "citation_url": "https://proceedings.iclr.cc/paper_files/paper/2026/hash/4f8745c0ca5c951a92844ad7668cfca5-Abstract-Conference.html",
+    "primary_pdf_url": "https://proceedings.iclr.cc/paper_files/paper/2026/file/4f8745c0ca5c951a92844ad7668cfca5-Paper-Conference.pdf",
+    "pdf_pages": 25,
+    "read_pdf_sha256": "55c0868d7e318ffec8f8ced2e805c47aceae2f224a0ab40d20b88a39f64cc8f7",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      8
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  },
+  {
+    "key": "agilepruner",
+    "name": "AgilePruner",
+    "title": "AgilePruner: An Empirical Study of Attention and Diversity for Adaptive Visual Token Pruning in Large Vision-Language Models",
+    "citation_url": "https://arxiv.org/abs/2603.01236",
+    "primary_pdf_url": "https://arxiv.org/pdf/2603.01236v1",
+    "pdf_pages": 29,
+    "read_pdf_sha256": "c00c2c13b69726f54883bd968e63ccb1bb447671719145975a69586ccb1bd8f9",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      4,
+      6,
+      7,
+      10
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2603.01236v1; ICLR 2026 header"
+  },
+  {
+    "key": "prumerge",
+    "name": "prumerge",
+    "title": "LLaVA-PruMerge: Adaptive Token Reduction for Efficient Large Multimodal Models",
+    "citation_url": "https://openaccess.thecvf.com/content/ICCV2025/html/Shang_LLaVA-PruMerge_Adaptive_Token_Reduction_for_Efficient_Large_Multimodal_Models_ICCV_2025_paper.html",
+    "primary_pdf_url": "https://arxiv.org/pdf/2403.15388v6",
+    "pdf_pages": 12,
+    "read_pdf_sha256": "a7fa0fca0200a034805ef9b0ffc34909bd54c81621444930eea4da3c083c1591",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      4,
+      5,
+      7
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "arXiv:2403.15388v6; compare formal ICCV 2025 version before transferring claims"
+  },
+  {
+    "key": "mob",
+    "name": "MoB",
+    "title": "Why 1 + 1 < 1 in Visual Token Pruning: Beyond Naïve Integration via Multi-Objective Balanced Covering",
+    "citation_url": "https://papers.neurips.cc/paper_files/paper/2025/hash/6818dcc65fdf3cbd4b05770fb957803e-Abstract-Conference.html",
+    "primary_pdf_url": "https://papers.neurips.cc/paper_files/paper/2025/file/6818dcc65fdf3cbd4b05770fb957803e-Paper-Conference.pdf",
+    "pdf_pages": 41,
+    "read_pdf_sha256": "474e0c910a72fdfee9eadfc05109b594f3595d4fac33abb90485ca0d11c145d6",
+    "reread_pdf_pages_this_handoff": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9
+    ],
+    "scope": "writing-relevant coherent passages and targeted evidence; not every appendix page",
+    "included_pdf": false,
+    "date": "2026-10-31",
+    "version_note": "conference-hosted PDF at recorded fixed proceedings URL"
+  }
+]

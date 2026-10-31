@@ -1,0 +1,64 @@
+[
+  {
+    "key": "qcpruner",
+    "url": "https://arxiv.org/pdf/2609.19990v1",
+    "pages": 22,
+    "status": "downloaded",
+    "scope": "targeted closest-work check, separate from 15 exemplar papers",
+    "reread_pages": [
+      1,
+      4
+    ],
+    "pdf_sha256": "0d08eb310580c8e39fcb93898220d502a85fdb5edfbf253a98e70d7c23adbfd2"
+  },
+  {
+    "key": "coreprune",
+    "url": "https://arxiv.org/pdf/2609.26484v1",
+    "pages": 24,
+    "status": "downloaded",
+    "scope": "targeted closest-work check, separate from 15 exemplar papers",
+    "reread_pages": [
+      1,
+      4
+    ],
+    "pdf_sha256": "4520f88bef5832d3cf6b6b7f4b1a424fb4c7859b7f6fb5e80e1eee191b84ff6a"
+  },
+  {
+    "key": "starpro",
+    "url": "https://arxiv.org/pdf/2609.05916v1",
+    "pages": 26,
+    "status": "downloaded",
+    "scope": "targeted closest-work check, separate from 15 exemplar papers",
+    "reread_pages": [
+      1,
+      3
+    ],
+    "pdf_sha256": "636b690b41a0840529fab995d230dcc762645c18f372aa46b8ce7b7db79997d8"
+  },
+  {
+    "key": "score",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Xu_SCoRe_Salience-Coverage_Reduction_for_Vision_Token_Pruning_in_Vision-Language_Models_CVPR_2026_paper.pdf",
+    "pages": 10,
+    "status": "downloaded",
+    "scope": "targeted closest-work check, separate from 15 exemplar papers",
+    "reread_pages": [
+      1,
+      3,
+      4
+    ],
+    "pdf_sha256": "ee25d39665888d30f0bcccd9b5a7c58ade31b34201d571936704dc00805fda09"
+  },
+  {
+    "key": "coin",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Du_CoIn_Coverage_and_Informativeness-Guided_Token_Reduction_for_Efficient_Large_Multimodal_CVPR_2026_paper.pdf",
+    "pages": 10,
+    "status": "downloaded",
+    "scope": "targeted closest-work check, separate from 15 exemplar papers",
+    "reread_pages": [
+      1,
+      3,
+      4
+    ],
+    "pdf_sha256": "70567cd327bd1efe04ed150ee96646bd5b819e794958088926fbbb4d7d7930c1"
+  }
+]

@@ -1,0 +1,46 @@
+% BELA Chinese working manuscript. Experiments are intentionally not included.
+% Compile locally with XeLaTeX and BibTeX or with an offline Tectonic bundle.
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[review]{cvpr}
+% Chinese font support only; the supplied CVPR geometry and type sizes are unchanged.
+\usepackage[UTF8,scheme=plain,fontset=fandol]{ctex}
+% fontspec is loaded by ctex; restore the original CVPR Latin font families.
+\renewcommand{\encodingdefault}{OT1}
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\ttdefault}{pcr}
+\ExplSyntaxOn
+\cs_if_exist:NT \l__fontspec_rmfamily_encoding_tl
+ {\tl_set:Nn \l__fontspec_rmfamily_encoding_tl {OT1}}
+\cs_if_exist:NT \l__fontspec_sffamily_encoding_tl
+ {\tl_set:Nn \l__fontspec_sffamily_encoding_tl {OT1}}
+\cs_if_exist:NT \l__fontspec_ttfamily_encoding_tl
+ {\tl_set:Nn \l__fontspec_ttfamily_encoding_tl {OT1}}
+\ExplSyntaxOff
+% Synchronize CJK heading fonts with CVPR's original 11 pt and 10 pt selectors.
+\renewcommand{\elvbf}{\fontsize{11}{12}\selectfont\bfseries}
+\renewcommand{\tenbf}{\fontsize{10}{12}\selectfont\bfseries}
+\normalfont
+\input{preamble}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
+\def\confName{CVPR}
+\def\confYear{2027}
+\title{BELA：覆盖约束下的问题条件\\渐进视觉 Token 剪枝}
+\author{Anonymous CVPR submission}
+\begin{document}
+\maketitle
+\input{sec/0_abstract}
+\input{sec/1_intro}
+\input{sec/2_related_work}
+\input{sec/3_method}
+% \input{sec/4_experiments}
+\input{sec/5_conclusion}
+\input{sec/llm_usage}
+{\small
+\bibliographystyle{ieeenat_fullname}
+\bibliography{references}
+}
+\end{document}

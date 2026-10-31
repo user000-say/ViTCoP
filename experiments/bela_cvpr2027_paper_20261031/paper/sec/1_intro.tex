@@ -1,0 +1,40 @@
+\section{引言}
+\label{sec:intro}
+
+视觉语言模型把视觉编码器和语言模型接到同一条生成过程里。Flamingo、BLIP-2 以及随后的 LLaVA、MiniGPT-4、InstructBLIP 说明，冻结或轻量对齐的视觉前端已经足以支持开放式图文交互~\cite{flamingo,blip2,llava,minigpt4,instructblip}。InternVL、Qwen2-VL、Qwen2.5-VL 和 LLaVA-OneVision 继续提高分辨率、增加视觉输入形式~\cite{internvl,qwen2vl,qwen25vl,onevision}。分辨率和视觉细节增加时，送入语言模型的 patch 序列通常一起变长。
+
+主流模型用 ViT 或 CLIP 把图像切成 patch，再经投影进入 Decoder~\cite{vit,clip,llava15}。LLaVA-1.5 的常用网格是 576 个视觉 token，往往长于问题本身。对长度为 $n$、宽度为 $d$ 的序列，自注意力中的查询--键与注意力--值乘积带有 $O(n^2d)$ 项~\cite{attention}。视觉前缀因此提高预填充成本，并增加解码时要读取的 KV cache~\cite{pagedattention}。FlashAttention 降低了注意力的访存开销~\cite{flashattention,flashattention2}，前馈层、投影和缓存实现仍随序列长度变化。减少实际进入各层的视觉 token，是另一条与算子优化互补的途径。
+
+已有工作表明，视觉序列里有大量可压缩冗余~\cite{fastv,visionzip,sparsevlm,vitcop}。VisionZip、VisPruner 和 LLaVA-PruMerge 在视觉侧挑选或合并紧凑表示，DivPrune 与 DART 分别从集合多样性和重复关系决定保留谁~\cite{visionzip,vispruner,prumerge,divprune,dart}。SparseVLM 与 PyramidDrop 则在语言模型内部按层缩减视觉序列~\cite{sparsevlm,pyramiddrop}。这些方法已经覆盖了“看视觉特征选 token”“看集合内部是否重复”和“在深层继续删”三类决策。
+
+问题条件并没有留在这一步之外。CDPruner 用指令相关性调制 DPP 核，MMTok 用统一覆盖同时代表文本和视觉，MoB 把提示对齐与视觉保留写成带预算分配的双目标覆盖~\cite{cdpruner,mmtok,mob}。SCoRe、CoIn 和 QCPruner 进一步把显著性、信息性或问题效用放进覆盖或设施选址目标~\cite{score,coin,qcpruner}。STAR-Pro 则把入口覆盖池和后续嵌套精炼连在同一个层平均预算下~\cite{starpro}。因此，不能把“同时使用问题、覆盖和渐进剪枝”本身当作剩余问题。
+
+仍需要单独处理的是交换的两侧并不评价同一组对象。一个位置与当前问题的相关性，描述的是它和问题代理的关系；把它换进集合时删掉的旧代表，影响的是有多少原始视觉位置失去当前最近代表。相关性高、相对已选集合也新颖的候选，仍可能拆掉一大片原先被覆盖的位置。本文研究的操作是：入口容量保持不变，问题信号只能在一个已经建好的视觉集合附近做有限次替换，而且每一次替换都要检查全体原始位置上的覆盖变化。
+
+BELA 按这个操作组织推理。视觉塔两个深度提供选择描述，显著性最高的一部分位置作为锚点，其余名额由空间格子上的原型新颖性补足，得到与问题无关的初始集合。问题条件更新使用另一套相似度：它在同一选择描述上计算全体位置的最近代表覆盖，只接受问题增益、新颖性和覆盖下降同时满足门槛的交换，并且交换次数有硬上限。随后 Decoder 把“进入早期计算”和“继续占用后层预算”分开。第一次缩减比较当前问题响应与浅层记录的秩，第二次缩减直接按问题对视觉位置的注意力保留。送入语言模型的是原模型投影器所使用的特征，选择描述只决定索引。整个过程不更新参数。
+
+我们在 LLaVA-1.5-7B 上固定 $64\!\rightarrow\!17\!\rightarrow\!10$ 的日程，层平均视觉 token 数为 32，视觉 token-layer 预算 $W{=}1024$。表~\ref{tab:main} 只改变入口身份。六项成绩除以固定完整模型参考后的平均值由 93.56\% 变为 95.34\%；参考值为 GQA 61.9、POPE F1 85.8、MME 1852、MMBench 64.1、ScienceQA-IMG 69.51、TextVQA-OCR 58.20。五项上升，TextVQA-OCR 由 53.41 降到 53.06。同一日程下，匹配换入数量的随机替换得到 GQA 55.96 和 POPE F1 83.34，已经高于原生集合，真实问题的更新再高于这一随机对照。把问题换成固定错配排列时 GQA 为 55.68，该对照的 POPE 没有跑完，所以问题身份目前只在 GQA 上有成对结果。POPE F1 的上升伴随召回由 73.60\% 增至 81.58\%、精度由 93.11\% 降至 91.30\%，不能写成所有幻觉类型都减少。
+
+\begin{table}[t]
+\centering
+\caption{LLaVA-1.5-7B 上只改变入口身份的对照。两列共享双深度初始化、入口容量 64、事件 $11{:}17,19{:}10$ 和后层规则。GQA、ScienceQA-IMG 与 TextVQA-OCR 为准确率，POPE 为 F1，MME 为感知加认知，MMBench 为英文开发集分数。末行是六项相对固定完整模型参考的算术平均。}
+\label{tab:main}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc}
+\hline
+任务 & 原生集合 & 问题条件更新 \\
+\hline
+GQA & 55.57 & 56.52 \\
+POPE F1 & 82.21 & 86.16 \\
+MME & 1651.78 & 1715.68 \\
+MMBench-EN & 61.34 & 61.77 \\
+ScienceQA-IMG & 68.91 & 69.61 \\
+TextVQA-OCR & 53.41 & 53.06 \\
+\hline
+六任务归一化平均 & 93.56\% & 95.34\% \\
+\hline
+\end{tabular}
+\end{table}
+
+本文的贡献有三点。第一，把严格入口预算下的问题适配定义成对已有视觉集合的有限交换，并区分初始化所用的空间原型规则和更新所用的群体覆盖。第二，给出由问题增益、新颖性和覆盖变化共同筛选的同容量交换，以及移除损失与加入补偿的分解和累计变化范围。第三，把该集合接到固定的 Decoder 日程上：第一次精炼使用问题响应的秩漂移，第二次使用问题注意力，并在上述同日程对照中报告入口身份变化的效果与文字任务上的下降。

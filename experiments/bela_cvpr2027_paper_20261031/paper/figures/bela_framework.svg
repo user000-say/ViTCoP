@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="835" viewBox="0 0 2400 835">
+<rect width="100%" height="100%" fill="white"/>
+<rect x="25" y="30" width="2350" height="490" rx="18" fill="#F4F7FB" stroke="#C4CDD7" stroke-width="3"/>
+<rect x="25" y="560" width="2350" height="250" rx="18" fill="#F6F8F6" stroke="#C4CDD7" stroke-width="3"/>
+<text x="70" y="78" font-family="Noto Serif CJK SC,serif" font-size="43" fill="#14212D" text-anchor="start" dominant-baseline="central">阶段一 双深度视觉基础与问题条件修正</text>
+<text x="70" y="598" font-family="Noto Serif CJK SC,serif" font-size="43" fill="#14212D" text-anchor="start" dominant-baseline="central">阶段二 Decoder 内的渐进精炼（按剪点配置启用 RDRIFT）</text>
+<rect x="80" y="215" width="330" height="140" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="245" y="250" font-family="Noto Serif CJK SC,serif" font-size="38" fill="#14212D" text-anchor="middle" dominant-baseline="central">完整视觉编码</text>
+<text x="245" y="297" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">中层与深层表征</text>
+<text x="245" y="333" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">第9层 / 倒数第二层</text>
+<rect x="600" y="215" width="400" height="140" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="800" y="251" font-family="Noto Serif CJK SC,serif" font-size="38" fill="#14212D" text-anchor="middle" dominant-baseline="central">Native COVER</text>
+<text x="800" y="299" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">双深度指导的基础构建</text>
+<text x="800" y="337" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">视觉代表集合 S0</text>
+<polyline points="410,282 600,282" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="600,282 583.638616505852,289.5036744437258 583.638616505852,274.4963255562742" fill="#496E9C"/>
+<text x="505" y="246" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#496E9C" text-anchor="middle" dominant-baseline="central">选择描述</text>
+<rect x="1300" y="215" width="440" height="140" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="1520" y="251" font-family="Noto Serif CJK SC,serif" font-size="38" fill="#14212D" text-anchor="middle" dominant-baseline="central">QA-COVER</text>
+<text x="1520" y="297" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">同容量问题条件更新</text>
+<text x="1520" y="335" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">相关性、新颖性与覆盖约束</text>
+<polyline points="1000,282 1300,282" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="1300,282 1283.638616505852,289.5036744437258 1283.638616505852,274.4963255562742" fill="#496E9C"/>
+<text x="1180" y="246" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#496E9C" text-anchor="middle" dominant-baseline="central">基础集合 S0</text>
+<text x="1180" y="322" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#496E9C" text-anchor="middle" dominant-baseline="central">度量视图</text>
+<rect x="1980" y="235" width="310" height="145" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="2135" y="273" font-family="Noto Serif CJK SC,serif" font-size="36" fill="#14212D" text-anchor="middle" dominant-baseline="central">按 SQ 提取</text>
+<text x="2135" y="320" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">实际前向表示</text>
+<polyline points="1740,282 1980,282" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="1980,282 1963.638616505852,289.5036744437258 1963.638616505852,274.4963255562742" fill="#496E9C"/>
+<text x="1856" y="250" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#496E9C" text-anchor="middle" dominant-baseline="central">更新索引 SQ</text>
+<rect x="1930" y="115" width="360" height="62" rx="10" fill="#E9EFF7" stroke="#9CB0C9" stroke-width="3"/>
+<text x="2110" y="145" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#14212D" text-anchor="middle" dominant-baseline="central">问题 Q 的输入表示</text>
+<rect x="1300" y="115" width="440" height="62" rx="10" fill="#E9EFF7" stroke="#9CB0C9" stroke-width="3"/>
+<text x="1520" y="145" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#14212D" text-anchor="middle" dominant-baseline="central">问题相关性代理 q</text>
+<polyline points="1930,145 1740,145" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="1740,145 1756.361383494148,137.4963255562742 1756.361383494148,152.5036744437258" fill="#496E9C"/>
+<polyline points="1520,177 1520,215" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="1520,215 1512.4963255562743,198.63861650585207 1527.5036744437257,198.63861650585207" fill="#496E9C"/>
+<rect x="80" y="398" width="330" height="80" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="245" y="436" font-family="Noto Serif CJK SC,serif" font-size="36" fill="#14212D" text-anchor="middle" dominant-baseline="central">完整投影 X</text>
+<polyline points="245,355 245,398" fill="none" stroke="#263644" stroke-width="4"/>
+<polygon points="245,398 237.4963255562742,381.63861650585204 252.5036744437258,381.63861650585204" fill="#263644"/>
+<polyline points="410,436 1050,436 1050,145 1300,145" fill="none" stroke="#496E9C" stroke-width="4" stroke-dasharray="13 9"/>
+<polygon points="1300,145 1283.638616505852,152.5036744437258 1283.638616505852,137.4963255562742" fill="#496E9C"/>
+<polyline points="410,454 2135,454 2135,380" fill="none" stroke="#263644" stroke-width="4"/>
+<polygon points="2135,380 2142.5036744437257,396.36138349414796 2127.4963255562743,396.36138349414796" fill="#263644"/>
+<text x="1010" y="489" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">保留原模型的表示路径</text>
+<polyline points="2290,310 2340,310 2340,540 50,540 50,706 220,706" fill="none" stroke="#263644" stroke-width="4"/>
+<polygon points="220,706 203.63861650585207,713.5036744437258 203.63861650585207,698.4963255562742" fill="#263644"/>
+<rect x="220" y="657" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="455" y="687" font-family="Noto Serif CJK SC,serif" font-size="36" fill="#14212D" text-anchor="middle" dominant-baseline="central">64 个视觉 token</text>
+<text x="455" y="733" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">第 1-12 层</text>
+<rect x="965" y="657" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="1200" y="687" font-family="Noto Serif CJK SC,serif" font-size="36" fill="#14212D" text-anchor="middle" dominant-baseline="central">17 个视觉 token</text>
+<text x="1200" y="733" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">第 13-20 层</text>
+<rect x="1710" y="657" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#576777" stroke-width="3"/>
+<text x="1945" y="687" font-family="Noto Serif CJK SC,serif" font-size="36" fill="#14212D" text-anchor="middle" dominant-baseline="central">10 个视觉 token</text>
+<text x="1945" y="733" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">第 21-32 层</text>
+<polyline points="690,706 965,706" fill="none" stroke="#263644" stroke-width="4"/>
+<polygon points="965,706 948.638616505852,713.5036744437258 948.638616505852,698.4963255562742" fill="#263644"/>
+<polyline points="1435,706 1710,706" fill="none" stroke="#263644" stroke-width="4"/>
+<polygon points="1710,706 1693.638616505852,713.5036744437258 1693.638616505852,698.4963255562742" fill="#263644"/>
+<text x="827" y="653" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">指定剪点</text>
+<text x="1572" y="653" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">指定剪点</text>
+<text x="1390" y="788" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#536475" text-anchor="middle" dominant-baseline="central">实线 表示前向</text>
+<text x="1960" y="788" font-family="Noto Serif CJK SC,serif" font-size="34" fill="#496E9C" text-anchor="middle" dominant-baseline="central">虚线 选择依据或索引</text>
+</svg>

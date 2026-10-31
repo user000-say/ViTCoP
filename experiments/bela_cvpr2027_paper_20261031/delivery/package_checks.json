@@ -1,0 +1,14 @@
+{
+  "exemplar_count": 15,
+  "bib_entries": 54,
+  "cited_unique_keys": 54,
+  "undefined_bib_keys": [],
+  "uncited_bib_keys": [],
+  "seed_pdf_pages": 7,
+  "page_points": [
+    612.0,
+    792.0
+  ],
+  "qa_reference_syntax_parsed": true,
+  "seed_pdf_sha256": "bc1fb5370e7d2919440a88ea63cc5b85a4015826c9f74a261da4509fb08ac944"
+}

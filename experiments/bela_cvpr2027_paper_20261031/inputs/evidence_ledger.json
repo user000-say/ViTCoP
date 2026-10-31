@@ -1,0 +1,61 @@
+{
+  "status": "author_reported; models not rerun in this handoff",
+  "model": "LLaVA-1.5-7B",
+  "original_visual_tokens": 576,
+  "decoder_layers": 32,
+  "schedule": [
+    {
+      "layers": 12,
+      "tokens": 64
+    },
+    {
+      "layers": 8,
+      "tokens": 17
+    },
+    {
+      "layers": 12,
+      "tokens": 10
+    }
+  ],
+  "W": 1024,
+  "average_K": 32,
+  "token_layer_reduction_percent": 94.44444444444444,
+  "mean6_QA_reported": 95.34,
+  "mean6_native_reported": 93.56,
+  "mean_of_reported_rounded_relatives": 95.33999999999999,
+  "controls": {
+    "GQA": {
+      "native": 55.57,
+      "QA": 56.52,
+      "matched_random": 55.96,
+      "wrong_query": 55.68
+    },
+    "POPE_F1": {
+      "native": 82.21,
+      "QA": 86.16,
+      "matched_random": 83.34,
+      "wrong_query": null
+    }
+  },
+  "survival_counts": {
+    "GQA": {
+      "added": 100533,
+      "final_alive": 11048
+    },
+    "POPE": {
+      "added": 71953,
+      "final_alive": 7306
+    }
+  },
+  "complete_production_code_in_package": false,
+  "QA_reference_source_lines": [
+    4664,
+    5072
+  ],
+  "template_sha256": {
+    "cvpr.sty": "1cd7f434b13d41c475df4a1901a5d82d9ca8b80b8cf6205dc4602a5c164286b4",
+    "preamble.tex": "f666a85903f49929395951e7afb620e96d4e208334623f23135298b4d7f06228",
+    "ieeenat_fullname.bst": "e38e6166bd7b1e6d23a1b79dcdb55c656e4fcdbe91bdf6b50d827e6b5d1aacfc"
+  },
+  "source_export_sha256": "6a45fa3bb8271cec746c8acda3a82d0aaf02be7f089f1495dabbaccb81a2ebd4"
+}

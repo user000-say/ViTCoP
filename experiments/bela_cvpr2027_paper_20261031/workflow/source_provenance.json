@@ -1,0 +1,58 @@
+{
+  "repo": "https://github.com/mikubaka88/CCFA-Skills",
+  "commit": "91ca9e2801698466f934b557a75ce46db8ba46b5",
+  "reference_files": [
+    {
+      "path": "ccf-humanization/SKILL.md",
+      "sha256": "6ea2eff6c9f2763c11ce463c2a00ef15d916375b3ef5399af3d22aacc4ffed20"
+    },
+    {
+      "path": "ccf-common/SKILL.md",
+      "sha256": "b71e3f17ea0a28bf710ea2a44744b54ff4c03cba688f391dfb9a9e28111c2676"
+    },
+    {
+      "path": "ccf-paper-to-exemplar/SKILL.md",
+      "sha256": "8014f09d17165c95be89c5a053be1da89c2aba914d4138984fa2ac1226853b4a"
+    },
+    {
+      "path": "ccf-idea-optimizer/SKILL.md",
+      "sha256": "5e52d586eaff6e2f5a7e34e4a61ceb25edd1eb16b5407aba491d6c141eeceab3"
+    },
+    {
+      "path": "ccf-paper-writer/SKILL.md",
+      "sha256": "058443596b595c5d4de010eecf51e45db18b5688cba06093b68a9d508570a237"
+    },
+    {
+      "path": "ccf-paper-reviewer/SKILL.md",
+      "sha256": "25b3a8a41c4826fe5a42bc72210c3fdf59344ef9a3cdf7aadbaaaed78199a715"
+    },
+    {
+      "path": "ccf-integrity-auditor/SKILL.md",
+      "sha256": "fc7e557cd4f6fe163e7a12db5fde27cd323e7277a9a5b0ffe213e77c8c8ad82f"
+    },
+    {
+      "path": "ccf-submission-checker/SKILL.md",
+      "sha256": "e4d0a30ff7093b282b42af0995177efa50723aaddbea818156c1c19efe162bc5"
+    },
+    {
+      "path": "ccf-pipeline-orchestrator/SKILL.md",
+      "sha256": "32da0107b3da0e3a269b639ba65d0c9d3856303b45b983e17d48f626ac09010d"
+    },
+    {
+      "path": "ccf-paper-writer/references/exemplar-style-analysis.md",
+      "sha256": "171cb609d352c1823e40b5377d0bb870f527d466172584783caefc9662761476"
+    },
+    {
+      "path": "ccf-idea-optimizer/references/problem-method-blueprint.md",
+      "sha256": "03be439f299550e84260a7e19dcedd4c88a299b3a0a2d303e4eb7efb694dddda"
+    },
+    {
+      "path": "ccf-common/references/privacy-and-evidence.md",
+      "sha256": "2a2e1649296ae346120f840764b1228a30acac782060f5dfd6ad8500fadd1361"
+    },
+    {
+      "path": "ccf-common/references/artifact-contracts.md",
+      "sha256": "2bbf9af3f7cf213410835f8ff4b6ca95195c6b49c7b6064406e01aa09cfc5bfa"
+    }
+  ]
+}

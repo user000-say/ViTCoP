@@ -1,0 +1,369 @@
+\begin{thebibliography}{47}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Alayrac et~al.(2022)Alayrac, Donahue, Luc, Miech, Barr, Hasson, Lenc,
+  Mensch, Millican, Reynolds, Ring, Rutherford, Cabi, Han, Gong, Samangooei,
+  Monteiro, Menick, Borgeaud, Brock, Nematzadeh, Sharifzadeh, Binkowski,
+  Barreira, Vinyals, Zisserman, and Simonyan]{flamingo}
+Jean-Baptiste Alayrac, Jeff Donahue, Pauline Luc, Antoine Miech, Iain Barr,
+  Yana Hasson, Karel Lenc, Arthur Mensch, Katie Millican, Malcolm Reynolds,
+  Roman Ring, Eliza Rutherford, Serkan Cabi, Tengda Han, Zhitao Gong, Sina
+  Samangooei, Marianne Monteiro, Jacob Menick, Sebastian Borgeaud, Andrew
+  Brock, Aida Nematzadeh, Sahand Sharifzadeh, Mikolaj Binkowski, Ricardo
+  Barreira, Oriol Vinyals, Andrew Zisserman, and Karen Simonyan.
+\newblock {Flamingo: a Visual Language Model for Few-Shot Learning}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
+
+\bibitem[Alvar et~al.(2025)Alvar, Singh, Akbari, and Zhang]{divprune}
+Saeed~Ranjbar Alvar, Gursimran Singh, Mohammad Akbari, and Yong Zhang.
+\newblock {DivPrune: Diversity-based Visual Token Pruning for Large Multimodal
+  Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 9392--9401, 2025.
+
+\bibitem[Baek et~al.(2026)Baek, Song, Kim, and Kong]{agilepruner}
+Changwoo Baek, Jouwon Song, Sohyeon Kim, and Kyeongbo Kong.
+\newblock {AgilePruner: An Empirical Study of Attention and Diversity for
+  Adaptive Visual Token Pruning in Large Vision-Language Models}.
+\newblock In \emph{International Conference on Learning Representations}, 2026.
+
+\bibitem[Bai et~al.(2025)Bai, Chen, Liu, Wang, Ge, Song, Dang, Wang, Wang,
+  Tang, Zhong, Zhu, Yang, Li, Wan, Wang, Ding, Fu, Xu, Ye, Zhang, Xie, Cheng,
+  Zhang, Yang, Xu, and Lin]{qwen25vl}
+Shuai Bai, Keqin Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Sibo Song, Kai
+  Dang, Peng Wang, Shijie Wang, Jun Tang, Humen Zhong, Yuanzhi Zhu, Mingkun
+  Yang, Zhaohai Li, Jianqiang Wan, Pengfei Wang, Wei Ding, Zheren Fu, Yiheng
+  Xu, Jiabo Ye, Xi Zhang, Tianbao Xie, Zesen Cheng, Hang Zhang, Zhibo Yang,
+  Haiyang Xu, and Junyang Lin.
+\newblock {Qwen2.5-VL Technical Report}.
+\newblock \emph{arXiv preprint arXiv:2502.13923}, 2025.
+
+\bibitem[Bolya et~al.(2023)Bolya, Fu, Dai, Zhang, Feichtenhofer, and
+  Hoffman]{tome}
+Daniel Bolya, Cheng-Yang Fu, Xiaoliang Dai, Peizhao Zhang, Christoph
+  Feichtenhofer, and Judy Hoffman.
+\newblock {Token Merging: Your ViT But Faster}.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Chen et~al.(2024{\natexlab{a}})Chen, Zhao, Liu, Bai, Lin, Zhou, and
+  Chang]{fastv}
+Liang Chen, Haozhe Zhao, Tianyu Liu, Shuai Bai, Junyang Lin, Chang Zhou, and
+  Baobao Chang.
+\newblock {An Image is Worth 1/2 Tokens After Layer 2: Plug-and-Play Inference
+  Acceleration for Large Vision-Language Models}.
+\newblock In \emph{Computer Vision - ECCV 2024}, 2024{\natexlab{a}}.
+
+\bibitem[Chen et~al.(2024{\natexlab{b}})Chen, Wu, Wang, Su, Chen, Xing, Zhong,
+  Zhang, Zhu, Lu, Li, Luo, Lu, Qiao, and Dai]{internvl}
+Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan Zhong,
+  Qinglong Zhang, Xizhou Zhu, Lewei Lu, Bin Li, Ping Luo, Tong Lu, Yu Qiao, and
+  Jifeng Dai.
+\newblock {InternVL: Scaling up Vision Foundation Models and Aligning for
+  Generic Visual-Linguistic Tasks}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 24185--24198, 2024{\natexlab{b}}.
+
+\bibitem[Dai et~al.(2023)Dai, Li, Li, Tiong, Zhao, Wang, Li, Fung, and
+  Hoi]{instructblip}
+Wenliang Dai, Junnan Li, Dongxu Li, Anthony Meng~Huat Tiong, Junqi Zhao,
+  Weisheng Wang, Boyang Li, Pascale Fung, and Steven Hoi.
+\newblock {InstructBLIP: Towards General-purpose Vision-Language Models with
+  Instruction Tuning}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem[Dao(2024)]{flashattention2}
+Tri Dao.
+\newblock {FlashAttention-2: Faster Attention with Better Parallelism and Work
+  Partitioning}.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
+
+\bibitem[Dao et~al.(2022)Dao, Fu, Ermon, Rudra, and R{\'e}]{flashattention}
+Tri Dao, Daniel~Y. Fu, Stefano Ermon, Atri Rudra, and Christopher R{\'e}.
+\newblock {FlashAttention: Fast and Memory-Efficient Exact Attention with
+  IO-Awareness}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
+
+\bibitem[Dong et~al.(2026)Dong, Hu, Zhang, Yin, Fu, and Qian]{mmtok}
+Sixun Dong, Juhua Hu, Mian Zhang, Ming Yin, Yanjie Fu, and Qi Qian.
+\newblock {MMTok: Multimodal Coverage Maximization for Efficient Inference of
+  VLMs}.
+\newblock In \emph{International Conference on Learning Representations}, 2026.
+
+\bibitem[Dosovitskiy et~al.(2021)Dosovitskiy, Beyer, Kolesnikov, Weissenborn,
+  Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and
+  Houlsby]{vit}
+Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn,
+  Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg
+  Heigold, Sylvain Gelly, Jakob Uszkoreit, and Neil Houlsby.
+\newblock {An Image is Worth 16x16 Words: Transformers for Image Recognition at
+  Scale}.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Du et~al.(2026)Du, Deng, Liu, Zhang, Chen, and Ren]{coin}
+Chenxi Du, Yongheng Deng, Jiani Liu, Yujia Zhang, Xi Chen, and Ju Ren.
+\newblock {CoIn: Coverage and Informativeness-Guided Token Reduction for
+  Efficient Large Multimodal Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 10492--10501, 2026.
+
+\bibitem[Fayyaz et~al.(2022)Fayyaz, Koohpayegani, Jafari, Sengupta, Joze,
+  Sommerlade, Pirsiavash, and Gall]{ats}
+Mohsen Fayyaz, Soroush~Abbasi Koohpayegani, Farnoush~Rezaei Jafari, Sunando
+  Sengupta, Hamid Reza~Vaezi Joze, Eric Sommerlade, Hamed Pirsiavash, and
+  Juergen Gall.
+\newblock {Adaptive Token Sampling For Efficient Vision Transformers}.
+\newblock In \emph{Computer Vision -- ECCV 2022}, 2022.
+
+\bibitem[Guo et~al.(2026)Guo, Wang, Zhang, Meng, Zhang, Cao, Jiang, Wu, Wu,
+  Chen, Luo, Cheng, Tang, Li, Li, Huang, Wang, and Zhang]{starpro}
+Yichen Guo, Tinghao Wang, Qizhe Zhang, Lingbei Meng, Yuan Zhang, Jiajun Cao,
+  Hao Jiang, Chenwei Wu, Jixian Wu, Sixiang Chen, Tao Luo, Hongyang Cheng, Kai
+  Tang, Chenxi Li, Renyuan Li, Xiande Huang, Wenya Wang, and Shanghang Zhang.
+\newblock {STAR-Pro: Stage-Wise Token Adaptive Reduction with Progressive
+  Refinement for Efficient Large Vision-Language Models}.
+\newblock \emph{arXiv preprint arXiv:2609.05916}, 2026.
+
+\bibitem[He et~al.(2026{\natexlab{a}})He, Yang, and Xu]{autoselect}
+Landi He, Xiaoyu Yang, and Lijian Xu.
+\newblock {The Model Knows Which Tokens Matter: Automatic Token Selection via
+  Noise Gating}.
+\newblock \emph{arXiv preprint arXiv:2603.07135}, 2026{\natexlab{a}}.
+
+\bibitem[He et~al.(2026{\natexlab{b}})He, Liang, He, Zeng, He, Fang, Wu, and
+  Zheng]{coreprune}
+Shengli He, Yongchao Liang, Roumeng He, Junjie Zeng, Jiyuan He, Xin Fang, Can
+  Wu, and Li Zheng.
+\newblock {From Token Importance to Conditional Removability: Rethinking Visual
+  Token Pruning in Multimodal Large Language Models}.
+\newblock \emph{arXiv preprint arXiv:2609.26484}, 2026{\natexlab{b}}.
+
+\bibitem[He et~al.(2026{\natexlab{c}})He, Liang, He, Zeng, He, Wu, and
+  Zheng]{qcpruner}
+Shengli He, Yongchao Liang, Roumeng He, Junjie Zeng, Jiyuan He, Can Wu, and Li
+  Zheng.
+\newblock {QCPruner: Query-Conditioned Population Coverage for Visual Token
+  Pruning}.
+\newblock \emph{arXiv preprint arXiv:2609.19990}, 2026{\natexlab{c}}.
+
+\bibitem[Kwon et~al.(2023)Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang,
+  and Stoica]{pagedattention}
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody~Hao Yu,
+  Joseph~E. Gonzalez, Hao Zhang, and Ion Stoica.
+\newblock {Efficient Memory Management for Large Language Model Serving with
+  PagedAttention}.
+\newblock In \emph{Proceedings of the 29th Symposium on Operating Systems
+  Principles}, 2023.
+
+\bibitem[Li et~al.(2024)Li, Zhang, Guo, Zhang, Li, Zhang, Zhang, Zhang, Li,
+  Liu, and Li]{onevision}
+Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen
+  Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, and Chunyuan Li.
+\newblock {LLaVA-OneVision: Easy Visual Task Transfer}.
+\newblock \emph{arXiv preprint arXiv:2408.03326}, 2024.
+
+\bibitem[Li et~al.(2023)Li, Li, Savarese, and Hoi]{blip2}
+Junnan Li, Dongxu Li, Silvio Savarese, and Steven Hoi.
+\newblock {BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image
+  Encoders and Large Language Models}.
+\newblock In \emph{Proceedings of the 40th International Conference on Machine
+  Learning}, pages 19730--19742, 2023.
+
+\bibitem[Li et~al.(2025)Li, Zhan, Chen, Liu, jie Xiong, and Lu]{mob}
+Yangfu Li, Hongjian Zhan, Tianyi Chen, Qi Liu, Yu jie Xiong, and Yue Lu.
+\newblock {Why $1 + 1 < 1$ in Visual Token Pruning: Beyond Na{\"i}ve
+  Integration via Multi-Objective Balanced Covering}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2025.
+
+\bibitem[Liang et~al.(2022)Liang, Ge, Tong, Song, Wang, and Xie]{evit}
+Youwei Liang, Chongjian Ge, Zhan Tong, Yibing Song, Jue Wang, and Pengtao Xie.
+\newblock {EViT: Expediting Vision Transformers via Token Reorganizations}.
+\newblock In \emph{International Conference on Learning Representations}, 2022.
+
+\bibitem[Lin and Bilmes(2011)]{linbilmes2011}
+Hui Lin and Jeff Bilmes.
+\newblock {A Class of Submodular Functions for Document Summarization}.
+\newblock In \emph{Proceedings of the 49th Annual Meeting of the Association
+  for Computational Linguistics: Human Language Technologies}, pages 510--520,
+  2011.
+
+\bibitem[Liu et~al.(2023)Liu, Li, Wu, and Lee]{llava}
+Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong~Jae Lee.
+\newblock {Visual Instruction Tuning}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem[Liu et~al.(2024)Liu, Li, Li, and Lee]{llava15}
+Haotian Liu, Chunyuan Li, Yuheng Li, and Yong~Jae Lee.
+\newblock {Improved Baselines with Visual Instruction Tuning}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 26296--26306, 2024.
+
+\bibitem[Liu et~al.(2026)Liu, Zhu, Du, Lian, Li, Chen, Guan, and Wang]{hiprune}
+Jizhihui Liu, Guangdao Zhu, Feiyi Du, Niu Lian, Jun Li, Bin Chen, Weili Guan,
+  and Yaowei Wang.
+\newblock {HiPrune: Hierarchical Attention for Efficient Token Pruning in
+  Vision-Language Models}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2026}, pages 3274--3291, 2026.
+
+\bibitem[Luo et~al.(2026)Luo, Chen, Huang, and Huang]{vitcop}
+Wen Luo, Peng Chen, Xiaotao Huang, and LiQun Huang.
+\newblock {ViTCoP: Accelerating Large Vision-Language Models via Visual and
+  Textual Semantic Collaborative Pruning}.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}, 2026.
+
+\bibitem[Radford et~al.(2021)Radford, Kim, Hallacy, Ramesh, Goh, Agarwal,
+  Sastry, Askell, Mishkin, Clark, Krueger, and Sutskever]{clip}
+Alec Radford, Jong~Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh,
+  Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark,
+  Gretchen Krueger, and Ilya Sutskever.
+\newblock {Learning Transferable Visual Models From Natural Language
+  Supervision}.
+\newblock In \emph{Proceedings of the 38th International Conference on Machine
+  Learning}, pages 8748--8763, 2021.
+
+\bibitem[Rao et~al.(2021)Rao, Zhao, Liu, Lu, Zhou, and Hsieh]{dynamicvit}
+Yongming Rao, Wenliang Zhao, Benlin Liu, Jiwen Lu, Jie Zhou, and Cho-Jui Hsieh.
+\newblock {DynamicViT: Efficient Vision Transformers with Dynamic Token
+  Sparsification}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Ryoo et~al.(2021)Ryoo, Piergiovanni, Arnab, Dehghani, and
+  Angelova]{tokenlearner}
+Michael~S. Ryoo, AJ Piergiovanni, Anurag Arnab, Mostafa Dehghani, and Anelia
+  Angelova.
+\newblock {TokenLearner: What Can 8 Learned Tokens Do for Images and Videos?}
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Shang et~al.(2025)Shang, Cai, Xu, Lee, and Yan]{prumerge}
+Yuzhang Shang, Mu Cai, Bingxin Xu, Yong~Jae Lee, and Yan Yan.
+\newblock {LLaVA-PruMerge: Adaptive Token Reduction for Efficient Large
+  Multimodal Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision}, pages 22857--22867, 2025.
+
+\bibitem[Sun et~al.(2026)Sun, Dong, Fan, and Yang]{hiloprune}
+Zixun Sun, Yubo Dong, Hehe Fan, and Yi Yang.
+\newblock {Hi-Lo Prune: Look at What You'll Lose before Pruning with
+  Hierarchical Token Selection}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 31941--31951, 2026.
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez,
+  Kaiser, and Polosukhin]{attention}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
+  Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\newblock {Attention Is All You Need}.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem[Wang et~al.(2024)Wang, Bai, Tan, Wang, Fan, Bai, Chen, Liu, Wang, Ge,
+  Fan, Dang, Du, Ren, Men, Liu, Zhou, Zhou, and Lin]{qwen2vl}
+Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin
+  Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Yang Fan, Kai Dang, Mengfei Du,
+  Xuancheng Ren, Rui Men, Dayiheng Liu, Chang Zhou, Jingren Zhou, and Junyang
+  Lin.
+\newblock {Qwen2-VL: Enhancing Vision-Language Model's Perception of the World
+  at Any Resolution}.
+\newblock \emph{arXiv preprint arXiv:2409.12191}, 2024.
+
+\bibitem[Wen et~al.(2025)Wen, Gao, Wang, Zhang, Zhang, Li, He, and Zhang]{dart}
+Zichen Wen, Yifeng Gao, Shaobo Wang, Junyuan Zhang, Qintong Zhang, Weijia Li,
+  Conghui He, and Linfeng Zhang.
+\newblock {Stop Looking for ``Important Tokens'' in Multimodal Language Models:
+  Duplication Matters More}.
+\newblock In \emph{Proceedings of the 2025 Conference on Empirical Methods in
+  Natural Language Processing}, 2025.
+
+\bibitem[Xing et~al.(2025)Xing, Huang, Dong, Lu, Zhang, Zang, Cao, He, Wang,
+  Wu, and Lin]{pyramiddrop}
+Long Xing, Qidong Huang, Xiaoyi Dong, Jiajie Lu, Pan Zhang, Yuhang Zang, Yuhang
+  Cao, Conghui He, Jiaqi Wang, Feng Wu, and Dahua Lin.
+\newblock {Conical Visual Concentration for Efficient Large Vision-Language
+  Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 14593--14603, 2025.
+
+\bibitem[Xu et~al.(2026)Xu, Shi, and Gao]{score}
+Tong Xu, Hailong Shi, and Xingyu Gao.
+\newblock {SCoRe: Salience-Coverage Reduction for Vision Token Pruning in
+  Vision-Language Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 24686--24695, 2026.
+
+\bibitem[Yang et~al.(2025{\natexlab{a}})Yang, Chen, Tian, Wang, Li, Yu, and
+  Jia]{visionzip}
+Senqiao Yang, Yukang Chen, Zhuotao Tian, Chengyao Wang, Jingyao Li, Bei Yu, and
+  Jiaya Jia.
+\newblock {VisionZip: Longer is Better but Not Necessary in Vision Language
+  Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 19792--19802, 2025{\natexlab{a}}.
+
+\bibitem[Yang et~al.(2025{\natexlab{b}})Yang, Xu, Cui, Wang, Lin, and
+  Pang]{vflowopt}
+Sihan Yang, Runsen Xu, Chenhang Cui, Tai Wang, Dahua Lin, and Jiangmiao Pang.
+\newblock {VFlowOpt: A Token Pruning Framework for LMMs with Visual Information
+  Flow-Guided Optimization}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision}, pages 23924--23934, 2025{\natexlab{b}}.
+
+\bibitem[Ye et~al.(2025{\natexlab{a}})Ye, Wu, Lin, and Zhou]{fitprune}
+Weihao Ye, Qiong Wu, Wenhao Lin, and Yiyi Zhou.
+\newblock {Fit and Prune: Fast and Training-free Visual Token Pruning for
+  Multi-modal Large Language Models}.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}, pages 22128--22136, 2025{\natexlab{a}}.
+
+\bibitem[Ye et~al.(2025{\natexlab{b}})Ye, Gan, Ge, Zhang, and Tang]{atpllava}
+Xubing Ye, Yukang Gan, Yixiao Ge, Xiao-Ping Zhang, and Yansong Tang.
+\newblock {ATP-LLaVA: Adaptive Token Pruning for Large Vision Language Models}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 24972--24982, 2025{\natexlab{b}}.
+
+\bibitem[Yin et~al.(2022)Yin, Vahdat, Alvarez, Mallya, Kautz, and
+  Molchanov]{avit}
+Hongxu Yin, Arash Vahdat, Jose~M. Alvarez, Arun Mallya, Jan Kautz, and Pavlo
+  Molchanov.
+\newblock {A-ViT: Adaptive Tokens for Efficient Vision Transformer}.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, pages 10809--10818, 2022.
+
+\bibitem[Zhang et~al.(2025{\natexlab{a}})Zhang, Cheng, Lu, Zhang, Zhuo, Cao,
+  Guo, She, and Zhang]{vispruner}
+Qizhe Zhang, Aosong Cheng, Ming Lu, Renrui Zhang, Zhiyong Zhuo, Jiajun Cao,
+  Shaobo Guo, Qi She, and Shanghang Zhang.
+\newblock {Beyond Text-Visual Attention: Exploiting Visual Cues for Effective
+  Token Pruning in VLMs}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on
+  Computer Vision}, pages 20857--20867, 2025{\natexlab{a}}.
+
+\bibitem[Zhang et~al.(2025{\natexlab{b}})Zhang, Liu, Li, Lu, Zhang, Pan, She,
+  and Zhang]{cdpruner}
+Qizhe Zhang, Mengzhen Liu, Lichen Li, Ming Lu, Yuan Zhang, Junwen Pan, Qi She,
+  and Shanghang Zhang.
+\newblock {Beyond Attention or Similarity: Maximizing Conditional Diversity for
+  Token Pruning in MLLMs}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  2025{\natexlab{b}}.
+
+\bibitem[Zhang et~al.(2025{\natexlab{c}})Zhang, Fan, Ma, Zheng, Huang, Cheng,
+  Gudovskiy, Okuno, Nakata, Keutzer, and Zhang]{sparsevlm}
+Yuan Zhang, Chun-Kai Fan, Junpeng Ma, Wenzhao Zheng, Tao Huang, Kuan Cheng,
+  Denis~A Gudovskiy, Tomoyuki Okuno, Yohei Nakata, Kurt Keutzer, and Shanghang
+  Zhang.
+\newblock {SparseVLM: Visual Token Sparsification for Efficient Vision-Language
+  Model Inference}.
+\newblock In \emph{Proceedings of the 42nd International Conference on Machine
+  Learning}, pages 74840--74857, 2025{\natexlab{c}}.
+
+\bibitem[Zhu et~al.(2024)Zhu, Chen, Shen, Li, and Elhoseiny]{minigpt4}
+Deyao Zhu, Jun Chen, Xiaoqian Shen, Xiang Li, and Mohamed Elhoseiny.
+\newblock {MiniGPT-4: Enhancing Vision-Language Understanding with Advanced
+  Large Language Models}.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
+
+\end{thebibliography}

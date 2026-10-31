@@ -1,0 +1,1479 @@
+[
+  {
+    "key": "sparsevlm",
+    "name": "SparseVLM",
+    "authors": "Yuan Zhang and Chun-Kai Fan and Junpeng Ma and Wenzhao Zheng and Tao Huang and Kuan Cheng and Denis A Gudovskiy and Tomoyuki Okuno and Yohei Nakata and Kurt Keutzer and Shanghang Zhang",
+    "title": "SparseVLM: Visual Token Sparsification for Efficient Vision-Language Model Inference",
+    "venue": "Proceedings of the 42nd International Conference on Machine Learning",
+    "year": 2025,
+    "pages": "74840--74857",
+    "url": "https://proceedings.mlr.press/v267/zhang25s.html"
+  },
+  {
+    "key": "vitcop",
+    "name": "ViTCoP",
+    "authors": "Wen Luo and Peng Chen and Xiaotao Huang and LiQun Huang",
+    "title": "ViTCoP: Accelerating Large Vision-Language Models via Visual and Textual Semantic Collaborative Pruning",
+    "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+    "year": 2026,
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/download/39594/43555"
+  },
+  {
+    "key": "agilepruner",
+    "name": "AgilePruner",
+    "authors": "Changwoo Baek and Jouwon Song and Sohyeon Kim and Kyeongbo Kong",
+    "title": "AgilePruner: An Empirical Study of Attention and Diversity for Adaptive Visual Token Pruning in Large Vision-Language Models",
+    "venue": "International Conference on Learning Representations",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2603.01236"
+  },
+  {
+    "key": "visionzip",
+    "name": "VisionZip",
+    "authors": "Senqiao Yang and Yukang Chen and Zhuotao Tian and Chengyao Wang and Jingyao Li and Bei Yu and Jiaya Jia",
+    "title": "VisionZip: Longer is Better but Not Necessary in Vision Language Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2025,
+    "pages": "19792--19802",
+    "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_VisionZip_Longer_is_Better_but_Not_Necessary_in_Vision_Language_CVPR_2025_paper.html"
+  },
+  {
+    "key": "pyramiddrop",
+    "name": "PyramidDrop",
+    "authors": "Long Xing and Qidong Huang and Xiaoyi Dong and Jiajie Lu and Pan Zhang and Yuhang Zang and Yuhang Cao and Conghui He and Jiaqi Wang and Feng Wu and Dahua Lin",
+    "title": "Conical Visual Concentration for Efficient Large Vision-Language Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2025,
+    "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Xing_Conical_Visual_Concentration_for_Efficient_Large_Vision-Language_Models_CVPR_2025_paper.html",
+    "arxiv_title": "PyramidDrop: Accelerating Your Large Vision-Language Models via Pyramid Visual Redundancy Reduction",
+    "pages": "14593--14603"
+  },
+  {
+    "key": "divprune",
+    "name": "DivPrune",
+    "authors": "Saeed Ranjbar Alvar and Gursimran Singh and Mohammad Akbari and Yong Zhang",
+    "title": "DivPrune: Diversity-based Visual Token Pruning for Large Multimodal Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2025,
+    "pages": "9392--9401",
+    "url": "https://arxiv.org/abs/2503.02175"
+  },
+  {
+    "key": "cdpruner",
+    "name": "CDPruner",
+    "authors": "Qizhe Zhang and Mengzhen Liu and Lichen Li and Ming Lu and Yuan Zhang and Junwen Pan and Qi She and Shanghang Zhang",
+    "title": "Beyond Attention or Similarity: Maximizing Conditional Diversity for Token Pruning in MLLMs",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2025,
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2433fec2144ccf5fea1c9c5ebdbc3924-Abstract-Conference.html"
+  },
+  {
+    "key": "vispruner",
+    "name": "VisPruner",
+    "authors": "Qizhe Zhang and Aosong Cheng and Ming Lu and Renrui Zhang and Zhiyong Zhuo and Jiajun Cao and Shaobo Guo and Qi She and Shanghang Zhang",
+    "title": "Beyond Text-Visual Attention: Exploiting Visual Cues for Effective Token Pruning in VLMs",
+    "venue": "Proceedings of the IEEE/CVF International Conference on Computer Vision",
+    "year": 2025,
+    "pages": "20857--20867",
+    "url": "https://arxiv.org/abs/2412.01818"
+  },
+  {
+    "key": "dart",
+    "name": "DART",
+    "authors": "Zichen Wen and Yifeng Gao and Shaobo Wang and Junyuan Zhang and Qintong Zhang and Weijia Li and Conghui He and Linfeng Zhang",
+    "title": "Stop Looking for “Important Tokens” in Multimodal Language Models: Duplication Matters More",
+    "venue": "Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing",
+    "year": 2025,
+    "url": "https://aclanthology.org/2025.emnlp-main.505/"
+  },
+  {
+    "key": "fitprune",
+    "name": "FitPrune",
+    "authors": "Weihao Ye and Qiong Wu and Wenhao Lin and Yiyi Zhou",
+    "title": "Fit and Prune: Fast and Training-free Visual Token Pruning for Multi-modal Large Language Models",
+    "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+    "year": 2025,
+    "pages": "22128--22136",
+    "doi": "10.1609/aaai.v39i21.34366",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/view/34366"
+  },
+  {
+    "key": "atpllava",
+    "name": "ATP-LLaVA",
+    "authors": "Xubing Ye and Yukang Gan and Yixiao Ge and Xiao-Ping Zhang and Yansong Tang",
+    "title": "ATP-LLaVA: Adaptive Token Pruning for Large Vision Language Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2025,
+    "pages": "24972--24982",
+    "url": "https://arxiv.org/abs/2412.00447"
+  },
+  {
+    "key": "vflowopt",
+    "name": "VFlowOpt",
+    "authors": "Sihan Yang and Runsen Xu and Chenhang Cui and Tai Wang and Dahua Lin and Jiangmiao Pang",
+    "title": "VFlowOpt: A Token Pruning Framework for LMMs with Visual Information Flow-Guided Optimization",
+    "venue": "Proceedings of the IEEE/CVF International Conference on Computer Vision",
+    "year": 2025,
+    "pages": "23924--23934",
+    "url": "https://arxiv.org/abs/2508.05211"
+  },
+  {
+    "key": "mmtok",
+    "name": "MMTok",
+    "authors": "Sixun Dong and Juhua Hu and Mian Zhang and Ming Yin and Yanjie Fu and Qi Qian",
+    "title": "MMTok: Multimodal Coverage Maximization for Efficient Inference of VLMs",
+    "venue": "International Conference on Learning Representations",
+    "year": 2026,
+    "url": "https://proceedings.iclr.cc/paper_files/paper/2026/hash/4f8745c0ca5c951a92844ad7668cfca5-Abstract-Conference.html"
+  },
+  {
+    "key": "score",
+    "name": "SCoRe",
+    "authors": "Tong Xu and Hailong Shi and Xingyu Gao",
+    "title": "SCoRe: Salience-Coverage Reduction for Vision Token Pruning in Vision-Language Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2026,
+    "pages": "24686--24695",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xu_SCoRe_Salience-Coverage_Reduction_for_Vision_Token_Pruning_in_Vision-Language_Models_CVPR_2026_paper.html"
+  },
+  {
+    "key": "coin",
+    "name": "CoIn",
+    "authors": "Chenxi Du and Yongheng Deng and Jiani Liu and Yujia Zhang and Xi Chen and Ju Ren",
+    "title": "CoIn: Coverage and Informativeness-Guided Token Reduction for Efficient Large Multimodal Models",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2026,
+    "pages": "10492--10501",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Du_CoIn_Coverage_and_Informativeness-Guided_Token_Reduction_for_Efficient_Large_Multimodal_CVPR_2026_paper.html"
+  },
+  {
+    "key": "hiprune",
+    "name": "HiPrune",
+    "authors": "Jizhihui Liu and Guangdao Zhu and Feiyi Du and Niu Lian and Jun Li and Bin Chen and Weili Guan and Yaowei Wang",
+    "title": "HiPrune: Hierarchical Attention for Efficient Token Pruning in Vision-Language Models",
+    "venue": "Findings of the Association for Computational Linguistics: ACL 2026",
+    "year": 2026,
+    "pages": "3274--3291",
+    "url": "https://aclanthology.org/2026.findings-acl.162/"
+  },
+  {
+    "key": "fastv",
+    "name": "FastV",
+    "authors": "Liang Chen and Haozhe Zhao and Tianyu Liu and Shuai Bai and Junyang Lin and Chang Zhou and Baobao Chang",
+    "title": "An Image is Worth 1/2 Tokens After Layer 2: Plug-and-Play Inference Acceleration for Large Vision-Language Models",
+    "venue": "Computer Vision - ECCV 2024",
+    "year": 2024,
+    "url": "https://www.ecva.net/papers/eccv_2024/papers_ECCV/html/10478_ECCV_2024_paper.php"
+  },
+  {
+    "key": "coverpruner",
+    "name": "CoverPruner",
+    "authors": "Qingchan Zhu and Weihang You and Hanqi Jiang and Changdi Yang and Tianming Liu and Geng Yuan",
+    "title": "Who Speaks for the Pruned? Visual Token Pruning as Coverage Optimization",
+    "venue": "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing",
+    "year": 2026,
+    "pages": "8018--8037",
+    "url": "https://aclanthology.org/2026.emnlp-main.349/"
+  },
+  {
+    "key": "qcpruner",
+    "name": "QCPruner",
+    "authors": "Shengli He and Yongchao Liang and Roumeng He and Junjie Zeng and Jiyuan He and Can Wu and Li Zheng",
+    "title": "QCPruner: Query-Conditioned Population Coverage for Visual Token Pruning",
+    "venue": "arXiv preprint arXiv:2609.19990",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2609.19990",
+    "preprint": true
+  },
+  {
+    "key": "starpro",
+    "name": "STAR-Pro",
+    "authors": "Yichen Guo and Tinghao Wang and Qizhe Zhang and Lingbei Meng and Yuan Zhang and Jiajun Cao and Hao Jiang and Chenwei Wu and Jixian Wu and Sixiang Chen and Tao Luo and Hongyang Cheng and Kai Tang and Chenxi Li and Renyuan Li and Xiande Huang and Wenya Wang and Shanghang Zhang",
+    "title": "STAR-Pro: Stage-Wise Token Adaptive Reduction with Progressive Refinement for Efficient Large Vision-Language Models",
+    "venue": "arXiv preprint arXiv:2609.05916",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2609.05916",
+    "preprint": true
+  },
+  {
+    "key": "coreprune",
+    "name": "CoRePrune",
+    "authors": "Shengli He and Yongchao Liang and Roumeng He and Junjie Zeng and Jiyuan He and Xin Fang and Can Wu and Li Zheng",
+    "title": "From Token Importance to Conditional Removability: Rethinking Visual Token Pruning in Multimodal Large Language Models",
+    "venue": "arXiv preprint arXiv:2609.26484",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2609.26484",
+    "preprint": true
+  },
+  {
+    "key": "hiloprune",
+    "name": "Hi-Lo Prune",
+    "authors": "Zixun Sun and Yubo Dong and Hehe Fan and Yi Yang",
+    "title": "Hi-Lo Prune: Look at What You'll Lose before Pruning with Hierarchical Token Selection",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2026,
+    "pages": "31941--31951",
+    "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Sun_Hi-Lo_Prune_Look_at_What_Youll_Lose_before_Pruning_with_CVPR_2026_paper.html"
+  },
+  {
+    "key": "llava15",
+    "name": "LLaVA-1.5",
+    "authors": "Haotian Liu and Chunyuan Li and Yuheng Li and Yong Jae Lee",
+    "title": "Improved Baselines with Visual Instruction Tuning",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2024,
+    "pages": "26296--26306",
+    "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Liu_Improved_Baselines_with_Visual_Instruction_Tuning_CVPR_2024_paper.html"
+  },
+  {
+    "key": "attention",
+    "name": "attention",
+    "title": "Attention Is All You Need",
+    "authors": "Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2017,
+    "url": "https://arxiv.org/abs/1706.03762",
+    "arxiv": "1706.03762",
+    "primary_metadata": {
+      "arxiv": "1706.03762",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "meta": {
+        "citation_title": [
+          "Attention Is All You Need"
+        ],
+        "citation_author": [
+          "Vaswani, Ashish",
+          "Shazeer, Noam",
+          "Parmar, Niki",
+          "Uszkoreit, Jakob",
+          "Jones, Llion",
+          "Gomez, Aidan N.",
+          "Kaiser, Lukasz",
+          "Polosukhin, Illia"
+        ],
+        "citation_date": [
+          "2017/06/12"
+        ],
+        "citation_online_date": [
+          "2023/08/02"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/1706.03762"
+        ],
+        "citation_arxiv_id": [
+          "1706.03762"
+        ]
+      }
+    }
+  },
+  {
+    "key": "vit",
+    "name": "vit",
+    "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+    "authors": "Dosovitskiy, Alexey and Beyer, Lucas and Kolesnikov, Alexander and Weissenborn, Dirk and Zhai, Xiaohua and Unterthiner, Thomas and Dehghani, Mostafa and Minderer, Matthias and Heigold, Georg and Gelly, Sylvain and Uszkoreit, Jakob and Houlsby, Neil",
+    "venue": "International Conference on Learning Representations",
+    "year": 2021,
+    "url": "https://arxiv.org/abs/2010.11929",
+    "arxiv": "2010.11929",
+    "primary_metadata": {
+      "arxiv": "2010.11929",
+      "url": "https://arxiv.org/abs/2010.11929",
+      "meta": {
+        "citation_title": [
+          "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"
+        ],
+        "citation_author": [
+          "Dosovitskiy, Alexey",
+          "Beyer, Lucas",
+          "Kolesnikov, Alexander",
+          "Weissenborn, Dirk",
+          "Zhai, Xiaohua",
+          "Unterthiner, Thomas",
+          "Dehghani, Mostafa",
+          "Minderer, Matthias",
+          "Heigold, Georg",
+          "Gelly, Sylvain",
+          "Uszkoreit, Jakob",
+          "Houlsby, Neil"
+        ],
+        "citation_date": [
+          "2020/10/22"
+        ],
+        "citation_online_date": [
+          "2021/06/03"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2010.11929"
+        ],
+        "citation_arxiv_id": [
+          "2010.11929"
+        ]
+      }
+    }
+  },
+  {
+    "key": "clip",
+    "name": "clip",
+    "title": "Learning Transferable Visual Models From Natural Language Supervision",
+    "authors": "Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya",
+    "venue": "Proceedings of the 38th International Conference on Machine Learning",
+    "year": 2021,
+    "url": "https://proceedings.mlr.press/v139/radford21a.html",
+    "arxiv": "2103.00020",
+    "primary_metadata": {
+      "arxiv": "2103.00020",
+      "url": "https://arxiv.org/abs/2103.00020",
+      "meta": {
+        "citation_title": [
+          "Learning Transferable Visual Models From Natural Language Supervision"
+        ],
+        "citation_author": [
+          "Radford, Alec",
+          "Kim, Jong Wook",
+          "Hallacy, Chris",
+          "Ramesh, Aditya",
+          "Goh, Gabriel",
+          "Agarwal, Sandhini",
+          "Sastry, Girish",
+          "Askell, Amanda",
+          "Mishkin, Pamela",
+          "Clark, Jack",
+          "Krueger, Gretchen",
+          "Sutskever, Ilya"
+        ],
+        "citation_date": [
+          "2021/02/26"
+        ],
+        "citation_online_date": [
+          "2021/02/26"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2103.00020"
+        ],
+        "citation_arxiv_id": [
+          "2103.00020"
+        ]
+      }
+    },
+    "pages": "8748--8763"
+  },
+  {
+    "key": "flamingo",
+    "name": "flamingo",
+    "title": "Flamingo: a Visual Language Model for Few-Shot Learning",
+    "authors": "Alayrac, Jean-Baptiste and Donahue, Jeff and Luc, Pauline and Miech, Antoine and Barr, Iain and Hasson, Yana and Lenc, Karel and Mensch, Arthur and Millican, Katie and Reynolds, Malcolm and Ring, Roman and Rutherford, Eliza and Cabi, Serkan and Han, Tengda and Gong, Zhitao and Samangooei, Sina and Monteiro, Marianne and Menick, Jacob and Borgeaud, Sebastian and Brock, Andrew and Nematzadeh, Aida and Sharifzadeh, Sahand and Binkowski, Mikolaj and Barreira, Ricardo and Vinyals, Oriol and Zisserman, Andrew and Simonyan, Karen",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2022,
+    "url": "https://arxiv.org/abs/2204.14198",
+    "arxiv": "2204.14198",
+    "primary_metadata": {
+      "arxiv": "2204.14198",
+      "url": "https://arxiv.org/abs/2204.14198",
+      "meta": {
+        "citation_title": [
+          "Flamingo: a Visual Language Model for Few-Shot Learning"
+        ],
+        "citation_author": [
+          "Alayrac, Jean-Baptiste",
+          "Donahue, Jeff",
+          "Luc, Pauline",
+          "Miech, Antoine",
+          "Barr, Iain",
+          "Hasson, Yana",
+          "Lenc, Karel",
+          "Mensch, Arthur",
+          "Millican, Katie",
+          "Reynolds, Malcolm",
+          "Ring, Roman",
+          "Rutherford, Eliza",
+          "Cabi, Serkan",
+          "Han, Tengda",
+          "Gong, Zhitao",
+          "Samangooei, Sina",
+          "Monteiro, Marianne",
+          "Menick, Jacob",
+          "Borgeaud, Sebastian",
+          "Brock, Andrew",
+          "Nematzadeh, Aida",
+          "Sharifzadeh, Sahand",
+          "Binkowski, Mikolaj",
+          "Barreira, Ricardo",
+          "Vinyals, Oriol",
+          "Zisserman, Andrew",
+          "Simonyan, Karen"
+        ],
+        "citation_date": [
+          "2022/04/29"
+        ],
+        "citation_online_date": [
+          "2022/11/15"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2204.14198"
+        ],
+        "citation_arxiv_id": [
+          "2204.14198"
+        ]
+      }
+    }
+  },
+  {
+    "key": "blip2",
+    "name": "blip2",
+    "title": "BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models",
+    "authors": "Li, Junnan and Li, Dongxu and Savarese, Silvio and Hoi, Steven",
+    "venue": "Proceedings of the 40th International Conference on Machine Learning",
+    "year": 2023,
+    "url": "https://proceedings.mlr.press/v202/li23q.html",
+    "arxiv": "2301.12597",
+    "primary_metadata": {
+      "arxiv": "2301.12597",
+      "url": "https://arxiv.org/abs/2301.12597",
+      "meta": {
+        "citation_title": [
+          "BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models"
+        ],
+        "citation_author": [
+          "Li, Junnan",
+          "Li, Dongxu",
+          "Savarese, Silvio",
+          "Hoi, Steven"
+        ],
+        "citation_date": [
+          "2023/01/30"
+        ],
+        "citation_online_date": [
+          "2023/06/15"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2301.12597"
+        ],
+        "citation_arxiv_id": [
+          "2301.12597"
+        ]
+      }
+    },
+    "pages": "19730--19742"
+  },
+  {
+    "key": "instructblip",
+    "name": "instructblip",
+    "title": "InstructBLIP: Towards General-purpose Vision-Language Models with Instruction Tuning",
+    "authors": "Dai, Wenliang and Li, Junnan and Li, Dongxu and Tiong, Anthony Meng Huat and Zhao, Junqi and Wang, Weisheng and Li, Boyang and Fung, Pascale and Hoi, Steven",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2305.06500",
+    "arxiv": "2305.06500",
+    "primary_metadata": {
+      "arxiv": "2305.06500",
+      "url": "https://arxiv.org/abs/2305.06500",
+      "meta": {
+        "citation_title": [
+          "InstructBLIP: Towards General-purpose Vision-Language Models with Instruction Tuning"
+        ],
+        "citation_author": [
+          "Dai, Wenliang",
+          "Li, Junnan",
+          "Li, Dongxu",
+          "Tiong, Anthony Meng Huat",
+          "Zhao, Junqi",
+          "Wang, Weisheng",
+          "Li, Boyang",
+          "Fung, Pascale",
+          "Hoi, Steven"
+        ],
+        "citation_date": [
+          "2023/05/11"
+        ],
+        "citation_online_date": [
+          "2023/06/15"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2305.06500"
+        ],
+        "citation_arxiv_id": [
+          "2305.06500"
+        ]
+      }
+    }
+  },
+  {
+    "key": "llava",
+    "name": "llava",
+    "title": "Visual Instruction Tuning",
+    "authors": "Liu, Haotian and Li, Chunyuan and Wu, Qingyang and Lee, Yong Jae",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2304.08485",
+    "arxiv": "2304.08485",
+    "primary_metadata": {
+      "arxiv": "2304.08485",
+      "url": "https://arxiv.org/abs/2304.08485",
+      "meta": {
+        "citation_title": [
+          "Visual Instruction Tuning"
+        ],
+        "citation_author": [
+          "Liu, Haotian",
+          "Li, Chunyuan",
+          "Wu, Qingyang",
+          "Lee, Yong Jae"
+        ],
+        "citation_date": [
+          "2023/04/17"
+        ],
+        "citation_online_date": [
+          "2023/12/11"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2304.08485"
+        ],
+        "citation_arxiv_id": [
+          "2304.08485"
+        ]
+      }
+    }
+  },
+  {
+    "key": "minigpt4",
+    "name": "minigpt4",
+    "title": "MiniGPT-4: Enhancing Vision-Language Understanding with Advanced Large Language Models",
+    "authors": "Zhu, Deyao and Chen, Jun and Shen, Xiaoqian and Li, Xiang and Elhoseiny, Mohamed",
+    "venue": "International Conference on Learning Representations",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2304.10592",
+    "arxiv": "2304.10592",
+    "primary_metadata": {
+      "arxiv": "2304.10592",
+      "url": "https://arxiv.org/abs/2304.10592",
+      "meta": {
+        "citation_title": [
+          "MiniGPT-4: Enhancing Vision-Language Understanding with Advanced Large Language Models"
+        ],
+        "citation_author": [
+          "Zhu, Deyao",
+          "Chen, Jun",
+          "Shen, Xiaoqian",
+          "Li, Xiang",
+          "Elhoseiny, Mohamed"
+        ],
+        "citation_date": [
+          "2023/04/20"
+        ],
+        "citation_online_date": [
+          "2023/10/02"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2304.10592"
+        ],
+        "citation_arxiv_id": [
+          "2304.10592"
+        ]
+      }
+    }
+  },
+  {
+    "key": "internvl",
+    "name": "internvl",
+    "title": "InternVL: Scaling up Vision Foundation Models and Aligning for Generic Visual-Linguistic Tasks",
+    "authors": "Chen, Zhe and Wu, Jiannan and Wang, Wenhai and Su, Weijie and Chen, Guo and Xing, Sen and Zhong, Muyan and Zhang, Qinglong and Zhu, Xizhou and Lu, Lewei and Li, Bin and Luo, Ping and Lu, Tong and Qiao, Yu and Dai, Jifeng",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2312.14238",
+    "arxiv": "2312.14238",
+    "primary_metadata": {
+      "arxiv": "2312.14238",
+      "url": "https://arxiv.org/abs/2312.14238",
+      "meta": {
+        "citation_title": [
+          "InternVL: Scaling up Vision Foundation Models and Aligning for Generic Visual-Linguistic Tasks"
+        ],
+        "citation_author": [
+          "Chen, Zhe",
+          "Wu, Jiannan",
+          "Wang, Wenhai",
+          "Su, Weijie",
+          "Chen, Guo",
+          "Xing, Sen",
+          "Zhong, Muyan",
+          "Zhang, Qinglong",
+          "Zhu, Xizhou",
+          "Lu, Lewei",
+          "Li, Bin",
+          "Luo, Ping",
+          "Lu, Tong",
+          "Qiao, Yu",
+          "Dai, Jifeng"
+        ],
+        "citation_date": [
+          "2023/12/21"
+        ],
+        "citation_online_date": [
+          "2024/01/15"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2312.14238"
+        ],
+        "citation_arxiv_id": [
+          "2312.14238"
+        ]
+      }
+    },
+    "pages": "24185--24198"
+  },
+  {
+    "key": "qwen2vl",
+    "name": "qwen2vl",
+    "title": "Qwen2-VL: Enhancing Vision-Language Model's Perception of the World at Any Resolution",
+    "authors": "Wang, Peng and Bai, Shuai and Tan, Sinan and Wang, Shijie and Fan, Zhihao and Bai, Jinze and Chen, Keqin and Liu, Xuejing and Wang, Jialin and Ge, Wenbin and Fan, Yang and Dang, Kai and Du, Mengfei and Ren, Xuancheng and Men, Rui and Liu, Dayiheng and Zhou, Chang and Zhou, Jingren and Lin, Junyang",
+    "venue": "arXiv preprint arXiv:2409.12191",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2409.12191",
+    "arxiv": "2409.12191",
+    "primary_metadata": {
+      "arxiv": "2409.12191",
+      "url": "https://arxiv.org/abs/2409.12191",
+      "meta": {
+        "citation_title": [
+          "Qwen2-VL: Enhancing Vision-Language Model's Perception of the World at Any Resolution"
+        ],
+        "citation_author": [
+          "Wang, Peng",
+          "Bai, Shuai",
+          "Tan, Sinan",
+          "Wang, Shijie",
+          "Fan, Zhihao",
+          "Bai, Jinze",
+          "Chen, Keqin",
+          "Liu, Xuejing",
+          "Wang, Jialin",
+          "Ge, Wenbin",
+          "Fan, Yang",
+          "Dang, Kai",
+          "Du, Mengfei",
+          "Ren, Xuancheng",
+          "Men, Rui",
+          "Liu, Dayiheng",
+          "Zhou, Chang",
+          "Zhou, Jingren",
+          "Lin, Junyang"
+        ],
+        "citation_date": [
+          "2024/09/18"
+        ],
+        "citation_online_date": [
+          "2024/10/03"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2409.12191"
+        ],
+        "citation_arxiv_id": [
+          "2409.12191"
+        ]
+      }
+    },
+    "preprint": true
+  },
+  {
+    "key": "qwen25vl",
+    "name": "qwen25vl",
+    "title": "Qwen2.5-VL Technical Report",
+    "authors": "Bai, Shuai and Chen, Keqin and Liu, Xuejing and Wang, Jialin and Ge, Wenbin and Song, Sibo and Dang, Kai and Wang, Peng and Wang, Shijie and Tang, Jun and Zhong, Humen and Zhu, Yuanzhi and Yang, Mingkun and Li, Zhaohai and Wan, Jianqiang and Wang, Pengfei and Ding, Wei and Fu, Zheren and Xu, Yiheng and Ye, Jiabo and Zhang, Xi and Xie, Tianbao and Cheng, Zesen and Zhang, Hang and Yang, Zhibo and Xu, Haiyang and Lin, Junyang",
+    "venue": "arXiv preprint arXiv:2502.13923",
+    "year": 2025,
+    "url": "https://arxiv.org/abs/2502.13923",
+    "arxiv": "2502.13923",
+    "primary_metadata": {
+      "arxiv": "2502.13923",
+      "url": "https://arxiv.org/abs/2502.13923",
+      "meta": {
+        "citation_title": [
+          "Qwen2.5-VL Technical Report"
+        ],
+        "citation_author": [
+          "Bai, Shuai",
+          "Chen, Keqin",
+          "Liu, Xuejing",
+          "Wang, Jialin",
+          "Ge, Wenbin",
+          "Song, Sibo",
+          "Dang, Kai",
+          "Wang, Peng",
+          "Wang, Shijie",
+          "Tang, Jun",
+          "Zhong, Humen",
+          "Zhu, Yuanzhi",
+          "Yang, Mingkun",
+          "Li, Zhaohai",
+          "Wan, Jianqiang",
+          "Wang, Pengfei",
+          "Ding, Wei",
+          "Fu, Zheren",
+          "Xu, Yiheng",
+          "Ye, Jiabo",
+          "Zhang, Xi",
+          "Xie, Tianbao",
+          "Cheng, Zesen",
+          "Zhang, Hang",
+          "Yang, Zhibo",
+          "Xu, Haiyang",
+          "Lin, Junyang"
+        ],
+        "citation_date": [
+          "2025/02/19"
+        ],
+        "citation_online_date": [
+          "2025/02/19"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2502.13923"
+        ],
+        "citation_arxiv_id": [
+          "2502.13923"
+        ]
+      }
+    },
+    "preprint": true
+  },
+  {
+    "key": "onevision",
+    "name": "onevision",
+    "title": "LLaVA-OneVision: Easy Visual Task Transfer",
+    "authors": "Li, Bo and Zhang, Yuanhan and Guo, Dong and Zhang, Renrui and Li, Feng and Zhang, Hao and Zhang, Kaichen and Zhang, Peiyuan and Li, Yanwei and Liu, Ziwei and Li, Chunyuan",
+    "venue": "arXiv preprint arXiv:2408.03326",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2408.03326",
+    "arxiv": "2408.03326",
+    "primary_metadata": {
+      "arxiv": "2408.03326",
+      "url": "https://arxiv.org/abs/2408.03326",
+      "meta": {
+        "citation_title": [
+          "LLaVA-OneVision: Easy Visual Task Transfer"
+        ],
+        "citation_author": [
+          "Li, Bo",
+          "Zhang, Yuanhan",
+          "Guo, Dong",
+          "Zhang, Renrui",
+          "Li, Feng",
+          "Zhang, Hao",
+          "Zhang, Kaichen",
+          "Zhang, Peiyuan",
+          "Li, Yanwei",
+          "Liu, Ziwei",
+          "Li, Chunyuan"
+        ],
+        "citation_date": [
+          "2024/08/06"
+        ],
+        "citation_online_date": [
+          "2024/10/26"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2408.03326"
+        ],
+        "citation_arxiv_id": [
+          "2408.03326"
+        ]
+      }
+    },
+    "preprint": true
+  },
+  {
+    "key": "dynamicvit",
+    "name": "dynamicvit",
+    "title": "DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification",
+    "authors": "Rao, Yongming and Zhao, Wenliang and Liu, Benlin and Lu, Jiwen and Zhou, Jie and Hsieh, Cho-Jui",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2021,
+    "url": "https://arxiv.org/abs/2106.02034",
+    "arxiv": "2106.02034",
+    "primary_metadata": {
+      "arxiv": "2106.02034",
+      "url": "https://arxiv.org/abs/2106.02034",
+      "meta": {
+        "citation_title": [
+          "DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification"
+        ],
+        "citation_author": [
+          "Rao, Yongming",
+          "Zhao, Wenliang",
+          "Liu, Benlin",
+          "Lu, Jiwen",
+          "Zhou, Jie",
+          "Hsieh, Cho-Jui"
+        ],
+        "citation_date": [
+          "2021/06/03"
+        ],
+        "citation_online_date": [
+          "2021/10/26"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2106.02034"
+        ],
+        "citation_arxiv_id": [
+          "2106.02034"
+        ]
+      }
+    }
+  },
+  {
+    "key": "evit",
+    "name": "evit",
+    "title": "EViT: Expediting Vision Transformers via Token Reorganizations",
+    "authors": "Liang, Youwei and Ge, Chongjian and Tong, Zhan and Song, Yibing and Wang, Jue and Xie, Pengtao",
+    "venue": "International Conference on Learning Representations",
+    "year": 2022,
+    "url": "https://openreview.net/forum?id=BjyvwnXXVn_",
+    "arxiv": "2202.07800",
+    "primary_metadata": {
+      "arxiv": "2202.07800",
+      "url": "https://arxiv.org/abs/2202.07800",
+      "meta": {
+        "citation_title": [
+          "Not All Patches are What You Need: Expediting Vision Transformers via Token Reorganizations"
+        ],
+        "citation_author": [
+          "Liang, Youwei",
+          "Ge, Chongjian",
+          "Tong, Zhan",
+          "Song, Yibing",
+          "Wang, Jue",
+          "Xie, Pengtao"
+        ],
+        "citation_date": [
+          "2022/02/16"
+        ],
+        "citation_online_date": [
+          "2022/04/13"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2202.07800"
+        ],
+        "citation_arxiv_id": [
+          "2202.07800"
+        ]
+      }
+    }
+  },
+  {
+    "key": "avit",
+    "name": "avit",
+    "title": "A-ViT: Adaptive Tokens for Efficient Vision Transformer",
+    "authors": "Yin, Hongxu and Vahdat, Arash and Alvarez, Jose M. and Mallya, Arun and Kautz, Jan and Molchanov, Pavlo",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2022,
+    "url": "https://openaccess.thecvf.com/content/CVPR2022/html/Yin_A-ViT_Adaptive_Tokens_for_Efficient_Vision_Transformer_CVPR_2022_paper.html",
+    "arxiv": "2112.07658",
+    "primary_metadata": {
+      "arxiv": "2112.07658",
+      "url": "https://arxiv.org/abs/2112.07658",
+      "meta": {
+        "citation_title": [
+          "AdaViT: Adaptive Tokens for Efficient Vision Transformer"
+        ],
+        "citation_author": [
+          "Yin, Hongxu",
+          "Vahdat, Arash",
+          "Alvarez, Jose M.",
+          "Mallya, Arun",
+          "Kautz, Jan",
+          "Molchanov, Pavlo"
+        ],
+        "citation_date": [
+          "2021/12/14"
+        ],
+        "citation_online_date": [
+          "2022/10/05"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2112.07658"
+        ],
+        "citation_arxiv_id": [
+          "2112.07658"
+        ]
+      }
+    },
+    "pages": "10809--10818"
+  },
+  {
+    "key": "tokenlearner",
+    "name": "tokenlearner",
+    "title": "TokenLearner: What Can 8 Learned Tokens Do for Images and Videos?",
+    "authors": "Ryoo, Michael S. and Piergiovanni, AJ and Arnab, Anurag and Dehghani, Mostafa and Angelova, Anelia",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2021,
+    "url": "https://arxiv.org/abs/2106.11297",
+    "arxiv": "2106.11297",
+    "primary_metadata": {
+      "arxiv": "2106.11297",
+      "url": "https://arxiv.org/abs/2106.11297",
+      "meta": {
+        "citation_title": [
+          "TokenLearner: What Can 8 Learned Tokens Do for Images and Videos?"
+        ],
+        "citation_author": [
+          "Ryoo, Michael S.",
+          "Piergiovanni, AJ",
+          "Arnab, Anurag",
+          "Dehghani, Mostafa",
+          "Angelova, Anelia"
+        ],
+        "citation_date": [
+          "2021/06/21"
+        ],
+        "citation_online_date": [
+          "2022/04/03"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2106.11297"
+        ],
+        "citation_arxiv_id": [
+          "2106.11297"
+        ]
+      }
+    }
+  },
+  {
+    "key": "ats",
+    "name": "ats",
+    "title": "Adaptive Token Sampling For Efficient Vision Transformers",
+    "authors": "Fayyaz, Mohsen and Koohpayegani, Soroush Abbasi and Jafari, Farnoush Rezaei and Sengupta, Sunando and Joze, Hamid Reza Vaezi and Sommerlade, Eric and Pirsiavash, Hamed and Gall, Juergen",
+    "venue": "Computer Vision -- ECCV 2022",
+    "year": 2022,
+    "url": "https://arxiv.org/abs/2111.15667",
+    "arxiv": "2111.15667",
+    "primary_metadata": {
+      "arxiv": "2111.15667",
+      "url": "https://arxiv.org/abs/2111.15667",
+      "meta": {
+        "citation_title": [
+          "Adaptive Token Sampling For Efficient Vision Transformers"
+        ],
+        "citation_author": [
+          "Fayyaz, Mohsen",
+          "Koohpayegani, Soroush Abbasi",
+          "Jafari, Farnoush Rezaei",
+          "Sengupta, Sunando",
+          "Joze, Hamid Reza Vaezi",
+          "Sommerlade, Eric",
+          "Pirsiavash, Hamed",
+          "Gall, Juergen"
+        ],
+        "citation_date": [
+          "2021/11/30"
+        ],
+        "citation_online_date": [
+          "2022/07/26"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2111.15667"
+        ],
+        "citation_arxiv_id": [
+          "2111.15667"
+        ]
+      }
+    }
+  },
+  {
+    "key": "tome",
+    "name": "tome",
+    "title": "Token Merging: Your ViT But Faster",
+    "authors": "Bolya, Daniel and Fu, Cheng-Yang and Dai, Xiaoliang and Zhang, Peizhao and Feichtenhofer, Christoph and Hoffman, Judy",
+    "venue": "International Conference on Learning Representations",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2210.09461",
+    "arxiv": "2210.09461",
+    "primary_metadata": {
+      "arxiv": "2210.09461",
+      "url": "https://arxiv.org/abs/2210.09461",
+      "meta": {
+        "citation_title": [
+          "Token Merging: Your ViT But Faster"
+        ],
+        "citation_author": [
+          "Bolya, Daniel",
+          "Fu, Cheng-Yang",
+          "Dai, Xiaoliang",
+          "Zhang, Peizhao",
+          "Feichtenhofer, Christoph",
+          "Hoffman, Judy"
+        ],
+        "citation_date": [
+          "2022/10/17"
+        ],
+        "citation_online_date": [
+          "2023/03/01"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2210.09461"
+        ],
+        "citation_arxiv_id": [
+          "2210.09461"
+        ]
+      }
+    }
+  },
+  {
+    "key": "prumerge",
+    "name": "prumerge",
+    "title": "LLaVA-PruMerge: Adaptive Token Reduction for Efficient Large Multimodal Models",
+    "authors": "Shang, Yuzhang and Cai, Mu and Xu, Bingxin and Lee, Yong Jae and Yan, Yan",
+    "venue": "Proceedings of the IEEE/CVF International Conference on Computer Vision",
+    "year": 2025,
+    "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Shang_LLaVA-PruMerge_Adaptive_Token_Reduction_for_Efficient_Large_Multimodal_Models_ICCV_2025_paper.html",
+    "arxiv": "2403.15388",
+    "primary_metadata": {
+      "arxiv": "2403.15388",
+      "url": "https://arxiv.org/abs/2403.15388",
+      "meta": {
+        "citation_title": [
+          "LLaVA-PruMerge: Adaptive Token Reduction for Efficient Large Multimodal Models"
+        ],
+        "citation_author": [
+          "Shang, Yuzhang",
+          "Cai, Mu",
+          "Xu, Bingxin",
+          "Lee, Yong Jae",
+          "Yan, Yan"
+        ],
+        "citation_date": [
+          "2024/03/22"
+        ],
+        "citation_online_date": [
+          "2026/01/31"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2403.15388"
+        ],
+        "citation_arxiv_id": [
+          "2403.15388"
+        ]
+      }
+    },
+    "pages": "22857--22867"
+  },
+  {
+    "key": "flashattention",
+    "name": "flashattention",
+    "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+    "authors": "Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and Ré, Christopher",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2022,
+    "url": "https://arxiv.org/abs/2205.14135",
+    "arxiv": "2205.14135",
+    "primary_metadata": {
+      "arxiv": "2205.14135",
+      "url": "https://arxiv.org/abs/2205.14135",
+      "meta": {
+        "citation_title": [
+          "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
+        ],
+        "citation_author": [
+          "Dao, Tri",
+          "Fu, Daniel Y.",
+          "Ermon, Stefano",
+          "Rudra, Atri",
+          "Ré, Christopher"
+        ],
+        "citation_date": [
+          "2022/05/27"
+        ],
+        "citation_online_date": [
+          "2022/06/23"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2205.14135"
+        ],
+        "citation_arxiv_id": [
+          "2205.14135"
+        ]
+      }
+    }
+  },
+  {
+    "key": "flashattention2",
+    "name": "flashattention2",
+    "title": "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning",
+    "authors": "Dao, Tri",
+    "venue": "International Conference on Learning Representations",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2307.08691",
+    "arxiv": "2307.08691",
+    "primary_metadata": {
+      "arxiv": "2307.08691",
+      "url": "https://arxiv.org/abs/2307.08691",
+      "meta": {
+        "citation_title": [
+          "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"
+        ],
+        "citation_author": [
+          "Dao, Tri"
+        ],
+        "citation_date": [
+          "2023/07/17"
+        ],
+        "citation_online_date": [
+          "2023/07/17"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2307.08691"
+        ],
+        "citation_arxiv_id": [
+          "2307.08691"
+        ]
+      }
+    }
+  },
+  {
+    "key": "pagedattention",
+    "name": "pagedattention",
+    "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+    "authors": "Kwon, Woosuk and Li, Zhuohan and Zhuang, Siyuan and Sheng, Ying and Zheng, Lianmin and Yu, Cody Hao and Gonzalez, Joseph E. and Zhang, Hao and Stoica, Ion",
+    "venue": "Proceedings of the 29th Symposium on Operating Systems Principles",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2309.06180",
+    "arxiv": "2309.06180",
+    "primary_metadata": {
+      "arxiv": "2309.06180",
+      "url": "https://arxiv.org/abs/2309.06180",
+      "meta": {
+        "citation_title": [
+          "Efficient Memory Management for Large Language Model Serving with PagedAttention"
+        ],
+        "citation_author": [
+          "Kwon, Woosuk",
+          "Li, Zhuohan",
+          "Zhuang, Siyuan",
+          "Sheng, Ying",
+          "Zheng, Lianmin",
+          "Yu, Cody Hao",
+          "Gonzalez, Joseph E.",
+          "Zhang, Hao",
+          "Stoica, Ion"
+        ],
+        "citation_date": [
+          "2023/09/12"
+        ],
+        "citation_online_date": [
+          "2023/09/12"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2309.06180"
+        ],
+        "citation_arxiv_id": [
+          "2309.06180"
+        ]
+      }
+    }
+  },
+  {
+    "key": "gqa",
+    "name": "gqa",
+    "title": "GQA: A New Dataset for Real-World Visual Reasoning and Compositional Question Answering",
+    "authors": "Hudson, Drew A. and Manning, Christopher D.",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2019,
+    "url": "https://arxiv.org/abs/1902.09506",
+    "arxiv": "1902.09506",
+    "primary_metadata": {
+      "arxiv": "1902.09506",
+      "url": "https://arxiv.org/abs/1902.09506",
+      "meta": {
+        "citation_title": [
+          "GQA: A New Dataset for Real-World Visual Reasoning and Compositional Question Answering"
+        ],
+        "citation_author": [
+          "Hudson, Drew A.",
+          "Manning, Christopher D."
+        ],
+        "citation_date": [
+          "2019/02/25"
+        ],
+        "citation_online_date": [
+          "2019/05/10"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/1902.09506"
+        ],
+        "citation_arxiv_id": [
+          "1902.09506"
+        ]
+      }
+    }
+  },
+  {
+    "key": "pope",
+    "name": "pope",
+    "title": "Evaluating Object Hallucination in Large Vision-Language Models",
+    "authors": "Li, Yifan and Du, Yifan and Zhou, Kun and Wang, Jinpeng and Zhao, Wayne Xin and Wen, Ji-Rong",
+    "venue": "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2305.10355",
+    "arxiv": "2305.10355",
+    "primary_metadata": {
+      "arxiv": "2305.10355",
+      "url": "https://arxiv.org/abs/2305.10355",
+      "meta": {
+        "citation_title": [
+          "Evaluating Object Hallucination in Large Vision-Language Models"
+        ],
+        "citation_author": [
+          "Li, Yifan",
+          "Du, Yifan",
+          "Zhou, Kun",
+          "Wang, Jinpeng",
+          "Zhao, Wayne Xin",
+          "Wen, Ji-Rong"
+        ],
+        "citation_date": [
+          "2023/05/17"
+        ],
+        "citation_online_date": [
+          "2023/10/26"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2305.10355"
+        ],
+        "citation_arxiv_id": [
+          "2305.10355"
+        ]
+      }
+    }
+  },
+  {
+    "key": "mme",
+    "name": "mme",
+    "title": "MME: A Comprehensive Evaluation Benchmark for Multimodal Large Language Models",
+    "authors": "Fu, Chaoyou and Chen, Peixian and Shen, Yunhang and Qin, Yulei and Zhang, Mengdan and Lin, Xu and Yang, Jinrui and Zheng, Xiawu and Li, Ke and Sun, Xing and Wu, Yunsheng and Ji, Rongrong and Shan, Caifeng and He, Ran",
+    "venue": "arXiv preprint arXiv:2306.13394",
+    "year": 2023,
+    "url": "https://arxiv.org/abs/2306.13394",
+    "arxiv": "2306.13394",
+    "primary_metadata": {
+      "arxiv": "2306.13394",
+      "url": "https://arxiv.org/abs/2306.13394",
+      "meta": {
+        "citation_title": [
+          "MME: A Comprehensive Evaluation Benchmark for Multimodal Large Language Models"
+        ],
+        "citation_author": [
+          "Fu, Chaoyou",
+          "Chen, Peixian",
+          "Shen, Yunhang",
+          "Qin, Yulei",
+          "Zhang, Mengdan",
+          "Lin, Xu",
+          "Yang, Jinrui",
+          "Zheng, Xiawu",
+          "Li, Ke",
+          "Sun, Xing",
+          "Wu, Yunsheng",
+          "Ji, Rongrong",
+          "Shan, Caifeng",
+          "He, Ran"
+        ],
+        "citation_date": [
+          "2023/06/23"
+        ],
+        "citation_online_date": [
+          "2025/10/24"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2306.13394"
+        ],
+        "citation_arxiv_id": [
+          "2306.13394"
+        ]
+      }
+    },
+    "preprint": true
+  },
+  {
+    "key": "mmbench",
+    "name": "mmbench",
+    "title": "MMBench: Is Your Multi-modal Model an All-around Player?",
+    "authors": "Liu, Yuan and Duan, Haodong and Zhang, Yuanhan and Li, Bo and Zhang, Songyang and Zhao, Wangbo and Yuan, Yike and Wang, Jiaqi and He, Conghui and Liu, Ziwei and Chen, Kai and Lin, Dahua",
+    "venue": "Computer Vision -- ECCV 2024",
+    "year": 2024,
+    "url": "https://arxiv.org/abs/2307.06281",
+    "arxiv": "2307.06281",
+    "primary_metadata": {
+      "arxiv": "2307.06281",
+      "url": "https://arxiv.org/abs/2307.06281",
+      "meta": {
+        "citation_title": [
+          "MMBench: Is Your Multi-modal Model an All-around Player?"
+        ],
+        "citation_author": [
+          "Liu, Yuan",
+          "Duan, Haodong",
+          "Zhang, Yuanhan",
+          "Li, Bo",
+          "Zhang, Songyang",
+          "Zhao, Wangbo",
+          "Yuan, Yike",
+          "Wang, Jiaqi",
+          "He, Conghui",
+          "Liu, Ziwei",
+          "Chen, Kai",
+          "Lin, Dahua"
+        ],
+        "citation_date": [
+          "2023/07/12"
+        ],
+        "citation_online_date": [
+          "2024/08/20"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2307.06281"
+        ],
+        "citation_arxiv_id": [
+          "2307.06281"
+        ]
+      }
+    }
+  },
+  {
+    "key": "scienceqa",
+    "name": "scienceqa",
+    "title": "Learn to Explain: Multimodal Reasoning via Thought Chains for Science Question Answering",
+    "authors": "Lu, Pan and Mishra, Swaroop and Xia, Tony and Qiu, Liang and Chang, Kai-Wei and Zhu, Song-Chun and Tafjord, Oyvind and Clark, Peter and Kalyan, Ashwin",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2022,
+    "url": "https://arxiv.org/abs/2209.09513",
+    "arxiv": "2209.09513",
+    "primary_metadata": {
+      "arxiv": "2209.09513",
+      "url": "https://arxiv.org/abs/2209.09513",
+      "meta": {
+        "citation_title": [
+          "Learn to Explain: Multimodal Reasoning via Thought Chains for Science Question Answering"
+        ],
+        "citation_author": [
+          "Lu, Pan",
+          "Mishra, Swaroop",
+          "Xia, Tony",
+          "Qiu, Liang",
+          "Chang, Kai-Wei",
+          "Zhu, Song-Chun",
+          "Tafjord, Oyvind",
+          "Clark, Peter",
+          "Kalyan, Ashwin"
+        ],
+        "citation_date": [
+          "2022/09/20"
+        ],
+        "citation_online_date": [
+          "2022/10/17"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2209.09513"
+        ],
+        "citation_arxiv_id": [
+          "2209.09513"
+        ]
+      }
+    }
+  },
+  {
+    "key": "textvqa",
+    "name": "textvqa",
+    "title": "Towards VQA Models That Can Read",
+    "authors": "Singh, Amanpreet and Natarajan, Vivek and Shah, Meet and Jiang, Yu and Chen, Xinlei and Batra, Dhruv and Parikh, Devi and Rohrbach, Marcus",
+    "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+    "year": 2019,
+    "url": "https://arxiv.org/abs/1904.08920",
+    "arxiv": "1904.08920",
+    "primary_metadata": {
+      "arxiv": "1904.08920",
+      "url": "https://arxiv.org/abs/1904.08920",
+      "meta": {
+        "citation_title": [
+          "Towards VQA Models That Can Read"
+        ],
+        "citation_author": [
+          "Singh, Amanpreet",
+          "Natarajan, Vivek",
+          "Shah, Meet",
+          "Jiang, Yu",
+          "Chen, Xinlei",
+          "Batra, Dhruv",
+          "Parikh, Devi",
+          "Rohrbach, Marcus"
+        ],
+        "citation_date": [
+          "2019/04/18"
+        ],
+        "citation_online_date": [
+          "2019/05/13"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/1904.08920"
+        ],
+        "citation_arxiv_id": [
+          "1904.08920"
+        ]
+      }
+    }
+  },
+  {
+    "key": "autoselect",
+    "name": "autoselect",
+    "title": "The Model Knows Which Tokens Matter: Automatic Token Selection via Noise Gating",
+    "authors": "He, Landi and Yang, Xiaoyu and Xu, Lijian",
+    "venue": "arXiv preprint arXiv:2603.07135",
+    "year": 2026,
+    "url": "https://arxiv.org/abs/2603.07135",
+    "arxiv": "2603.07135",
+    "primary_metadata": {
+      "arxiv": "2603.07135",
+      "url": "https://arxiv.org/abs/2603.07135",
+      "meta": {
+        "citation_title": [
+          "The Model Knows Which Tokens Matter: Automatic Token Selection via Noise Gating"
+        ],
+        "citation_author": [
+          "He, Landi",
+          "Yang, Xiaoyu",
+          "Xu, Lijian"
+        ],
+        "citation_date": [
+          "2026/03/07"
+        ],
+        "citation_online_date": [
+          "2026/03/07"
+        ],
+        "citation_pdf_url": [
+          "https://arxiv.org/pdf/2603.07135"
+        ],
+        "citation_arxiv_id": [
+          "2603.07135"
+        ]
+      }
+    },
+    "preprint": true
+  },
+  {
+    "key": "mob",
+    "name": "MoB",
+    "title": "Why 1 + 1 < 1 in Visual Token Pruning: Beyond Naïve Integration via Multi-Objective Balanced Covering",
+    "authors": "Yangfu Li and Hongjian Zhan and Tianyi Chen and Qi Liu and Yu-jie Xiong and Yue Lu",
+    "venue": "Advances in Neural Information Processing Systems",
+    "year": 2025,
+    "url": "https://papers.neurips.cc/paper_files/paper/2025/hash/6818dcc65fdf3cbd4b05770fb957803e-Abstract-Conference.html",
+    "pdf": "https://papers.neurips.cc/paper_files/paper/2025/file/6818dcc65fdf3cbd4b05770fb957803e-Paper-Conference.pdf"
+  },
+  {
+    "key": "linbilmes2011",
+    "name": "Lin and Bilmes",
+    "title": "A Class of Submodular Functions for Document Summarization",
+    "authors": "Hui Lin and Jeff Bilmes",
+    "venue": "Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies",
+    "year": 2011,
+    "pages": "510--520",
+    "url": "https://aclanthology.org/P11-1052/"
+  }
+]

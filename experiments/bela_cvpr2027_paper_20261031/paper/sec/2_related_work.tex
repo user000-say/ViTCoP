@@ -1,0 +1,13 @@
+\section{相关工作}
+\label{sec:related}
+
+\paragraph{视觉侧的紧凑输入。}
+DynamicViT、A-ViT、EViT 和 ATS 在视觉 Transformer 内部按输入或注意力减少 token，ToMe 合并相近 token，TokenLearner 学习紧凑表示~\cite{dynamicvit,avit,evit,ats,tome,tokenlearner}。进入视觉语言模型之后，VisionZip 区分主导内容与上下文并改写保留表示，LLaVA-PruMerge 在采样之外补充被丢掉的信息，VisPruner 结合视觉重要性与去重~\cite{visionzip,prumerge,vispruner}。DivPrune 把保留集合写成最大最小多样性问题，DART 用随机对照说明重复关系可以比单独的重要性排序更决定结果~\cite{divprune,dart}。BELA 也在语言模型之前把 576 个位置收成固定入口，但送入 Decoder 的仍是被选中位置上的原始投影特征，不合并 hidden state。入口处的新颖性只用于提出候选和计算空间原型，不能代替后文对全体位置覆盖变化的检查。
+
+\paragraph{问题条件的集合目标。}
+CDPruner 把问题相关性写进 DPP 核，使子集概率偏向与指令相关且彼此多样的 token~\cite{cdpruner}。MMTok 以平均最大相似度定义覆盖，校准后联合文本目标与视觉目标，再贪心构造集合~\cite{mmtok}。MoB 在几何假设下分析视觉保留和提示对齐的耦合，并把预算分给两个目标~\cite{mob}。SCoRe 用显著性加权的 $k$-center 组织代表性，CoIn 把信息性与基于体积的集合选择合在一起，QCPruner 的设施选址增益则同时用问题效用加权视觉目标和候选代表~\cite{score,coin,qcpruner}。这些工作优化的是一次性的集合目标。BELA 的更新从已经选定的 $K$ 个索引出发，每次只替换一个成员，可行域同时限制问题增量、相对当前集合的新颖性和覆盖下降，总替换次数另有上限。问题分数决定交换方向，不作为群体两侧的同一权重。更新阶段的平均最近代表相似度也没有被初始化最大化，因此不能套用次模贪心的近似界~\cite{linbilmes2011}。
+
+\paragraph{深度、日程与渐进删除。}
+FastV 利用浅层语言模型中的注意力做一次性剪枝，PyramidDrop 先比较不同层位和删减比例，再把保留数量排成逐段日程~\cite{fastv,pyramiddrop}。SparseVLM 用文本评分者调节比例并回收 token；其所讨论的实现包含与高效注意力兼容的路径，本文不把它概括成一律无法使用 FlashAttention~\cite{sparsevlm}。FitPrune 用注意力分布拟合预算内的剪枝方案，VFlowOpt 把重要性、回收和信息流引导的策略搜索接在一起~\cite{fitprune,vflowopt}。ViTCoP 把视觉端筛选、浅层协同和深层精剪分成不同阶段，AgilePruner 与 AutoSelect 则分别从行为分析和可训练噪声门控研究选择依据~\cite{vitcop,agilepruner,autoselect}。HiPrune 比较视觉深度上的注意力，ATP-LLaVA 学习样本和层相关的阈值~\cite{hiprune,atpllava}。
+
+更近的工作已经把覆盖和渐进执行放在一起。STAR-Pro 使用前端特征覆盖池和嵌套的层间精炼，并报告层平均预算~\cite{starpro}。CoRePrune 说明一个 token 能否删除依赖于深度和当时的集合，Hi-Lo Prune 在删除前把信息转到保留表示里~\cite{coreprune,hiloprune}。BELA 沿用固定的分段数量，不把日程形状当作新的原理。本文相对这些工作的具体差别是入口处的受约束交换，以及第~\ref{sec:progressive} 节写出的两段后层规则：第一剪点用问题响应的秩漂移重排，第二剪点用问题注意力，二者都保持当前存活集合的嵌套。
