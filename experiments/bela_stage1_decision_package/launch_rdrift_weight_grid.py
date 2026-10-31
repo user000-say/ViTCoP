@@ -24,6 +24,7 @@ CFG_DIR = DEC / "configs" / "rdrift_weight_grid"
 OUT_ROOT = REPO / "logs/e014_aee/full/bela_rdrift_weight_grid_20261031"
 ABC_ROOT = REPO / "logs/e014_aee/full/bela_w4096_sched_abc_20261031"
 HIST_A = REPO / "logs/e014_aee/full/bela_w4096_77p8_20261031/S1_QANCHOR_W4096"
+HIST_L2 = REPO / "logs/e014_aee/full/bela_stage1_queryanchor_20261027/S1_QANCHOR_L2"
 LOG_DIR = DEC / "logs"
 
 _env_gpus = os.environ.get("VITCOP_DECISION_GPUS", "").strip()
@@ -60,20 +61,28 @@ def _letter() -> str:
 
 def _hist_for(arm_id: str, task: str) -> Path | None:
     """Reuse prior metrics when schedule+rate+weight match a finished run."""
-    # RD_S*_R778_W60 ← production default w=0.6
-    if arm_id == "RD_SA_R778_W60":
-        p = HIST_A / task / "metrics.json"
-        if p.exists():
-            return p
-        p2 = ABC_ROOT / "S1_W4096_A" / task / "metrics.json"
-        if p2.exists():
-            return p2
-    if arm_id == "RD_SB_R778_W60" and task in ("gqa", "pope", "mme"):
-        p = ABC_ROOT / "S1_W4096_B" / task / "metrics.json"
-        if p.exists():
-            return p
-    if arm_id == "RD_SC_R778_W60" and task in ("gqa", "pope", "mme"):
-        p = ABC_ROOT / "S1_W4096_C" / task / "metrics.json"
+    # W60@77.8 production default
+    if arm_id.endswith("_R778_W60"):
+        if arm_id.startswith("RD_SA_"):
+            p = HIST_A / task / "metrics.json"
+            if p.exists():
+                return p
+            p2 = ABC_ROOT / "S1_W4096_A" / task / "metrics.json"
+            if p2.exists():
+                return p2
+        if arm_id.startswith("RD_SB_") and task in ("gqa", "pope", "mme"):
+            p = ABC_ROOT / "S1_W4096_B" / task / "metrics.json"
+            if p.exists():
+                return p
+        if arm_id.startswith("RD_SC_") and task in ("gqa", "pope", "mme"):
+            p = ABC_ROOT / "S1_W4096_C" / task / "metrics.json"
+            if p.exists():
+                return p
+    # W60@94.4 = L2 64→17→10 default RDRIFT (same counts as schedule A/C @944)
+    if arm_id.endswith("_R944_W60") and (
+        arm_id.startswith("RD_SA_") or arm_id.startswith("RD_SC_")
+    ):
+        p = HIST_L2 / task / "metrics.json"
         if p.exists():
             return p
     return None
@@ -105,13 +114,6 @@ def _live_outputs() -> set[str]:
     return live
 
 
-# Skip only W60@77.8 (production default already measured). Run W60 at 88.9/94.4.
-def _should_run(arm_id: str) -> bool:
-    if arm_id.endswith("_R778_W60"):
-        return False
-    return True
-
-
 def _arms(letter: str) -> list[tuple[str, Path]]:
     man = json.loads((CFG_DIR / "MANIFEST.json").read_text())
     want = set(man.get("arms_to_run") or [])
@@ -120,14 +122,15 @@ def _arms(letter: str) -> list[tuple[str, Path]]:
         name = path.name
         if want and name not in want:
             continue
-        if not _should_run(path.stem):
+        # never queue W60 or deferred 88.9%
+        if path.stem.endswith("_W60") or "_R889_" in path.stem:
             continue
         arms.append((path.stem, path))
-    # 3 new @778 + 4 @889 + 4 @944 = 11
-    if len(arms) != 11:
+    # 3 @778 + 3 @944 = 6
+    if len(arms) != 6:
         raise SystemExit(
-            f"expected 11 run arms for schedule {letter} "
-            f"(skip only W60@77.8), got {len(arms)} in {CFG_DIR}"
+            f"expected 6 run arms for schedule {letter} "
+            f"(W20/W40/W80 × 77.8/94.4), got {len(arms)} in {CFG_DIR}"
         )
     return arms
 
@@ -219,7 +222,7 @@ def _write_summary(letter: str) -> None:
         "score = w*rank_now + (1-w)*(rank_now-rank_old)",
         "",
     ]
-    for rate, rate_lab in (("778", "77.8%"), ("889", "88.9%"), ("944", "94.4%")):
+    for rate, rate_lab in (("778", "77.8%"), ("944", "94.4%")):
         lines += [f"## {rate_lab}", "", "| arm | w | R4 mean rel% | R6 mean rel% | notes |", "|---|---:|---:|---:|---|"]
         for w in (0.2, 0.4, 0.6, 0.8):
             arm_id = f"RD_S{letter}_R{rate}_W{int(round(w * 100)):02d}"

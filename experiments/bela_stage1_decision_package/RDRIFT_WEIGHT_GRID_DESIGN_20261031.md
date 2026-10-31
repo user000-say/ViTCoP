@@ -12,14 +12,14 @@ Env: `E020_CURRENT_WEIGHT=w`. Config field: `method.stage2.rdrift_current_weight
 
 ## Weight pairs (w, 1−w)
 
-| label | w | 1−w | 77.8% | 88.9% / 94.4% |
-|---|---:|---:|---|---|
-| W20 | 0.2 | 0.8 | run | run |
-| W40 | 0.4 | 0.6 | run | run |
-| W60 | 0.6 | 0.4 | **skip / hist** (production default) | run (baseline at new rate) |
-| W80 | 0.8 | 0.2 | run | run |
+| label | w | 1−w | 77.8% | 94.4% | 88.9% |
+|---|---:|---:|---|---|---|
+| W20 | 0.2 | 0.8 | **run** | **run** | deferred |
+| W40 | 0.4 | 0.6 | **run** | **run** | deferred |
+| W60 | 0.6 | 0.4 | hist (S1/ABC) | hist (L2 `64→17→10`) | deferred |
+| W80 | 0.8 | 0.2 | **run** | **run** | deferred |
 
-Queue = **11 arms** (not 12): skip only `W60@77.8`.
+Phase-1 queue = **6 arms** (3 new weights × {77.8%, 94.4%}). STAR T64 / 88.9% later.
 
 ## Compression × schedule (LLaVA-1.5-7B, N=576, L=32, lengths 12/8/12)
 
