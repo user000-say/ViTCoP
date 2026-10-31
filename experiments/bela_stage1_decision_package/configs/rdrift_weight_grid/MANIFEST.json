@@ -1,0 +1,54 @@
+{
+  "schedule_letter": "A",
+  "weights": [
+    0.2,
+    0.4,
+    0.6,
+    0.8
+  ],
+  "rates": [
+    "778",
+    "889",
+    "944"
+  ],
+  "arms": [
+    "RD_SA_R778_W20.json",
+    "RD_SA_R778_W40.json",
+    "RD_SA_R778_W60.json",
+    "RD_SA_R778_W80.json",
+    "RD_SA_R889_W20.json",
+    "RD_SA_R889_W40.json",
+    "RD_SA_R889_W60.json",
+    "RD_SA_R889_W80.json",
+    "RD_SA_R944_W20.json",
+    "RD_SA_R944_W40.json",
+    "RD_SA_R944_W60.json",
+    "RD_SA_R944_W80.json"
+  ],
+  "schedules": {
+    "778": {
+      "counts": [
+        256,
+        74,
+        36
+      ],
+      "W": 4096
+    },
+    "889": {
+      "counts": [
+        128,
+        37,
+        18
+      ],
+      "W": 2048
+    },
+    "944": {
+      "counts": [
+        64,
+        17,
+        10
+      ],
+      "W": 1024
+    }
+  }
+}

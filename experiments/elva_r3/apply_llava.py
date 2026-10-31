@@ -67,14 +67,18 @@ def overlay(meta: dict | None = None) -> dict:
         E009_EXPECT_VISUAL=str(counts[0]),
         E007_EXPECT_STAGE1=str(counts[0]),
     )
+    rdrift_w = float(config["method"]["stage2"].get("rdrift_current_weight", 0.6))
     if first == "RDRIFT" and events:
         # Original E020 rank_drift on FIRST only; FINAL stays Q_ATTN. No merge.
+        # score = w*rank_now + (1-w)*(rank_now - rank_old); pairs (w,1-w).
         if e018_selector != "Q_ATTN":
             raise ValueError("RDRIFT first_selector requires E018_SELECTOR=Q_ATTN baseline")
+        if not (0.0 <= rdrift_w <= 1.0):
+            raise ValueError(f"rdrift_current_weight out of [0,1]: {rdrift_w}")
         os.environ.update(
             E020_ENABLE="True",
             E020_KIND="rank_drift",
-            E020_CURRENT_WEIGHT="0.6",
+            E020_CURRENT_WEIGHT=f"{rdrift_w:g}",
             E020_MODEL="current",
             E020_MODEL_PATH="",
             E020_GROUP_SIZE="1",
@@ -97,4 +101,5 @@ def overlay(meta: dict | None = None) -> dict:
     meta["first_selector"] = first
     meta["later_selector"] = later
     meta["e018_selector"] = e018_selector
+    meta["rdrift_current_weight"] = rdrift_w if first == "RDRIFT" else None
     return meta
