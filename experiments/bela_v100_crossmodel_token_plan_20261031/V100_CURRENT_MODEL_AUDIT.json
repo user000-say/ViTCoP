@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-31",
+  "kit": "BELA_V100_CROSSMODEL_TOKEN_PLAN_KIT_20261031",
+  "gpu_snapshot": {
+    "project_set": [0, 2, 4, 7],
+    "free_at_audit": [0, 4, 7],
+    "busy_foreign": {
+      "gpus": [1, 2, 3, 5],
+      "owner": "wangshirui",
+      "job": "polar_condition/train_polar.py (accelerate 4-proc)"
+    },
+    "note": "GPU 2 is project-set but foreign-busy; do not kill. Launch on 0/4/7 only until 2 frees."
+  },
+  "k256_allowlist": {
+    "historical_blocker": true,
+    "unlocked": true,
+    "files": [
+      "LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py",
+      "llava/model/multimodal_encoder/e013_stage1_support.py",
+      "experiments/elva_r3/native_cover.py",
+      "experiments/elva_r3/llava_stage1.py",
+      "experiments/elva_r3/elva/cover_binding.py"
+    ],
+    "slots_unchanged": 32,
+    "objective_unchanged": "REPLACE/COVER same formula; only capacity set extended with 256"
+  },
+  "llava15_w4096": {
+    "schedule_A": "256→74→36 lengths 12/8/12 W4096 T128 compression 77.7778%",
+    "e018_events": "11:74,19:36",
+    "arms": ["S1_QANCHOR_W4096", "P3_QA_QATTN_W4096"],
+    "tasks_six": ["gqa", "pope", "mme", "mmbench_en_dev", "scienceqa_img", "textvqa_val_ocr"],
+    "env": "vitcopreback",
+    "host": "e014_boot + elva_r3 overlay + bela_query_anchor QA",
+    "verdict": "READY_AFTER_SMOKE"
+  },
+  "cached_checkpoints": {
+    "liuhaotian/llava-v1.5-7b": "local e014 models_llava + hub",
+    "liuhaotian/llava-v1.5-13b": "hub present",
+    "llava-hf/llava-v1.6-vicuna-7b-hf": "~14G hub",
+    "llava-hf/llava-v1.6-vicuna-13b-hf": "expected hub (verify before NeXT-13B)",
+    "Qwen/Qwen3-VL-8B-Instruct": "~17G hub",
+    "Qwen/Qwen3.5-9B": "~19G hub"
+  },
+  "cross_model": {
+    "LLaVA-NeXT-7B": {
+      "dense_script": "experiments/bela_v100_4model_qacover_20261028/scripts/run_next7_dense6.sh",
+      "progressive_bela": "BLOCKED — no NeXT crop/AnyRes Stage1+Stage2 host binding; Dense-only until port",
+      "env": "vitcop-v100-4model"
+    },
+    "LLaVA-NeXT-13B": {
+      "progressive_bela": "BLOCKED — same host gap + 32GB V100 OOM risk",
+      "dense": "smoke memory first"
+    },
+    "Qwen3-VL-8B": {
+      "progressive_bela": "BLOCKED — DeepStack/M-RoPE prune host not wired; Dense via transformers/lmms if adapter exists",
+      "env": "vitcop-v100-4model"
+    },
+    "Qwen3.5-9B": {
+      "progressive_bela": "FORBIDDEN without hybrid DeltaNet state proof",
+      "allowed": "Stage1-only Dense/Native/QA labeled separately after FP16 smoke"
+    }
+  },
+  "audit_verdict": "GO_LLAVA15_W4096_SIX_AFTER_SMOKE; CROSSMODEL_PROGRESSIVE_BLOCKED; DENSE_NEXT7_QUEUEABLE_ON_FREE_GPUS"
+}

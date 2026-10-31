@@ -1,15 +1,16 @@
 """Thin callback into the existing E013 REPLACE/COVER. No new coverage formula.
 
 CVPR2027 handoff Stage1: production COVER accepts budget=K0 via ``core_k``.
-Allowed K0 match handoff profiles + FINAL late-cut + G1 F3:
-  64/72/80 (late-first-cut), 96 (EASY), 128 (G1 F3), 160 (NORMAL), 172 (HARD).
+Allowed K0 match handoff profiles + FINAL late-cut + G1 F3 + W4096:
+  64/72/80 (late-first-cut), 96 (EASY), 128 (G1 F3), 160 (NORMAL), 172 (HARD),
+  256 (STAR-Pro T128 / layer-avg 77.8% W4096).
 Replacement slots stay 32 (same REPLACE/COVER criterion as historical K172).
 Not PCOV / not pool172_then_topk.
 """
 from llava.model.multimodal_encoder.e013_stage1_support import e013_choose
 
-# Handoff PolicyProfile k0 + G1 F3 entry128 + sprint B1 K32.
-_ALLOWED_K = {32, 64, 72, 80, 96, 128, 160, 172}
+# Handoff PolicyProfile k0 + G1 F3 entry128 + sprint B1 K32 + W4096 K256.
+_ALLOWED_K = {32, 64, 72, 80, 96, 128, 160, 172, 256}
 _COVER_SLOTS = 32
 # K32 cannot use 32 REPLACE slots (anchors would be empty); keep ~25% residual.
 _SLOTS_BY_K = {32: 8}

@@ -1,0 +1,23 @@
+model,tier,reference_n,layers,cut_after_l1,cut_after_l2,stage0_k,stage1_k,stage2_k,token_segments,layer_token_work,avg_visual_tokens_per_layer,reduction_pct,kind,source,priority
+LLaVA-1.5-7B,T128_reference_77.8,576,32,12,20,256,74,36,12/8/12,4096,128.0,77.77777777777779,progressive,STAR-Pro Table 5,primary
+LLaVA-1.5-7B,T128_midheavy_77.8,576,32,12,20,256,80,32,12/8/12,4096,128.0,77.77777777777779,progressive,STAR-Pro Table 12 variation,selection
+LLaVA-1.5-7B,T128_deepheavy_77.8,576,32,12,20,256,68,40,12/8/12,4096,128.0,77.77777777777779,progressive,BELA matched-W candidate,selection
+LLaVA-NeXT-7B,T640_reference_77.8,2880,32,12,20,1280,367,182,12/8/12,20480,640.0,77.77777777777779,progressive,STAR-Pro Table 5,primary
+LLaVA-NeXT-7B,T640_midheavy_77.8,2880,32,12,20,1280,400,160,12/8/12,20480,640.0,77.77777777777779,progressive,STAR-Pro Table 14 variation,optional
+LLaVA-NeXT-7B,T320_reference_88.9,2880,32,12,20,640,182,92,12/8/12,10240,320.0,88.88888888888889,progressive,STAR-Pro Table 5,stress
+LLaVA-NeXT-13B,T640_reference_77.8,2880,40,15,30,1280,320,160,15/15/10,25600,640.0,77.77777777777779,progressive,STAR-Pro Table 5,primary
+LLaVA-NeXT-13B,T640_midheavy_77.8,2880,40,15,30,1280,360,100,15/15/10,25600,640.0,77.77777777777779,progressive,BELA matched-W candidate,optional
+LLaVA-NeXT-13B,T320_reference_88.9,2880,40,15,30,640,160,80,15/15/10,12800,320.0,88.88888888888889,progressive,STAR-Pro Table 5,stress
+Qwen2.5-VL-7B,T288_77.8,1296,28,10,18,576,198,72,10/8/10,8064,288.0,77.77777777777779,progressive,BELA proposed; not STAR-Pro,primary
+Qwen2.5-VL-7B,T288_later_77.8,1296,28,10,18,576,188,80,10/8/10,8064,288.0,77.77777777777779,progressive,BELA matched-W candidate,optional
+Qwen2.5-VL-7B,T256_80.25,1296,28,10,18,512,176,64,10/8/10,7168,256.0,80.24691358024691,progressive,BELA proposed; QCPruner fixed final K is different,paper_comparison_budget
+Qwen2.5-VL-7B,T128_90.12,1296,28,10,18,256,88,32,10/8/10,3584,128.0,90.12345679012346,progressive,BELA proposed; dynamic N,stress
+Qwen2.5-VL-3B,T288_77.8,1296,36,14,24,576,144,72,14/10/12,10368,288.0,77.77777777777779,progressive,BELA proposed; 3B L36 officially verified,optional_smoke
+Qwen3-VL-8B-Instruct,T288_77.8,1296,36,14,24,576,144,72,14/10/12,10368,288.0,77.77777777777779,progressive,BELA matched-rate candidate; not STAR-Pro deployed,optional_rate
+Qwen3-VL-8B-Instruct,T288_midheavy_77.8,1296,36,14,24,576,168,52,14/10/12,10368,288.0,77.77777777777779,progressive,BELA matched-W candidate,optional
+Qwen3-VL-8B-Instruct,T256_reference_80.25,1296,36,14,24,512,128,64,14/10/12,9216,256.0,80.24691358024691,progressive,STAR-Pro Table 5,primary
+Qwen3-VL-8B-Instruct,T128_reference_90.12,1296,36,14,24,256,64,32,14/10/12,4608,128.0,90.12345679012346,progressive,STAR-Pro Table 5,stress
+Qwen3.5-9B,K228_stage1_77.73,1024,32,,,228,,,stage1-only,7296,228,77.734375,stage1_only,BELA proposed; hybrid attention; no progressive claim,primary_safe
+Qwen3.5-9B,K256_stage1_75.0,1024,32,,,256,,,stage1-only,8192,256,75.0,stage1_only,"CoRePrune comparable final K tier, not same method",paper_comparison_budget
+Qwen3.5-9B,K128_stage1_87.5,1024,32,,,128,,,stage1-only,4096,128,87.5,stage1_only,"CoRePrune comparable final K tier, not same method",stress
+Qwen3.5-9B,T228_conditional_progressive_77.73,1024,32,12,24,456,120,48,12/12/8,7296,228.0,77.734375,conditional_progressive,BELA hypothetical: validate full+linear states first,do_not_run_without_gate

@@ -39,11 +39,11 @@ def _covers():
     _COVERS = {
         "legacy_native": NativeCover(legacy_callback, dict(
             family="legacy_native", entrypoint="native_cover:legacy_callback",
-            # COVER@K0: late-cut 64/72/80 + EASY96 / G1-F3-128 / NORMAL160 / HARD172; slots=32.
-            supported_k=[32, 64, 72, 80, 96, 128, 160, 172],
+            # COVER@K0: late-cut 64/72/80 + EASY96 / G1-F3-128 / NORMAL160 / HARD172 / W4096-256; slots=32.
+            supported_k=[32, 64, 72, 80, 96, 128, 160, 172, 256],
             replacement_slots={
                 "32": 8, "64": 32, "72": 32, "80": 32, "96": 32,
-                "128": 32, "160": 32, "172": 32,
+                "128": 32, "160": 32, "172": 32, "256": 32,
             },
             source_files=legacy_files)),
         "protected_coverage": NativeCover(pcov_callback, dict(

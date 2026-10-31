@@ -63,7 +63,7 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
     Handoff (CVPR2027) Stage1: the *same* REPLACE/COVER gain and fixed
     replacement slots accept budget=K0 in
       {64,72,80 (FINAL late-first-cut), 96 (EASY), 128 (G1 F3),
-       160 (NORMAL/G1 F2), 172 (HARD/anchor)}.
+       160 (NORMAL/G1 F2), 172 (HARD/anchor), 256 (W4096/T128 77.8%)}.
     This is not PCOV and not pool172-then-topk. Formula unchanged.
     """
     if tokens.ndim != 2 or tokens.shape[0] != GRID*GRID:
@@ -76,9 +76,9 @@ def e013_choose(tokens, cls_scores, variant, pick, budget,
     pick = str(pick).upper()
     b = int(budget)
     total_k = int(CORE_K if core_k is None else core_k)
-    # Handoff PolicyProfile k0 + G1 F3 entry128 + sprint B1 COVER@K32 (slots<=K).
-    if total_k not in {32, 64, 72, 80, 96, 128, 160, 172}:
-        raise ValueError('[E013] core_k must be one of {32,64,72,80,96,128,160,172}')
+    # Handoff PolicyProfile k0 + G1 F3 entry128 + sprint B1 COVER@K32 + W4096 K256.
+    if total_k not in {32, 64, 72, 80, 96, 128, 160, 172, 256}:
+        raise ValueError('[E013] core_k must be one of {32,64,72,80,96,128,160,172,256}')
     if variant not in {'EXTRA', 'REPLACE'}:
         raise ValueError('[E013] variant must be EXTRA or REPLACE')
     if pick not in {'ATTN', 'RANDOM', 'COVER', 'NULL', 'DUPLICATE'}:
