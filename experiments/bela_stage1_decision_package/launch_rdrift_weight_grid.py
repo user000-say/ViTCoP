@@ -105,12 +105,30 @@ def _live_outputs() -> set[str]:
     return live
 
 
+# Skip only W60@77.8 (production default already measured). Run W60 at 88.9/94.4.
+def _should_run(arm_id: str) -> bool:
+    if arm_id.endswith("_R778_W60"):
+        return False
+    return True
+
+
 def _arms(letter: str) -> list[tuple[str, Path]]:
+    man = json.loads((CFG_DIR / "MANIFEST.json").read_text())
+    want = set(man.get("arms_to_run") or [])
     arms = []
     for path in sorted(CFG_DIR.glob(f"RD_S{letter}_*.json")):
+        name = path.name
+        if want and name not in want:
+            continue
+        if not _should_run(path.stem):
+            continue
         arms.append((path.stem, path))
-    if len(arms) != 12:
-        raise SystemExit(f"expected 12 configs for schedule {letter}, got {len(arms)} in {CFG_DIR}")
+    # 3 new @778 + 4 @889 + 4 @944 = 11
+    if len(arms) != 11:
+        raise SystemExit(
+            f"expected 11 run arms for schedule {letter} "
+            f"(skip only W60@77.8), got {len(arms)} in {CFG_DIR}"
+        )
     return arms
 
 

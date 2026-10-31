@@ -12,12 +12,14 @@ Env: `E020_CURRENT_WEIGHT=w`. Config field: `method.stage2.rdrift_current_weight
 
 ## Weight pairs (w, 1−w)
 
-| label | w | 1−w | note |
-|---|---:|---:|---|
-| W20 | 0.2 | 0.8 | history-heavy |
-| W40 | 0.4 | 0.6 | |
-| W60 | 0.6 | 0.4 | production default |
-| W80 | 0.8 | 0.2 | current-heavy |
+| label | w | 1−w | 77.8% | 88.9% / 94.4% |
+|---|---:|---:|---|---|
+| W20 | 0.2 | 0.8 | run | run |
+| W40 | 0.4 | 0.6 | run | run |
+| W60 | 0.6 | 0.4 | **skip / hist** (production default) | run (baseline at new rate) |
+| W80 | 0.8 | 0.2 | run | run |
+
+Queue = **11 arms** (not 12): skip only `W60@77.8`.
 
 ## Compression × schedule (LLaVA-1.5-7B, N=576, L=32, lengths 12/8/12)
 

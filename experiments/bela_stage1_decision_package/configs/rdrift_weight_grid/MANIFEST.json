@@ -1,20 +1,38 @@
 {
   "schedule_letter": "A",
-  "weights": [
-    0.2,
-    0.4,
-    0.6,
-    0.8
-  ],
+  "weights_by_rate": {
+    "778": [
+      0.2,
+      0.4,
+      0.8
+    ],
+    "889": [
+      0.2,
+      0.4,
+      0.6,
+      0.8
+    ],
+    "944": [
+      0.2,
+      0.4,
+      0.6,
+      0.8
+    ]
+  },
+  "skip_rerun": {
+    "778": [
+      0.6
+    ]
+  },
+  "skip_reason": "w=0.6 (0.6/0.4) is production RDRIFT; reuse 77.8% hist only",
   "rates": [
     "778",
     "889",
     "944"
   ],
-  "arms": [
+  "arms_to_run": [
     "RD_SA_R778_W20.json",
     "RD_SA_R778_W40.json",
-    "RD_SA_R778_W60.json",
     "RD_SA_R778_W80.json",
     "RD_SA_R889_W20.json",
     "RD_SA_R889_W40.json",
@@ -25,6 +43,7 @@
     "RD_SA_R944_W60.json",
     "RD_SA_R944_W80.json"
   ],
+  "n_arms_to_run": 11,
   "schedules": {
     "778": {
       "counts": [
