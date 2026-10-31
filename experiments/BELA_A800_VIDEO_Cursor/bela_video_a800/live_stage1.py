@@ -12,6 +12,7 @@ BELA_VIDEO_MODE:
   native          — NATIVE_L2_TOPK only
   qacover         — NATIVE_L2_TOPK then frame-wise QA-COVER
   matched_random  — same swap count as QA, random donors
+  replay          — gather frozen ids from model._bela_replay_stage1_ids (P0 diagnostic)
 """
 from __future__ import annotations
 
@@ -94,6 +95,25 @@ def select_and_gather(
     f, n, h = pooled.shape
     spec = budget(tier, frames=f, patches_per_frame=n)
     k = spec.framewise_counts[0]
+
+    # P0 diagnostic: replay frozen QA (or any) keep IDs without live scoring.
+    if mode == "replay":
+        raw = getattr(model, "_bela_replay_stage1_ids", None)
+        if raw is None:
+            raise RuntimeError("replay mode requires model._bela_replay_stage1_ids")
+        ids = torch.as_tensor(raw, device=pooled.device, dtype=torch.long)
+        if ids.ndim != 2 or ids.shape != (f, k):
+            raise RuntimeError(f"replay ids shape {tuple(ids.shape)} != {(f, k)}")
+        swaps = tuple(0 for _ in range(f))
+        reason = "replay_frozen_ids"
+        selector = "REPLAY"
+        gathered = torch.gather(pooled, 1, ids.unsqueeze(-1).expand(-1, -1, h))
+        trace = Stage1Trace(
+            mode=mode, tier=tier, frames=f, patches=n, keep_per_frame=k,
+            ids=ids.detach().cpu(), swaps=swaps, reason=reason, selector=selector,
+        )
+        return gathered, trace
+
     native = native_l2_topk(pooled, k)
     control = {
         "native": "off",  # keep native ids inside select_framewise

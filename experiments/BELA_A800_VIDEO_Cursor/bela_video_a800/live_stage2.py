@@ -202,16 +202,19 @@ def select_and_prune(
             f"visual span invalid start={visual_start} end={visual_end} seq={seq_len} "
             f"F={f} K={k} expected_visual={visual_len}"
         )
-    # Score on CPU to isolate CUDA asserts in earlier kernels vs selector math.
-    hs_cpu = hidden_states.detach().float().cpu()
+    # P1 micro-opt: keep scoring on GPU (same hidden/attn formulas; no D2H).
+    # P3 same-layer Q/K replacement is a separate semantic change — not here.
+    device = hidden_states.device
     if attn_avg is not None:
         if int(attn_avg.shape[0]) != seq_len or int(attn_avg.shape[1]) != seq_len:
             raise RuntimeError(
                 f"attn_avg shape {tuple(attn_avg.shape)} != seq {seq_len}"
             )
-        flat_scores = q_attn_scores(attn_avg.float().cpu(), visual_start, visual_end)
+        flat_scores = q_attn_scores(attn_avg.float(), visual_start, visual_end)
     else:
-        flat_scores = q_attn_scores_from_hidden(hs_cpu, visual_start, visual_end)
+        flat_scores = q_attn_scores_from_hidden(
+            hidden_states.detach().float(), visual_start, visual_end
+        )
     if int(flat_scores.numel()) != visual_len:
         raise RuntimeError(
             f"flat_scores {int(flat_scores.numel())} != visual_len {visual_len}"
@@ -223,25 +226,32 @@ def select_and_prune(
         if state.ranks_history is None or state.ranks_history.shape != patch_scores.shape:
             old = ranks_from_scores(patch_scores)
         else:
-            old = state.ranks_history.cpu()
-        pref = rdrift_scores(patch_scores, old.to(patch_scores.device))
+            old = state.ranks_history.to(device=patch_scores.device)
+        pref = rdrift_scores(patch_scores, old)
     else:
         pref = patch_scores
 
-    mask = build_keep_mask_framewise(pref, k_target).cpu()
-    keep_rel = visual_region_keep_indices(state, mask)  # CPU indices into visual region
-    device = hidden_states.device
-    keep_rel_dev = keep_rel.to(device)
+    mask = build_keep_mask_framewise(pref, k_target)
+    # Vectorized keep indices inside visual region (patches + newlines).
+    # layout per frame: [p0..p{k-1}, newline]; stride = k+1
+    fi = torch.arange(f, device=device).view(f, 1)
+    pi = torch.arange(k, device=device).view(1, k)
+    patch_abs = (fi * (k + 1) + pi)[mask]  # kept patch offsets
+    nl_abs = torch.arange(f, device=device) * (k + 1) + k
+    # Interleave by frame: for each frame, kept patches (sorted by pi) then newline.
+    # Rebuild via list-free: sort key = frame * (k+1) + local
+    keep_rel_dev = torch.cat([patch_abs, nl_abs], dim=0).sort().values
     # update patch ids + ranks on surviving slots (for next RDRIFT cut)
     now_ranks = ranks_from_scores(patch_scores)
-    new_ids = []
-    kept_ranks = []
-    for fi in range(f):
-        m = mask[fi]
-        new_ids.append(state.patch_ids[fi][m].tolist())
-        kept_ranks.append(now_ranks[fi][m])
-    state.patch_ids = torch.tensor(new_ids, dtype=torch.long)
-    state.ranks_history = torch.stack(kept_ranks, dim=0)
+    # gather surviving ids: [F,k_target]
+    # mask [F,K] → take top positions already sorted ascending in build_keep_mask
+    idx = mask.to(torch.long).argsort(dim=-1, descending=True)[:, :k_target]
+    idx = idx.sort(dim=-1).values
+    patch_ids_dev = state.patch_ids.to(device=device)
+    if patch_ids_dev.dtype != torch.long:
+        patch_ids_dev = patch_ids_dev.long()
+    state.patch_ids = patch_ids_dev.gather(1, idx).detach().cpu()
+    state.ranks_history = now_ranks.gather(1, idx).detach()
 
     hs = gather_seq(hidden_states, keep_rel_dev, visual_start, visual_end, dim=1)
     # Re-index positions 0..L-1 after physical prune. Keeping sparse original

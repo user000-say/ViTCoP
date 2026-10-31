@@ -11,6 +11,7 @@ sequence, NOT positions in the full LLM text/video/time prompt.
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Sequence
+import os
 
 import torch
 import torch.nn.functional as F
@@ -20,7 +21,13 @@ from .qa_core import (
     select_question_anchored,
     matched_random_entry_control,
 )
+from .qa_batched import select_question_anchored_batched
 from .schedule import budget, FRAME_PATCHES
+
+
+def _qa_batch_enabled() -> bool:
+    v = os.environ.get("BELA_VIDEO_QA_BATCH", "1").strip().lower()
+    return v not in ("0", "false", "no", "off")
 
 
 @dataclass
@@ -121,37 +128,54 @@ def select_framewise(
         raise ValueError("raw_query_scores must be finite [F,N]")
     if control == "matched_random" and raw_query_scores is None:
         raise ValueError("random control requires QA selection proposal to match swaps")
-    output, counts, reasons = [], [], []
     # Fix swap fraction = 8/64 = 12.5% of initial entry cardinality.
     max_swaps = 8 if tier == "T32" else 4
-    for frame in range(f):
-        original = native_ids[frame].long().sort().values
-        if not enabled or control == "off" or raw_query_scores is None:
-            selected=original
-            used=0
-            reason="native_noop"
-        else:
-            candidate=select_question_anchored(
+    cfg = AnchorConfig(max_swaps=max_swaps)
+
+    if (not enabled) or control == "off" or raw_query_scores is None:
+        out = native_ids.long().sort(dim=-1).values
+        counts = tuple(0 for _ in range(f))
+        reasons = tuple("native_noop" for _ in range(f))
+    elif control == "qa" and _qa_batch_enabled() and f >= 1:
+        # P1 exact-equivalent batched path (default on).
+        batched = select_question_anchored_batched(
+            native_keep_ids=native_ids.long().to(dev),
+            visual_metric=tuple(v.to(dev) for v in dual_views),
+            raw_query_scores=raw_query_scores.to(dev),
+            config=cfg,
+        )
+        out = batched.keep_ids
+        counts = batched.swap_count
+        reasons = batched.reasons
+    else:
+        output, counts_l, reasons_l = [], [], []
+        for frame in range(f):
+            original = native_ids[frame].long().sort().values
+            candidate = select_question_anchored(
                 native_keep_ids=original,
                 visual_metric=tuple(view[frame] for view in dual_views),
                 raw_query_scores=raw_query_scores[frame],
-                config=AnchorConfig(max_swaps=max_swaps),
+                config=cfg,
             )
-            used=candidate.swaps
-            selected=candidate.keep_ids
-            reason=candidate.reason
-            if control=="matched_random":
-                selected=matched_random_entry_control(
+            used = candidate.swaps
+            selected = candidate.keep_ids
+            reason = candidate.reason
+            if control == "matched_random":
+                selected = matched_random_entry_control(
                     original, candidate.keep_ids, n_patches=n,
-                    seed=seed+frame,
+                    seed=seed + frame,
                 )
-                reason="matched_random_donors"
-        if selected.numel() != k or selected.unique().numel() != k:
-            raise RuntimeError("frame-wise selection violated fixed K")
-        output.append(selected.to(device=dev))
-        counts.append(used)
-        reasons.append(reason)
-    out=torch.stack(output,dim=0)
+                reason = "matched_random_donors"
+            if selected.numel() != k or selected.unique().numel() != k:
+                raise RuntimeError("frame-wise selection violated fixed K")
+            output.append(selected.to(device=dev))
+            counts_l.append(used)
+            reasons_l.append(reason)
+        out = torch.stack(output, dim=0)
+        counts = tuple(counts_l)
+        reasons = tuple(reasons_l)
+    if out.shape != (f, k) or any(int(row.unique().numel()) != k for row in out):
+        raise RuntimeError("frame-wise selection violated fixed K")
     visual_flat_ids=(
         out + torch.arange(f,device=dev,dtype=torch.long)[:,None]*n
     ).reshape(-1)
