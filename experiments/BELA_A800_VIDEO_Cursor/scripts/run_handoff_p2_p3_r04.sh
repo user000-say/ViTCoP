@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Continue handoff after P0/P1: P2 dual smoke, P3 QK audit, R0-R4 dev matrix, then full winner.
+# Offline-only on A800 (no DNS): same HF layout as run_slim_acc_queue.sh.
 set -euo pipefail
 ROOT=/data1/xiangyue
 SCR=$ROOT/ViTCoP/experiments/BELA_A800_VIDEO_Cursor/scripts
@@ -8,10 +9,31 @@ PY=$ROOT/envs/vitcop-a800-video/bin/python
 export PYTHONPATH=$ROOT/src/LLaVA-NeXT:$ROOT/src/lmms-eval:$PKG
 export BELA_VIDEO_QA_BATCH=1
 export BELA_VIDEO_STAGE2_SCORE=qk
+export HF_HOME=$ROOT/hf
+export HUGGINGFACE_HUB_CACHE=$ROOT/hf/hub
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_DATASETS_OFFLINE=1
+export BELA_LOCAL_DATASET=$ROOT/hf/ann/videomme
+export TOKENIZERS_PARALLELISM=false
+export TMPDIR=$ROOT/tmp
+mkdir -p "$TMPDIR" "$ROOT/cache"
 LOG=$ROOT/logs/video_handoff_p2p3_r04.log
+# Rotate prior failed log so this run is auditable.
+if [[ -f "$LOG" ]]; then
+  mv -f "$LOG" "$ROOT/logs/video_handoff_p2p3_r04.prev.log"
+fi
 mkdir -p $ROOT/logs/video_dev_matrix $ROOT/logs/video_full_acc
 exec > >(tee -a "$LOG") 2>&1
 echo "HANDOFF_REMAINING_START $(date -Is)"
+echo "OFFLINE HF_HOME=$HF_HOME BELA_LOCAL_DATASET=$BELA_LOCAL_DATASET HF_HUB_OFFLINE=$HF_HUB_OFFLINE"
+# Preflight: local Video-MME must already be staged (slim ACC path).
+if [[ ! -d $ROOT/hf/videomme/data ]] || ! ls $ROOT/hf/videomme/data/*.mp4 >/dev/null 2>&1; then
+  echo "FATAL: missing local Video-MME mp4 under $ROOT/hf/videomme/data" >&2
+  exit 2
+fi
+if [[ ! -d $BELA_LOCAL_DATASET ]]; then
+  echo "FATAL: missing ann $BELA_LOCAL_DATASET" >&2
+  exit 2
+fi
 
 $PY $SCR/patch_llava_video_stage2.py || true
 $PY $SCR/patch_generate_mask_fix.py || true
@@ -45,6 +67,10 @@ print(json.dumps(lock, indent=2))
 PY
 
 echo "=== P2/P3 smoke generate (native + dualcover + qk) ==="
+SKIP_P2P3=${BELA_SKIP_P2P3:-0}
+if [[ "$SKIP_P2P3" == "1" && -f $ROOT/logs/VIDEO_STAGE2_QK_SMOKE_NATIVE.json && -f $ROOT/logs/VIDEO_STAGE2_QK_AUDIT.json ]]; then
+  echo "SKIP_P2P3 reuse existing smoke artifacts"
+else
 CUDA_VISIBLE_DEVICES=2 BELA_SMOKE_GPU=2 BELA_SMOKE_FRAMES=8 \
   BELA_VIDEO_MODE=native BELA_VIDEO_TIER=T32 BELA_VIDEO_STAGE2=Q_ATTN_ALL \
   BELA_VIDEO_STAGE2_SCORE=qk \
@@ -104,6 +130,7 @@ assert s1 and s1.get("selector","").startswith("V_DUAL"), s1
 assert s2 and s2.get("events"), s2
 print("P2_P3_SMOKE_PASS")
 PY
+fi
 
 echo "=== Build / reuse DEV panel ==="
 $PY $SCR/build_dev_panel.py || true
@@ -125,49 +152,47 @@ run_arm () {
   CUDA_VISIBLE_DEVICES=$gpu \
     BELA_VIDEO_MODE=$mode BELA_VIDEO_TIER=T32 BELA_VIDEO_STAGE2=$s2 \
     BELA_VIDEO_QA_BATCH=1 BELA_VIDEO_STAGE2_SCORE=qk \
-    BELA_LOCAL_DATASET=$ROOT/hf/ann/videomme \
-    $PY -c "from bela_video_a800.qwen2_stage2_forward import apply_patch; from bela_video_a800.siglip_dual_capture import install_vision_capture; print('hooks-ready')" \
-    >/dev/null
-  # Install hooks via sitecustomize-like preamble in a tiny wrapper
-  CUDA_VISIBLE_DEVICES=$gpu \
-    BELA_VIDEO_MODE=$mode BELA_VIDEO_TIER=T32 BELA_VIDEO_STAGE2=$s2 \
-    BELA_VIDEO_QA_BATCH=1 BELA_VIDEO_STAGE2_SCORE=qk \
+    HF_HOME=$HF_HOME HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_DATASETS_OFFLINE=1 \
     BELA_LOCAL_DATASET=$ROOT/hf/ann/videomme \
     $PY $SCR/lmms_eval_video_arm.py \
       --arm "$arm" --mode "$mode" --stage2 "$s2" --limit "$LIMIT" \
       --output "$out/videomme" --model_args "$ARGS"
 }
 
-# wrapper created below; for dual arms need capture
-for spec in \
-  "R0_V_NATIVE_L2|native|Q_ATTN_ALL|2" \
-  "R1_V_DUAL_COVER|dualcover|Q_ATTN_ALL|3" \
-  "R2_V_DUAL_QA_B2|dualqa_b2|Q_ATTN_ALL|2" \
-  "R3_V_DUAL_QA_B4|dualqa_b4|Q_ATTN_ALL|3" \
-  "R4_V_DUAL_QA_B8|dualqa_b8|Q_ATTN_ALL|2"
- do
-  IFS='|' read -r arm mode s2 gpu <<<"$spec"
-  # serialize on free GPUs: launch two at a time
-  :
- done
+# Two-at-a-time on free GPUs 2/3 (handoff gpu_set).
+run_pair () {
+  local a1=$1 m1=$2 s1=$3 g1=$4
+  local a2=$5 m2=$6 s2=$7 g2=$8
+  run_arm "$a1" "$m1" "$s1" "$g1" &
+  local p1=$!
+  run_arm "$a2" "$m2" "$s2" "$g2" &
+  local p2=$!
+  set +e
+  wait $p1; local r1=$?
+  wait $p2; local r2=$?
+  set -e
+  if [[ $r1 -ne 0 || $r2 -ne 0 ]]; then
+    echo "FATAL pair failed rc=$r1,$r2" >&2
+    exit 1
+  fi
+}
 
-# Sequential safer for dual+hooks
-run_arm R0_V_NATIVE_L2 native Q_ATTN_ALL 2
-run_arm R1_V_DUAL_COVER dualcover Q_ATTN_ALL 3
-run_arm R2_V_DUAL_QA_B2 dualqa_b2 Q_ATTN_ALL 2
-run_arm R3_V_DUAL_QA_B4 dualqa_b4 Q_ATTN_ALL 3
+run_pair R0_V_NATIVE_L2 native Q_ATTN_ALL 2 \
+         R1_V_DUAL_COVER dualcover Q_ATTN_ALL 3
+run_pair R2_V_DUAL_QA_B2 dualqa_b2 Q_ATTN_ALL 2 \
+         R3_V_DUAL_QA_B4 dualqa_b4 Q_ATTN_ALL 3
 run_arm R4_V_DUAL_QA_B8 dualqa_b8 Q_ATTN_ALL 2
 
 $PY - <<'PY'
-import json,glob
+import json,glob,sys
 from pathlib import Path
 rows=[]
 for p in sorted(Path('/data1/xiangyue/logs/video_dev_matrix').glob('*/videomme/**/*results*.json')):
     arm=p.parts[p.parts.index('video_dev_matrix')+1]
     d=json.load(open(p))
-    sc=d['results']['videomme'].get('videomme_perception_score,none')
+    sc=(d.get('results') or {}).get('videomme', {}).get('videomme_perception_score,none')
     rows.append((arm, sc))
-rows=sorted(rows, key=lambda x: -(x[1] or -1))
+rows=sorted(rows, key=lambda x: -(x[1] if x[1] is not None else -1))
 md=['# VIDEO_DEV_MATRIX','','Exploratory `--limit` panel with P3 Q/K Stage2. Dual=SigLIP adaptation.','',
     '| Arm | Video-MME (limit) |','|---|---:|']
 for a,s in rows:
@@ -178,6 +203,8 @@ md.append(f'**Frozen T32 winner (dev):** `{winner}`')
 Path('/data1/xiangyue/logs/VIDEO_DEV_MATRIX.md').write_text('\n'.join(md)+'\n')
 Path('/data1/xiangyue/logs/VIDEO_DEV_WINNER.txt').write_text(winner or '')
 print('\n'.join(md))
+if not winner:
+    raise SystemExit('FATAL: R0-R4 produced zero results — refuse empty winner / full skip')
 PY
 
 WIN=$(cat $ROOT/logs/VIDEO_DEV_WINNER.txt || true)
