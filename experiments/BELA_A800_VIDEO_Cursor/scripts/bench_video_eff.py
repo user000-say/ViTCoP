@@ -40,6 +40,10 @@ def main() -> int:
 
     from bela_video_a800.qwen2_stage2_forward import apply_patch
     apply_patch()
+    if mode.startswith("dual") or os.environ.get("BELA_VIDEO_DUAL") == "1":
+        from bela_video_a800.siglip_dual_capture import install_vision_capture
+        # install after model load below
+        os.environ["_BELA_NEED_DUAL_CAPTURE"] = "1"
 
     import numpy as np
     import torch
@@ -74,6 +78,9 @@ def main() -> int:
         overwrite_config={"mm_spatial_pool_mode": "average", "mm_spatial_pool_stride": 2},
     )
     model.eval()
+    if os.environ.get("_BELA_NEED_DUAL_CAPTURE") == "1":
+        from bela_video_a800.siglip_dual_capture import install_vision_capture
+        install_vision_capture(model)
 
     vr = VideoReader(panel, ctx=cpu(0), num_threads=1)
     idxs = np.linspace(0, len(vr) - 1, frames_n, dtype=int).tolist()

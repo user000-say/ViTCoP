@@ -109,7 +109,12 @@ def bela_qwen2_forward(
     all_self_attns = () if output_attentions else None
     next_decoder_cache = None
 
-    from .live_stage2 import q_attn_scores_from_hidden, ranks_from_scores, stage2_mode
+    from .live_stage2 import (
+        q_attn_scores_from_hidden,
+        q_attn_scores_from_qk,
+        ranks_from_scores,
+        stage2_mode,
+    )
 
     tier = ctx["tier"]
     plan = {layer: (k, sel) for layer, k, sel in cut_plan(tier)}
@@ -120,12 +125,37 @@ def bela_qwen2_forward(
         visual_start=int(ctx["visual_start"]),
     )
     observed = []
-    # RDRIFT_FIRST: seed old ranks from hidden-state scores one layer before first cut.
     first_cut = min(plan.keys())
     probe_layer = first_cut - 1 if stage2_mode() == "RDRIFT_FIRST" else -1
-    # Scoring uses hidden-state text→visual proxy (see live_stage2.q_attn_scores_from_hidden).
-    # True weight attentions disabled: Qwen2 SDPA→eager output_attentions asserts on this stack.
-    score_mode = "hidden_text_to_visual_softmax_mean"
+    # P3: same-layer Q/K (default on). Set BELA_VIDEO_STAGE2_SCORE=hidden to revert.
+    score_mode = os.environ.get("BELA_VIDEO_STAGE2_SCORE", "qk").strip().lower()
+    if score_mode not in ("qk", "hidden"):
+        score_mode = "qk"
+
+    def _layer_qk(decoder_layer, hs, pos_ids):
+        """Build RoPE'd Q/K for this layer from pre-attn hidden (batch=1)."""
+        attn = decoder_layer.self_attn
+        normed = decoder_layer.input_layernorm(hs)
+        bsz, q_len, _ = normed.shape
+        q = attn.q_proj(normed)
+        k = attn.k_proj(normed)
+        head_dim = attn.head_dim
+        num_heads = attn.num_heads
+        num_kv = attn.num_key_value_heads
+        q = q.view(bsz, q_len, num_heads, head_dim).transpose(1, 2)
+        k = k.view(bsz, q_len, num_kv, head_dim).transpose(1, 2)
+        if num_kv != num_heads:
+            k = k.repeat_interleave(num_heads // num_kv, dim=1)
+        try:
+            cos, sin = attn.rotary_emb(k, seq_len=q_len)
+        except TypeError:
+            cos, sin = attn.rotary_emb(k, position_ids=pos_ids)
+        from transformers.models.qwen2.modeling_qwen2 import apply_rotary_pos_emb
+        try:
+            q, k = apply_rotary_pos_emb(q, k, cos, sin, pos_ids)
+        except TypeError:
+            q, k = apply_rotary_pos_emb(q, k, cos, sin, position_ids=pos_ids)
+        return q, k
 
     for layer_idx, decoder_layer in enumerate(self.layers):
         if output_hidden_states:
@@ -141,6 +171,13 @@ def bela_qwen2_forward(
             attention_mask = _prepare_mask(
                 self, None, hidden_states, batch_size, cur_seq, past_key_values_length, False
             )
+
+        # P3: capture Q/K *before* this layer's attention when a cut follows the layer.
+        # Cut is applied after the layer forward (post-attn hidden), but scores use
+        # this layer's Q/K built from pre-attn residual (STAR-compatible instrumentation).
+        pre_qk = None
+        if need_cut and score_mode == "qk" and state.current_k() > plan[layer_1based][0]:
+            pre_qk = _layer_qk(decoder_layer, hidden_states, position_ids)
 
         layer_outputs = decoder_layer(
             hidden_states,
@@ -159,18 +196,21 @@ def bela_qwen2_forward(
             k = state.current_k()
             f = state.frames
             vs, ve = state.visual_start, state.visual_start + f * (k + 1)
-            flat = q_attn_scores_from_hidden(hidden_states, vs, ve).view(f, k + 1)[:, :k]
+            if score_mode == "qk":
+                q, kk = _layer_qk(decoder_layer, hidden_states, position_ids)
+                flat = q_attn_scores_from_qk(q, kk, vs, ve).view(f, k + 1)[:, :k]
+            else:
+                flat = q_attn_scores_from_hidden(hidden_states, vs, ve).view(f, k + 1)[:, :k]
             state.ranks_history = ranks_from_scores(flat)
 
         if need_cut:
             k_tgt, selector = plan[layer_1based]
             if state.current_k() > k_tgt:
-                # Sync before prune so earlier layer CUDA errors surface here.
                 if hidden_states.is_cuda:
                     torch.cuda.synchronize()
                 print(
                     f"[BELA_S2] cut_enter layer={layer_1based} seq={tuple(hidden_states.shape)} "
-                    f"K={state.current_k()} -> {k_tgt} sel={selector} vs={state.visual_start}",
+                    f"K={state.current_k()} -> {k_tgt} sel={selector} vs={state.visual_start} score={score_mode}",
                     flush=True,
                 )
                 hidden_states, position_ids, attention_mask, past_key_values, state = select_and_prune(
@@ -184,6 +224,7 @@ def bela_qwen2_forward(
                     k_target=k_tgt,
                     selector=selector,
                     layers_filled=layer_idx + 1,
+                    qk=pre_qk if score_mode == "qk" else None,
                 )
                 next_decoder_cache = past_key_values
                 attention_mask = None

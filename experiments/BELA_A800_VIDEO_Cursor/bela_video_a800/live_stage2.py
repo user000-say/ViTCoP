@@ -74,23 +74,50 @@ def q_attn_scores(attn_avg: torch.Tensor, visual_start: int, visual_end: int) ->
 def q_attn_scores_from_hidden(
     hidden_states: torch.Tensor, visual_start: int, visual_end: int
 ) -> torch.Tensor:
-    """Question/text → visual scores via layer hidden states (batch=1).
-
-    Avoids Qwen2 SDPA→eager `output_attentions` path, which trips device asserts
-    on this Transformers 4.40 + Qwen2 stack. Scores are mean softmax attention
-    from post-visual tokens onto the visual span (same aggregation spirit as
-    STAR TEXT_AGG_MODE=average_all).
-    """
+    """Legacy hidden-dot proxy (pre-P3). Prefer q_attn_scores_from_qk."""
     assert hidden_states.shape[0] == 1
     hs = hidden_states[0].float()
     vis = hs[visual_start:visual_end]  # [Nv, D]
     txt = hs[visual_end:]  # [Nt, D]
     if txt.numel() == 0:
         return torch.ones(visual_end - visual_start, device=hs.device, dtype=torch.float32)
-    # [Nt, Nv]
     logits = txt @ vis.transpose(0, 1) / max(vis.shape[-1] ** 0.5, 1.0)
     attn = torch.softmax(logits, dim=-1)
     return attn.mean(dim=0)
+
+
+def q_attn_scores_from_qk(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    visual_start: int,
+    visual_end: int,
+    *,
+    causal: bool = True,
+) -> torch.Tensor:
+    """Text→visual scores from same-layer Q/K (batch=1).
+
+    q,k: [B, H, S, Dh] after RoPE. Softmax is over **all** keys (causal), then
+    visual columns are averaged over text queries and heads — not a visual-only softmax.
+    """
+    assert q.shape[0] == 1 and k.shape[0] == 1
+    # [H,S,Dh]
+    qq, kk = q[0].float(), k[0].float()
+    scale = kk.shape[-1] ** -0.5
+    # logits [H, Sq, Sk]
+    logits = torch.matmul(qq, kk.transpose(-1, -2)) * scale
+    s = logits.shape[-1]
+    if causal:
+        # standard upper-triangular mask on keys > query index
+        eye = torch.ones(s, s, device=logits.device, dtype=torch.bool).triu(diagonal=1)
+        logits = logits.masked_fill(eye.unsqueeze(0), float("-inf"))
+    probs = torch.softmax(logits, dim=-1)  # [H,S,S]
+    # text queries = positions >= visual_end; keys in [visual_start, visual_end)
+    if visual_end >= s:
+        return torch.ones(visual_end - visual_start, device=logits.device, dtype=torch.float32)
+    text = probs[:, visual_end:, visual_start:visual_end]  # [H,Nt,Nv]
+    if text.numel() == 0:
+        return torch.ones(visual_end - visual_start, device=logits.device, dtype=torch.float32)
+    return text.mean(dim=(0, 1))  # [Nv]
 
 
 def ranks_from_scores(scores: torch.Tensor) -> torch.Tensor:
@@ -176,7 +203,7 @@ def select_and_prune(
     *,
     state: Stage2State,
     hidden_states: torch.Tensor,
-    attn_avg: Optional[torch.Tensor],  # [seq,seq] or None → use hidden proxy
+    attn_avg: Optional[torch.Tensor],  # [seq,seq] or None
     position_ids: Optional[torch.Tensor],
     attention_mask: Optional[torch.Tensor],
     past_key_values,
@@ -184,6 +211,7 @@ def select_and_prune(
     k_target: int,
     selector: str,
     layers_filled: int,
+    qk: Optional[tuple] = None,  # (q,k) each [B,H,S,Dh] — P3 same-layer scores
 ):
     """Apply one physical cut. Returns updated tensors + state."""
     k = state.current_k()
@@ -202,10 +230,12 @@ def select_and_prune(
             f"visual span invalid start={visual_start} end={visual_end} seq={seq_len} "
             f"F={f} K={k} expected_visual={visual_len}"
         )
-    # P1 micro-opt: keep scoring on GPU (same hidden/attn formulas; no D2H).
-    # P3 same-layer Q/K replacement is a separate semantic change — not here.
     device = hidden_states.device
-    if attn_avg is not None:
+    if qk is not None:
+        q_t, k_t = qk
+        flat_scores = q_attn_scores_from_qk(q_t, k_t, visual_start, visual_end, causal=True)
+        state.events  # score mode recorded by caller
+    elif attn_avg is not None:
         if int(attn_avg.shape[0]) != seq_len or int(attn_avg.shape[1]) != seq_len:
             raise RuntimeError(
                 f"attn_avg shape {tuple(attn_avg.shape)} != seq {seq_len}"

@@ -13,6 +13,8 @@ BELA_VIDEO_MODE:
   qacover         — NATIVE_L2_TOPK then frame-wise QA-COVER
   matched_random  — same swap count as QA, random donors
   replay          — gather frozen ids from model._bela_replay_stage1_ids (P0 diagnostic)
+  dualcover       — SigLIP Dual-COVER *adaptation* (not image Dual)
+  dualqa_b2|b4|b8 — Dual-COVER adaptation then batched QA with max_swaps 2/4/8
 """
 from __future__ import annotations
 
@@ -23,7 +25,11 @@ from typing import Optional
 import torch
 
 from .schedule import budget
+from .video_dual_cover import dual_cover_framewise
 from .video_entry import select_framewise
+from .qa_core import AnchorConfig
+from .qa_batched import select_question_anchored_batched
+from .video_entry import query_proxy
 
 
 @dataclass
@@ -114,6 +120,51 @@ def select_and_gather(
         )
         return gathered, trace
 
+    # --- P2 SigLIP Dual-COVER adaptation arms ---
+    if mode in ("dualcover", "dualqa_b2", "dualqa_b4", "dualqa_b8"):
+        stash = getattr(model, "_bela_dual_vit", None)
+        if stash is None:
+            raise RuntimeError(
+                "dual* mode requires siglip_dual_capture.install_vision_capture + dual forward stash"
+            )
+        mid = stash["mid_729"]
+        pen = stash["pen_729"]
+        # align frames: video encode may pass [F,...]
+        if mid.shape[0] != f:
+            raise RuntimeError(f"dual mid frames {mid.shape[0]} != pooled F={f}")
+        slots = 32 if k >= 64 else 8
+        ids, _mid169, _pen169 = dual_cover_framewise(mid, pen, k=k, slots=slots)
+        ids = ids.to(device=pooled.device)
+        swaps = tuple(0 for _ in range(f))
+        reason = "siglip_dual_cover_adapt"
+        selector = "V_DUAL_COVER_ADAPT"
+        if mode.startswith("dualqa"):
+            b = {"dualqa_b2": 2, "dualqa_b4": 4, "dualqa_b8": 8}[mode]
+            q_emb = question_content_embeds(model, input_ids)
+            if q_emb is None:
+                reason = "dual_cover_no_question"
+            else:
+                # QA on projected pooled dual=(pooled,pooled) but native_ids from Dual COVER
+                raw = query_proxy(pooled, q_emb)
+                batched = select_question_anchored_batched(
+                    native_keep_ids=ids,
+                    visual_metric=(pooled, pooled),
+                    raw_query_scores=raw,
+                    config=AnchorConfig(max_swaps=b),
+                )
+                ids = batched.keep_ids
+                swaps = batched.swap_count
+                reason = "siglip_dual_cover_adapt+qa_b" + str(b)
+                selector = f"V_DUAL_QA_B{b}"
+        gathered = torch.gather(pooled, 1, ids.unsqueeze(-1).expand(-1, -1, h))
+        if gathered.shape != (f, k, h):
+            raise RuntimeError(f"gather shape {tuple(gathered.shape)} != {(f,k,h)}")
+        trace = Stage1Trace(
+            mode=mode, tier=tier, frames=f, patches=n, keep_per_frame=k,
+            ids=ids.detach().cpu(), swaps=swaps, reason=reason, selector=selector,
+        )
+        return gathered, trace
+
     native = native_l2_topk(pooled, k)
     control = {
         "native": "off",  # keep native ids inside select_framewise
@@ -127,8 +178,7 @@ def select_and_gather(
     if control != "off":
         q_emb = question_content_embeds(model, input_ids)
 
-    # Dual views: same pooled rows twice. This is an explicit Stage1 descriptor
-    # stand-in until SigLIP middle/penultimate Dual COVER is wired.
+    # L2 / QA path: dual=(pooled,pooled) remains the Stage1-QA geometry proxy.
     dual = (pooled, pooled)
     if control == "off" or q_emb is None:
         ids = native
