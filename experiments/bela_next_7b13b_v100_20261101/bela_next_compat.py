@@ -42,20 +42,45 @@ def original_dual(
     from bela_next_budget.crops import crop_quota_from_ids
 
     quotas = crop_quota_from_ids(capacities, int(keep), policy="uniform", min_per_crop=1)
-    parts = []
+    # CRITICAL: slots is a GLOBAL Dual COVER budget (32 on 1.5-7B / one 576 grid).
+    # Re-applying slots=32 on EVERY NeXT crop inflates COVER ~Nx (e.g. 5×160/320),
+    # which destroys saliency anchors and collapses ACC despite higher resolution.
+    # Distribute the same global slot budget proportionally across crop quotas.
+    keep_i = int(keep)
+    slots_i = int(slots)
+    qq_list = []
     for c, q in zip(uniq, quotas):
+        rows_n = int((crop == c).sum().item())
+        qq_list.append(min(int(q), rows_n))
+    qq_sum = sum(qq_list) or 1
+    raw = [slots_i * qq / qq_sum for qq in qq_list]
+    slots_per = [int(x) for x in raw]
+    rem = slots_i - sum(slots_per)
+    order = sorted(range(len(raw)), key=lambda i: (raw[i] - slots_per[i], -qq_list[i], i), reverse=True)
+    for i in order:
+        if rem <= 0:
+            break
+        slots_per[i] += 1
+        rem -= 1
+    parts = []
+    for c, qq, slots_c in zip(uniq, qq_list, slots_per):
         rows = torch.nonzero(crop == c, as_tuple=True)[0]
-        qq = min(int(q), int(rows.numel()))
         if qq <= 0:
             continue
+        # Cap per-crop COVER so anchors still dominate (mirror 1.5 ratio).
+        slots_c = max(0, min(int(slots_c), int(qq) - 1 if qq > 1 else 0, 32))
         local = dual_cover_one_crop(
             mid.index_select(0, rows),
             pen.index_select(0, rows),
             qq,
-            slots=int(slots),
+            slots=slots_c,
             seed=int(seed) + int(c),
         )
         parts.append(rows.index_select(0, local))
+    if isinstance(context, dict):
+        context["dual_slots_per_crop"] = list(slots_per)
+        context["dual_quotas"] = list(qq_list)
+        context["dual_slots_global"] = slots_i
     out = torch.cat(parts, dim=0).sort().values
     if int(out.numel()) != int(keep):
         # capacities may have forced fewer than keep when unpad is harsh
@@ -114,6 +139,7 @@ def original_qa(
         llm_input_embeddings=embed,
         config=cfg,
         random_seed=int(seed),
+        diagnostics=True,
     )
     # AnchorResult: .keep or .ids — support both
     keep = getattr(result, "keep_ids", None)
@@ -126,4 +152,11 @@ def original_qa(
     keep = keep.long().to(device=initial_keep.device).sort().values
     if int(keep.numel()) != int(initial_keep.numel()):
         raise RuntimeError(f"QA changed K: {keep.numel()} vs {initial_keep.numel()}")
+    # Surface QA reason for smoke/ACC traces (was silent no_safe_query_anchor).
+    if isinstance(context, dict):
+        context["qa_reason"] = getattr(result, "reason", None)
+        context["qa_swaps_reported"] = int(getattr(result, "swaps", 0) or 0)
+        context["qa_records_n"] = (
+            len(result.records) if getattr(result, "records", None) is not None else 0
+        )
     return keep

@@ -35,7 +35,7 @@ class NativeStage1Result:
     k2: int
     cut_layers: Tuple[int, int]
     pack_mode: str = "spatial_unpad_newline"
-    mid_layer: int = 9
+    mid_layer: int = 10
 
 
 def _arm_to_cfg(arm: dict) -> BelaConfig:
@@ -50,21 +50,69 @@ def _arm_to_cfg(arm: dict) -> BelaConfig:
         donor=16,
         drop=12,
         seed=17,
-        mid_layer=9,
+        # CLIP ViT: hidden_states[0]=embed, hidden_states[10]=after Layer9.
+        # mid_layer=9 was Layer8 (off-by-one vs 1.5 Dual L9).
+        mid_layer=10,
         pen_layer=-2,
         require_true_qa=True,
     )
 
 
-def _question_ids_from_input(input_ids: torch.Tensor, image_token_id: int) -> torch.Tensor:
+_TOK_CACHE = {}
+
+
+def _tokenizer_for(llava_model):
+    """Lazy tokenizer for question-only span (Vicuna USER/ASSISTANT strip)."""
+    for obj in (llava_model, getattr(llava_model, "config", None)):
+        if obj is None:
+            continue
+        tok = getattr(obj, "tokenizer", None) or getattr(obj, "_tokenizer", None)
+        if tok is not None:
+            return tok
+    name = getattr(getattr(llava_model, "config", None), "_name_or_path", None) or getattr(
+        getattr(llava_model, "config", None), "name_or_path", None
+    )
+    if not name:
+        name = "llava-hf/llava-v1.6-vicuna-7b-hf"
+    if name not in _TOK_CACHE:
+        from transformers import AutoTokenizer
+
+        _TOK_CACHE[name] = AutoTokenizer.from_pretrained(name, use_fast=False)
+    return _TOK_CACHE[name]
+
+
+def _question_ids_from_input(
+    input_ids: torch.Tensor, image_token_id: int, tokenizer=None
+) -> torch.Tensor:
+    """Return QUESTION-ONLY ids (no image placeholder, no USER/ASSISTANT wrapper).
+
+    Matching 1.5 LIVE_CALLMAP / e006_span: template tokens dilute cosine query
+    and force QA into no_safe_query_anchor (smoke always qa_swaps=0).
+    """
     assert input_ids.ndim == 1
-    # Drop image placeholders and common specials (bos/pad/eos often appear)
     mask = input_ids != image_token_id
     ids = input_ids[mask]
-    # Keep content-ish tokens: exclude 0 pad if present
     if ids.numel() and int(ids[0].item()) == 0:
         ids = ids[1:]
-    return ids
+    if tokenizer is None or ids.numel() == 0:
+        return ids
+    text = tokenizer.decode(ids.tolist(), skip_special_tokens=False)
+    q = text
+    for start_mark in ("USER:", "User:", "user\n"):
+        if start_mark in q:
+            q = q.split(start_mark, 1)[1]
+            break
+    for end_mark in ("ASSISTANT:", "Assistant:", "assistant\n"):
+        if end_mark in q:
+            q = q.split(end_mark, 1)[0]
+            break
+    q = q.strip(" \n\r\t:")
+    if not q:
+        return ids
+    new_ids = tokenizer(q, add_special_tokens=False).input_ids
+    if not new_ids:
+        return ids
+    return torch.tensor(new_ids, device=input_ids.device, dtype=input_ids.dtype)
 
 
 @torch.no_grad()
@@ -142,7 +190,8 @@ def run_native_stage1(
 
     ids_1d = input_ids[0] if input_ids.ndim == 2 else input_ids
     image_token_id = int(llava_model.config.image_token_id)
-    q_ids = _question_ids_from_input(ids_1d, image_token_id)
+    tok = _tokenizer_for(llava_model)
+    q_ids = _question_ids_from_input(ids_1d, image_token_id, tokenizer=tok)
     # question embeddings via LLM embed (same space QA expects after projector on vision)
     q_emb = llava_model.get_input_embeddings()(q_ids.unsqueeze(0))[0]
 
@@ -169,6 +218,12 @@ def run_native_stage1(
             "legacy_qa_called": bool(cfg.qa_swaps > 0),
             "mid_layer": cfg.mid_layer,
             "qa_swaps_cfg": cfg.qa_swaps,
+            "dual_slots_per_crop": context.get("dual_slots_per_crop"),
+            "dual_quotas": context.get("dual_quotas"),
+            "dual_slots_global": context.get("dual_slots_global"),
+            "qa_reason": context.get("qa_reason"),
+            "qa_swaps_reported": context.get("qa_swaps_reported"),
+            "question_n_tokens": int(q_ids.numel()),
         }
     )
 
