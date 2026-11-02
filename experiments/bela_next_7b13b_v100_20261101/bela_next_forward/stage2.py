@@ -9,16 +9,26 @@ import torch
 
 @dataclass
 class Stage2State:
-    patch_pos: torch.Tensor  # absolute indices of surviving visual patches
+    patch_pos: torch.Tensor  # local indices of surviving visual patches in current seq
     k_targets: Tuple[int, int]
     cut_layers: Tuple[int, int]  # 1-based "after this layer"
+    # Per-position kind aligned with current hidden length: -2=text, -1=newline, 0=patch
+    source: Optional[torch.Tensor] = None
     events: list = field(default_factory=list)
 
 
 def q_attn_scores_from_qk(
-    q: torch.Tensor, k: torch.Tensor, patch_pos: torch.Tensor, text_start: int
+    q: torch.Tensor,
+    k: torch.Tensor,
+    patch_pos: torch.Tensor,
+    text_start: int,
+    position_ids: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
-    """q,k: [B,H,S,Dh] after RoPE. Mean text→patch attention over heads/queries."""
+    """q,k: [B,H,S,Dh] after RoPE. Mean text→patch attention over heads/queries.
+
+    Prefer suffix-text queries (abs RoPE pos > max patch abs pos) when position_ids
+    carry Dense-absolute positions — matches fidelity kit Q_ATTN policy.
+    """
     assert q.shape[0] == 1
     qq, kk = q[0].float(), k[0].float()
     scale = kk.shape[-1] ** -0.5
@@ -27,11 +37,20 @@ def q_attn_scores_from_qk(
     causal = torch.ones(s, s, device=logits.device, dtype=torch.bool).triu(1)
     logits = logits.masked_fill(causal.unsqueeze(0), float("-inf"))
     probs = torch.softmax(logits, dim=-1)
-    if text_start >= s:
-        return torch.ones(patch_pos.numel(), device=logits.device)
-    text = probs[:, text_start:, :]
     cols = patch_pos.to(device=probs.device, dtype=torch.long)
-    patch_p = text.index_select(-1, cols)
+
+    text_idx = None
+    if position_ids is not None and patch_pos.numel() > 0:
+        patch_abs = position_ids[0].index_select(0, cols)
+        text_idx = torch.where(position_ids[0] > patch_abs.max())[0]
+    if text_idx is None or text_idx.numel() == 0:
+        if text_start >= s:
+            return torch.ones(patch_pos.numel(), device=logits.device)
+        text = probs[:, int(text_start) :, :]
+        patch_p = text.index_select(-1, cols)
+    else:
+        text = probs.index_select(1, text_idx)
+        patch_p = text.index_select(-1, cols)
     return patch_p.mean(dim=(0, 1))
 
 
@@ -72,12 +91,6 @@ def prune_cache(past_key_values, keep_abs: torch.Tensor, layers_filled: int):
             if layer.get_seq_length() == 0:
                 continue
             idx = keep_abs.to(device=layer.keys.device)
-            # keys/values: [B, H, S, Dh] — select along S
-            if layer.keys.shape[-2] != keep_abs.numel() and layer.keys.shape[-2] != int(
-                # allow when keep_abs indexes into current S
-                layer.keys.shape[-2]
-            ):
-                pass
             if int(keep_abs.max()) >= int(layer.keys.shape[-2]):
                 raise RuntimeError(
                     f"prune_cache keep max {int(keep_abs.max())} >= cache S {layer.keys.shape[-2]}"
@@ -94,6 +107,23 @@ def prune_cache(past_key_values, keep_abs: torch.Tensor, layers_filled: int):
         idx = keep_abs.to(device=kk.device)
         out.append((kk.index_select(2, idx), vv.index_select(2, idx)))
     return tuple(out)
+
+
+def _drop_orphan_newlines(keep: torch.Tensor, source: torch.Tensor) -> torch.Tensor:
+    """Drop image_newline markers whose preceding HR row lost all patches."""
+    keep = keep.clone()
+    nl = torch.where(source == -1)[0]
+    if nl.numel() == 0:
+        return keep
+    highres = bool((source == 0).any())  # patches present
+    prev = 0
+    for newline in nl.tolist():
+        row = torch.arange(prev, newline, device=source.device)
+        has_patch = bool((keep[row] & (source[row] == 0)).any()) if row.numel() else False
+        if not has_patch and highres:
+            keep[newline] = False
+        prev = newline + 1
+    return keep
 
 
 @torch.no_grad()
@@ -113,7 +143,9 @@ def select_and_prune(
     device = hidden_states.device
     patch_pos = state.patch_pos.to(device=device, dtype=torch.long)
     q, k = _layer_qk(decoder_layer, hidden_states, position_embeddings)
-    scores = q_attn_scores_from_qk(q, k, patch_pos, text_start=int(text_start))
+    scores = q_attn_scores_from_qk(
+        q, k, patch_pos, text_start=int(text_start), position_ids=position_ids
+    )
     if scores.numel() != patch_pos.numel():
         raise RuntimeError("score/patch size mismatch")
     if k_target > patch_pos.numel():
@@ -125,14 +157,16 @@ def select_and_prune(
     seq = hidden_states.shape[1]
     is_patch = torch.zeros(seq, dtype=torch.bool, device=device)
     is_patch[patch_pos] = True
-    non_patch = torch.where(~is_patch)[0]
-    keep_abs = torch.cat([non_patch, keep_patch], dim=0).sort().values
+    keep = ~is_patch
+    keep[keep_patch] = True
+    if state.source is not None and state.source.numel() == seq:
+        src = state.source.to(device=device)
+        keep = _drop_orphan_newlines(keep, src)
+    keep_abs = torch.where(keep)[0]
 
     hs = gather_seq(hidden_states, keep_abs, dim=1)
-    # Always index_select current position_ids by keep_abs.
-    # Cut1: position_ids are 0..S-1 so this equals keep_abs (absolute).
-    # Cut2+: position_ids already hold absolute RoPE ids; must NOT replace with
-    # local keep_abs (that desyncs RoPE vs cached K/V).
+    # Always index_select current position_ids by keep_abs so Dense-absolute
+    # RoPE ids survive both cuts (never replace with local arange).
     if position_ids is not None:
         position_ids = position_ids.index_select(
             -1, keep_abs.to(device=position_ids.device)
@@ -143,6 +177,8 @@ def select_and_prune(
     old_to_new[keep_abs] = torch.arange(keep_abs.numel(), device=device)
     new_patch = old_to_new[keep_patch]
     state.patch_pos = new_patch.detach().cpu()
+    if state.source is not None and state.source.numel() == seq:
+        state.source = state.source.to(device=device)[keep_abs].detach().cpu()
     state.events.append(
         {
             "layer_1based": layer_1based,

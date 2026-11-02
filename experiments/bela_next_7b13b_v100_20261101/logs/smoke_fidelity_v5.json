@@ -1,0 +1,46 @@
+[
+  {
+    "arm": "NEXT7_T160_A0_PAPER",
+    "ok": true,
+    "got": [
+      320,
+      91,
+      46
+    ],
+    "expect": [
+      320,
+      91,
+      46
+    ],
+    "mid": 10,
+    "rope_mode": "dense_absolute",
+    "dense_len": 2098,
+    "seq_s1": 401,
+    "rope_next": 2098,
+    "prefill_hits": 1,
+    "gen_hash": "0ec3dcac697c",
+    "text_tail": "dominant color? Answer with one word.\nASSISTANT: Bluettttttt"
+  },
+  {
+    "arm": "NEXT7_T160_A4_STRONG_LATE",
+    "ok": true,
+    "got": [
+      256,
+      160,
+      64
+    ],
+    "expect": [
+      256,
+      160,
+      64
+    ],
+    "mid": 10,
+    "rope_mode": "dense_absolute",
+    "dense_len": 2098,
+    "seq_s1": 337,
+    "rope_next": 2098,
+    "prefill_hits": 1,
+    "gen_hash": "a0124a05ce92",
+    "text_tail": "nswer with one word.\nASSISTANT: Bluedominant color\n```\n\n```\n"
+  }
+]

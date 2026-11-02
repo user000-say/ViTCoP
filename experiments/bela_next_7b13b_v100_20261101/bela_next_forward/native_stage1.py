@@ -23,7 +23,7 @@ from bela_next_fix.native_layout import (
 @dataclass
 class NativeStage1Result:
     packed_features: torch.Tensor  # [L, D] after Stage1 keep (patches+kept newlines)
-    is_patch: torch.Tensor  # [L] bool
+    is_patch: torch.Tensor  # [L] bool over kept tokens
     n_patches: int
     n_newlines: int
     native_patch_count: int
@@ -34,8 +34,13 @@ class NativeStage1Result:
     k1: int
     k2: int
     cut_layers: Tuple[int, int]
+    # Full native pack (pre-Stage1) for Dense-absolute RoPE gather.
+    native_packed: torch.Tensor  # [M, D] spatial_unpad+newline
+    native_keep: torch.Tensor  # [M] bool structural keep mask
+    native_is_patch: torch.Tensor  # [M] bool patch vs newline on native pack
     pack_mode: str = "spatial_unpad_newline"
-    mid_layer: int = 9
+    # HF CLIP hidden_states: [0]=embed, [10]=after transformer layer 9.
+    mid_layer: int = 10
 
 
 def _arm_to_cfg(arm: dict) -> BelaConfig:
@@ -50,7 +55,7 @@ def _arm_to_cfg(arm: dict) -> BelaConfig:
         donor=16,
         drop=12,
         seed=17,
-        mid_layer=9,
+        mid_layer=10,  # CLIP hs[10] == ViT block 9 (hs[0] is patch embed)
         pen_layer=-2,
         require_true_qa=True,
     )
@@ -194,5 +199,8 @@ def run_native_stage1(
         k1=int(cfg.cut12),
         k2=int(cfg.cut20),
         cut_layers=(c1, c2),
+        native_packed=native_packed.detach(),
+        native_keep=local_keep.detach().cpu(),
+        native_is_patch=layout.patch_mask.detach().cpu(),
         mid_layer=cfg.mid_layer,
     )

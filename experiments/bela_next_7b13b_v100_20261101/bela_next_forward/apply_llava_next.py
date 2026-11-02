@@ -1,9 +1,10 @@
 """Wire native NeXT BELA (FIX KIT 20261102) into HF LlavaNext TF5.20.
 
 BELA_NEXT_V2_ENABLE=0 → stock Dense forward/generate untouched.
-ENABLE=1 → Stage1: stock spatial_unpad+newline + Dual COVER (ViT L9+pen) +
+ENABLE=1 → Stage1: stock spatial_unpad+newline + Dual COVER (CLIP hs[10]=L9+pen) +
 global QA B8 + structural newline keep; Stage2 Q_ATTN physical cuts;
-RoPE keeps original absolute positions.
+RoPE uses Dense-absolute positions (gather, never compact-renumber);
+decode clock = dense_seq_len + step.
 
 Do NOT force image_grid_pinpoints=[[672,672]] here — match Dense processor.
 Do NOT prune inside get_image_features (no question there); Stage1 runs in
@@ -161,7 +162,19 @@ def apply_patch(model) -> bool:
                         layers_filled=layer_idx + 1,
                         text_start=text_start,
                     )
-                    text_start = int(state.patch_pos.max().item()) + 1
+                    # Prefer suffix-text via absolute RoPE in q_attn; keep local fallback.
+                    if position_ids is not None and state.patch_pos.numel() > 0:
+                        pabs = position_ids[0].index_select(
+                            0, state.patch_pos.to(device=position_ids.device)
+                        )
+                        suf = torch.where(position_ids[0] > pabs.max())[0]
+                        text_start = (
+                            int(suf[0].item())
+                            if suf.numel()
+                            else int(hidden_states.shape[1])
+                        )
+                    else:
+                        text_start = int(state.patch_pos.max().item()) + 1
                     parent._bela_text_start = text_start
                     if attention_mask is not None:
                         attention_mask = torch.ones(
@@ -173,7 +186,13 @@ def apply_patch(model) -> bool:
 
         hidden_states = self_lm.norm(hidden_states)
         parent._bela_position_ids = position_ids.detach()
-        parent._bela_rope_next_pos = int(position_ids.max().item()) + 1
+        # Decode RoPE must continue the Dense multimodal clock, not max(kept)+1
+        # on a compacted axis (fidelity kit / historical BELA).
+        dense_len = int(getattr(parent, "_bela_dense_seq_len", -1))
+        if dense_len > 0:
+            parent._bela_rope_next_pos = dense_len
+        else:
+            parent._bela_rope_next_pos = int(position_ids.max().item()) + 1
         return BaseModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=past_key_values,
@@ -259,54 +278,85 @@ def apply_patch(model) -> bool:
             vision_feature_layer=vision_feature_layer,
             vision_feature_select_strategy=vision_feature_select_strategy,
         )
-        image_features = s1.packed_features
-        n_img = int(image_features.shape[0])
+        native_packed = s1.native_packed
+        native_keep = s1.native_keep.to(device=native_packed.device)
+        native_is_patch = s1.native_is_patch.to(device=native_packed.device)
+        n_native = int(native_packed.shape[0])
         model._bela_stage1 = {
             "arm": s1.arm_id,
             "k0": s1.k0,
             "k1": s1.k1,
             "k2": s1.k2,
-            "packed_len": n_img,
+            "packed_len": int(s1.packed_features.shape[0]),
             "packed_patches": s1.n_patches,
             "packed_newlines": s1.n_newlines,
             "native_patches": s1.native_patch_count,
             "native_newlines": s1.native_newlines,
+            "native_len": n_native,
             "pack_mode": s1.pack_mode,
             "mid_layer": s1.mid_layer,
             "qa_log": s1.qa_log,
             "selector": "NATIVE_DUAL_COVER_L9_PLUS_QA_B8",
+            "rope_mode": "dense_absolute",
         }
-        model._bela_visual_is_patch = s1.is_patch
-        model._bela_visual_patch_local = torch.where(s1.is_patch)[0].to(dtype=torch.long)
         model._bela_prefill_hits = int(getattr(model, "_bela_prefill_hits", 0)) + 1
 
+        # 1) Build FULL Dense multimodal sequence (native AnyRes pack, unpruned).
         image_token_id = self_m.config.image_token_id
-        new_ids, new_mask, img_start = _rewrite_image_placeholders(
-            input_ids, attention_mask, image_token_id, n_img
+        dense_ids, dense_mask, img_start = _rewrite_image_placeholders(
+            input_ids, attention_mask, image_token_id, n_native
         )
-        inputs_embeds = self_m.get_input_embeddings()(new_ids)
-        special = (new_ids == image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
-        inputs_embeds = inputs_embeds.masked_scatter(
-            special, image_features.to(inputs_embeds.device, inputs_embeds.dtype)
+        dense_embeds = self_m.get_input_embeddings()(dense_ids)
+        special = (dense_ids == image_token_id).unsqueeze(-1).expand_as(dense_embeds)
+        dense_embeds = dense_embeds.masked_scatter(
+            special, native_packed.to(dense_embeds.device, dense_embeds.dtype)
         )
+        dense_len = int(dense_embeds.shape[1])
+        dense_pos = torch.arange(dense_len, device=dense_embeds.device, dtype=torch.long)
 
-        patch_local = model._bela_visual_patch_local.to(dtype=torch.long)
-        patch_pos = patch_local + int(img_start)
-        model._bela_patch_pos = patch_pos
-        model._bela_text_start = int(img_start + n_img)
+        # 2) Stage1 gather: keep text + Dual/QA-selected patches/newlines; preserve
+        #    Dense-absolute RoPE ids (fidelity kit contract).
+        keep_mask = torch.ones(dense_len, dtype=torch.bool, device=dense_embeds.device)
+        keep_mask[img_start : img_start + n_native] = native_keep
+        seq_indices = torch.where(keep_mask)[0]
+        inputs_embeds = dense_embeds.index_select(1, seq_indices)
+        position_ids = dense_pos.index_select(0, seq_indices).unsqueeze(0)
+        if dense_mask is not None:
+            new_mask = dense_mask.index_select(1, seq_indices)
+        else:
+            new_mask = None
+
+        # source kinds on Stage1-compressed seq: -2 text, -1 newline, 0 patch
+        source = torch.full((seq_indices.numel(),), -2, dtype=torch.long, device=dense_embeds.device)
+        for new_i, abs_i in enumerate(seq_indices.tolist()):
+            if img_start <= abs_i < img_start + n_native:
+                li = abs_i - img_start
+                source[new_i] = 0 if bool(native_is_patch[li]) else -1
+        patch_pos = torch.where(source == 0)[0]
+        if int(patch_pos.numel()) != int(s1.k0):
+            raise RuntimeError(
+                f"Stage1 gather patches {patch_pos.numel()} != K0 {s1.k0}"
+            )
+        # local text_start fallback = first suffix text after image span
+        text_start = int((seq_indices < img_start + n_native).sum().item())
+        model._bela_patch_pos = patch_pos.detach().cpu()
+        model._bela_text_start = text_start
+        model._bela_dense_seq_len = dense_len
         model._bela_stage1["img_start"] = int(img_start)
-        model._bela_stage1["seq_after_stage1"] = int(new_ids.shape[1])
+        model._bela_stage1["dense_seq_len"] = dense_len
+        model._bela_stage1["seq_after_stage1"] = int(inputs_embeds.shape[1])
 
         state = Stage2State(
             patch_pos=patch_pos.clone(),
             k_targets=(s1.k1, s1.k2),
             cut_layers=s1.cut_layers,
+            source=source.detach().cpu(),
         )
         outputs = _llama_forward_with_cuts(
             llama_model,
             inputs_embeds=inputs_embeds,
             attention_mask=new_mask,
-            position_ids=None,
+            position_ids=position_ids,
             past_key_values=None,
             use_cache=True if use_cache is None else use_cache,
             state=state,
@@ -316,6 +366,7 @@ def apply_patch(model) -> bool:
             "events": list(state.events),
             "final_patches": int(state.patch_pos.numel()),
             "rope_next_pos": int(getattr(model, "_bela_rope_next_pos", -1)),
+            "dense_seq_len": dense_len,
         }
         model._bela_patch_pos = state.patch_pos
         model._bela_last_prefill_seq = int(outputs.last_hidden_state.shape[1])
