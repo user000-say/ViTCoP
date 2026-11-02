@@ -1,0 +1,7 @@
+{
+  "transformers_version": "5.20.2",
+  "transformers_file": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/__init__.py",
+  "modeling_llava_next": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llava_next/modeling_llava_next.py",
+  "processing_llava_next": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llava_next/processing_llava_next.py",
+  "modeling_llama": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py"
+}

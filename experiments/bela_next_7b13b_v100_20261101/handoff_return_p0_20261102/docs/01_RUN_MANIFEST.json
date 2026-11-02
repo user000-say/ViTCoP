@@ -1,0 +1,34 @@
+{
+  "handoff": "BELA_NEXT7B_P0_SOURCE_REQUEST_HANDOFF_20261102",
+  "collected_at": "2026-11-02T18:05:13+08:00",
+  "git_sha": "9c8641ed8d6cdb080fa2a25574924090446736e9",
+  "branch": "env/v100-4model-qacover",
+  "active_queue": {
+    "script": "experiments/bela_next_7b13b_v100_20261101/scripts/run_next7_s2qk_gated.sh",
+    "out_root": "experiments/bela_next_7b13b_v100_20261101/logs/acc_a0_a4_s2qk_20261102",
+    "note": "A0 SKIP_6ACC single_below_88 (MME 81.61, MMBench 84.36); A1 R4 still running on GPUs 4-7 at collection time; NOT interrupted for this audit",
+    "enable_env": {"BELA_NEXT_V2_ENABLE": "1", "BELA_NEXT_MAX_NEW": "256"},
+    "model": "llava-hf/llava-v1.6-vicuna-7b-hf",
+    "dtype": "float16",
+    "attn_implementation": "sdpa",
+    "entry": "experiments/bela_next_7b13b_v100_20261101/scripts/lmms_bela_next_entry.py"
+  },
+  "a0_schedule": {"stage_k": [320, 91, 46], "cuts_after_layers_1based": [12, 20], "W": 5120},
+  "legacy_w1024_anchor": {
+    "schedule": {"counts": [64, 17, 10], "lengths": [12, 8, 12], "W": 1024},
+    "qa_qattn_config": "experiments/bela_stage1_decision_package/configs/P3_QA_QATTN.json",
+    "qa_rdrift_config": "experiments/bela_query_anchor/configs/S1_QANCHOR_L2.json",
+    "note": "Do NOT unify 95.34 (QA+RDRIFT) vs 95.43 (QA+Q_ATTN); both configs included"
+  },
+  "runtime": {
+    "env": "vitcop-v100-4model",
+    "transformers": "5.20.2",
+    "inspect_getfile": "staging/RUNTIME_SNAPSHOT/IMPORT_PATHS.json"
+  },
+  "modifications_included": [
+    "stage2 input-QK scoring (apply_llava_next + stage2)",
+    "dual slots global redistribute (bela_next_compat)",
+    "mid_layer=9, QA question slice without re-tokenize (native_stage1)",
+    "single_floor=88 early SKIP (gate_next7_arm_r4 + queue scripts)"
+  ]
+}

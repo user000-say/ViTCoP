@@ -1,0 +1,23 @@
+# Historical LLaVA-1.5-7B W1024 = 64×12+17×8+10×12
+experiments/bela_stage1_decision_package/configs/P3_QA_QATTN.json
+experiments/bela_query_anchor/configs/S1_QANCHOR_L2.json
+experiments/bela_cvpr27_final_handoff_20261025/configs/p1_arms/L2_LATE_64_17_10.json
+experiments/bela_stage1_decision_package/configs/P3_NATIVE_QATTN.json
+experiments/bela_stage1_decision_package/latency/P3_QA_QATTN/run_meta.json
+experiments/bela_stage1_decision_package/latency/S1_QANCHOR_L2_RDRIFT/run_meta.json
+experiments/elva_r3/apply_llava.py
+experiments/elva_r3/llava_stage1.py
+experiments/elva_r3/native_cover.py
+experiments/bela_query_anchor/query_anchor.py
+experiments/bela_query_anchor/llava_adapter.py
+experiments/bela_query_anchor/LIVE_CALLMAP.md
+experiments/bela_query_anchor/RESULTS_LLAVA15_QACOVER_20261028.json
+LLaVA/llava/model/e018_stage2_support.py
+LLaVA/llava/model/e018_contract.py
+LLaVA/llava/model/language_model/vitcop_modeling_llama.py
+LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py
+LLaVA/llava/model/multimodal_encoder/clip_encoder.py
+e006_span.py
+experiments/bela_cvpr2027_paper_20261031/research/01_experiment_evidence.md
+experiments/bela_cvpr2027_paper_20261031/CURSOR_HANDOFF_ZH.md
+research/BELA_20261026/AUDIT.md
