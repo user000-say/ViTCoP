@@ -19,7 +19,7 @@ class BelaConfig:
     donor: int = 16
     drop: int = 12
     seed: int = 17
-    mid_layer: int = 10  # CLIP hs[10] = Layer9 (hs[0]=embed); was 9 = Layer8 off-by-one
+    mid_layer: int = 9  # Dual L9 = hs[9] with hs[0]=layer0 input (ELVA/capture_outputs)
     pen_layer: int = -2
     require_true_qa: bool = True
 

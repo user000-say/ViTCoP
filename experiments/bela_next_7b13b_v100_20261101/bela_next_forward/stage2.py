@@ -109,10 +109,22 @@ def select_and_prune(
     k_target: int,
     layers_filled: int,
     text_start: int,
+    score_hidden_states: Optional[torch.Tensor] = None,
+    q: Optional[torch.Tensor] = None,
+    k: Optional[torch.Tensor] = None,
 ):
+    """Physically prune layer *output* using Q/K from that layer's *input*.
+
+    LLaVA-1.5 Dual+QA ranks with the attention Q/K computed on the pre-layer
+    residual, then gathers the post-layer hidden states + cache. Scoring the
+    post-layer states through input_layernorm+q/k_proj again is a different
+    probe and was the primary NeXT Stage2 contract bug.
+    """
     device = hidden_states.device
     patch_pos = state.patch_pos.to(device=device, dtype=torch.long)
-    q, k = _layer_qk(decoder_layer, hidden_states, position_embeddings)
+    if q is None or k is None:
+        score_hs = hidden_states if score_hidden_states is None else score_hidden_states
+        q, k = _layer_qk(decoder_layer, score_hs, position_embeddings)
     scores = q_attn_scores_from_qk(q, k, patch_pos, text_start=int(text_start))
     if scores.numel() != patch_pos.numel():
         raise RuntimeError("score/patch size mismatch")

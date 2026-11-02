@@ -128,6 +128,8 @@ def apply_patch(model) -> bool:
         text_start = int(getattr(parent, "_bela_text_start", int(state.patch_pos.max().item()) + 1))
         cut_map = {state.cut_layers[0]: state.k_targets[0], state.cut_layers[1]: state.k_targets[1]}
 
+        from .stage2 import _layer_qk
+
         for layer_idx, decoder_layer in enumerate(self_lm.layers[: self_lm.config.num_hidden_layers]):
             causal_mask = create_causal_mask(
                 config=self_lm.config,
@@ -137,6 +139,12 @@ def apply_patch(model) -> bool:
                 position_ids=position_ids,
             )
             position_embeddings = self_lm.rotary_emb(hidden_states, position_ids=position_ids)
+            layer_1based = layer_idx + 1
+            # Score with Q/K of this layer's INPUT (1.5 Dual+QA contract), then
+            # prune the OUTPUT + cache. Never re-probe post-layer states.
+            q_score = k_score = None
+            if layer_1based in cut_map and state.patch_pos.numel() > cut_map[layer_1based]:
+                q_score, k_score = _layer_qk(decoder_layer, hidden_states, position_embeddings)
             hidden_states = decoder_layer(
                 hidden_states,
                 attention_mask=causal_mask,
@@ -145,7 +153,6 @@ def apply_patch(model) -> bool:
                 past_key_values=past_key_values,
                 use_cache=use_cache,
             )
-            layer_1based = layer_idx + 1
             if layer_1based in cut_map:
                 k_tgt = cut_map[layer_1based]
                 if state.patch_pos.numel() > k_tgt:
@@ -160,6 +167,8 @@ def apply_patch(model) -> bool:
                         k_target=k_tgt,
                         layers_filled=layer_idx + 1,
                         text_start=text_start,
+                        q=q_score,
+                        k=k_score,
                     )
                     text_start = int(state.patch_pos.max().item()) + 1
                     parent._bela_text_start = text_start
