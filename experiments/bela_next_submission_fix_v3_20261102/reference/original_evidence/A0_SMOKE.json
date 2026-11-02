@@ -1,0 +1,36 @@
+{
+  "mid_layer": 9,
+  "k0": 320,
+  "packed_patches": 320,
+  "qa_swaps": 8,
+  "qa_reason": "swapped",
+  "question_n_tokens": 18,
+  "dual_slots_per_crop": [
+    6,
+    6,
+    6,
+    7,
+    7
+  ],
+  "stage2_events": [
+    {
+      "layer_1based": 12,
+      "k_before": 320,
+      "k_after": 91,
+      "seq_before": 386,
+      "seq_after": 157,
+      "unique_patch": 91
+    },
+    {
+      "layer_1based": 20,
+      "k_before": 91,
+      "k_after": 46,
+      "seq_before": 157,
+      "seq_after": 112,
+      "unique_patch": 46
+    }
+  ],
+  "final_patches": 46,
+  "finite": true,
+  "gen_tail": "USER: \nWhat primary color dominates this image? Answer with one word.\nASSISTANT: Bluettt"
+}

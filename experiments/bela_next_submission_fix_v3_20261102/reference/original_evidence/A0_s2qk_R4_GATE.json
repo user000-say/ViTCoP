@@ -1,0 +1,29 @@
+{
+  "arm": "NEXT7_T160_A0_PAPER",
+  "r4_min": 92.0,
+  "single_floor": 88.0,
+  "abs": {
+    "mme": 1490.624949979992,
+    "mmbench_en_dev": 56.529209621993125
+  },
+  "rel": {
+    "mme": 81.6077166332328,
+    "mmbench_en_dev": 84.35897435897436
+  },
+  "missing": [
+    "gqa",
+    "pope"
+  ],
+  "dense_ref": {
+    "gqa": 64.28685005565272,
+    "pope": 86.52862362971986,
+    "mme": 1826.5735294117646,
+    "mmbench_en_dev": 67.0103092783505
+  },
+  "weak": {
+    "mme": 81.6077166332328,
+    "mmbench_en_dev": 84.35897435897436
+  },
+  "verdict": "SKIP_6ACC",
+  "reason": "single_below_88.0"
+}

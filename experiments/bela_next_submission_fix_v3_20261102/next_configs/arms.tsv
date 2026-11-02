@@ -1,0 +1,21 @@
+arm_id	model	T	compression_pct	layers	cut1	cut2	K0	K1	K2	W	origin
+NEXT7_T160_A0_PAPER	next7	160	94.444	32	12	20	320	91	46	5120	STAR-Pro paper Table 5/Table 12
+NEXT7_T160_A1_PAPER_VAR	next7	160	94.444	32	12	20	320	100	40	5120	STAR-Pro paper Table 5/Table 12
+NEXT7_T160_A2_LATE	next7	160	94.444	32	12	20	320	82	52	5120	BELA proposed matched-W candidate, NOT paper result
+NEXT7_T160_A3_LESS_S1	next7	160	94.444	32	12	20	288	136	48	5120	BELA proposed matched-W candidate, NOT paper result
+NEXT7_T160_A4_STRONG_LATE	next7	160	94.444	32	12	20	256	160	64	5120	BELA proposed matched-W candidate, NOT paper result
+NEXT7_T320_A0_PAPER	next7	320	88.889	32	12	20	640	182	92	10240	STAR-Pro paper Table 5/Table 12
+NEXT7_T320_A1_PAPER_VAR	next7	320	88.889	32	12	20	640	200	80	10240	STAR-Pro paper Table 5/Table 12
+NEXT7_T320_A2_LATE	next7	320	88.889	32	12	20	640	170	100	10240	BELA proposed matched-W candidate, NOT paper result
+NEXT7_T320_A3_LESS_S1	next7	320	88.889	32	12	20	576	248	112	10240	BELA proposed matched-W candidate, NOT paper result
+NEXT7_T320_A4_STRONG_LATE	next7	320	88.889	32	12	20	512	320	128	10240	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T160_A0_PAPER	next13	160	94.444	40	15	30	320	80	40	6400	STAR-Pro paper Table 5/Table 12
+NEXT13_T160_A1_PAPER_VAR	next13	160	94.444	40	15	30	320	84	34	6400	STAR-Pro paper Table 5/Table 12
+NEXT13_T160_A2_LATE	next13	160	94.444	40	15	30	320	72	52	6400	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T160_A3_LESS_S1	next13	160	94.444	40	15	30	288	112	40	6400	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T160_A4_STRONG_LATE	next13	160	94.444	40	15	30	256	128	64	6400	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T320_A0_PAPER	next13	320	88.889	40	15	30	640	160	80	12800	STAR-Pro paper Table 5/Table 12
+NEXT13_T320_A1_PAPER_VAR	next13	320	88.889	40	15	30	640	168	68	12800	STAR-Pro paper Table 5/Table 12
+NEXT13_T320_A2_LATE	next13	320	88.889	40	15	30	640	144	104	12800	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T320_A3_LESS_S1	next13	320	88.889	40	15	30	576	224	80	12800	BELA proposed matched-W candidate, NOT paper result
+NEXT13_T320_A4_STRONG_LATE	next13	320	88.889	40	15	30	512	256	128	12800	BELA proposed matched-W candidate, NOT paper result

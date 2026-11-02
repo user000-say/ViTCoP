@@ -1,0 +1,593 @@
+{
+  "title": "BELA NeXT7B/13B image-only cross-model 94.4/88.9 schedules",
+  "status": "NOT executed on user's V100; source implementation hooks must be audited",
+  "model_family_expected": {
+    "next7": {
+      "expected_layers": 32,
+      "paper_checkpoint": "liuhaotian/llava-v1.6-vicuna-7b",
+      "requires_actual_checkpoint_review": true,
+      "decoder_dtype": "float16"
+    },
+    "next13": {
+      "expected_layers": 40,
+      "paper_checkpoint": "liuhaotian/llava-v1.6-vicuna-13b",
+      "requires_actual_checkpoint_review": true,
+      "decoder_dtype": "float16"
+    }
+  },
+  "paper_reference": {
+    "visual_patch_tokens_max": 2880,
+    "visual_crops": 5,
+    "patches_per_crop": 576,
+    "image_grid_pinpoints_reference": [
+      [
+        672,
+        672
+      ]
+    ],
+    "image_processor_pixel_basis": 336,
+    "newline_tokens_excluded_from_patch_budget": true
+  },
+  "stage1_locked": {
+    "qa_swaps": 8,
+    "slots": 32,
+    "donor_pool": 16,
+    "drop_pool": 12,
+    "seed": 17,
+    "note": "These are BELA LLaVA-1.5-7B image historical anchors, not validated NeXT optima."
+  },
+  "stage2_locked": {
+    "selector": "Q_ATTN_ALL",
+    "other": "Only after schedule and QA gate, consider RDRIFT.",
+    "rdrift": "OFF"
+  },
+  "arm_matrix": [
+    {
+      "arm_id": "NEXT7_T160_A0_PAPER",
+      "model": "next7",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        320,
+        91,
+        46
+      ],
+      "visual_patch_token_layer_W": 5120,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro exact reference schedule",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T160_A1_PAPER_VAR",
+      "model": "next7",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        320,
+        100,
+        40
+      ],
+      "visual_patch_token_layer_W": 5120,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro matched-W token-var ablation",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T160_A2_LATE",
+      "model": "next7",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        320,
+        82,
+        52
+      ],
+      "visual_patch_token_layer_W": 5120,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: more retained at late decoder layers",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T160_A3_LESS_S1",
+      "model": "next7",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        288,
+        136,
+        48
+      ],
+      "visual_patch_token_layer_W": 5120,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: reduce Stage1 candidate size moderately",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T160_A4_STRONG_LATE",
+      "model": "next7",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        256,
+        160,
+        64
+      ],
+      "visual_patch_token_layer_W": 5120,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: lighter Stage1, larger mid/late pool",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T320_A0_PAPER",
+      "model": "next7",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        640,
+        182,
+        92
+      ],
+      "visual_patch_token_layer_W": 10240,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro exact reference schedule",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T320_A1_PAPER_VAR",
+      "model": "next7",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        640,
+        200,
+        80
+      ],
+      "visual_patch_token_layer_W": 10240,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro matched-W token-var ablation",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T320_A2_LATE",
+      "model": "next7",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        640,
+        170,
+        100
+      ],
+      "visual_patch_token_layer_W": 10240,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: more retained at late decoder layers",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T320_A3_LESS_S1",
+      "model": "next7",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        576,
+        248,
+        112
+      ],
+      "visual_patch_token_layer_W": 10240,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: reduce Stage1 candidate size moderately",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT7_T320_A4_STRONG_LATE",
+      "model": "next7",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 32,
+      "cuts_after_layers": [
+        12,
+        20
+      ],
+      "stage_k": [
+        512,
+        320,
+        128
+      ],
+      "visual_patch_token_layer_W": 10240,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: lighter Stage1, larger mid/late pool",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T160_A0_PAPER",
+      "model": "next13",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        320,
+        80,
+        40
+      ],
+      "visual_patch_token_layer_W": 6400,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro exact reference schedule",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T160_A1_PAPER_VAR",
+      "model": "next13",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        320,
+        84,
+        34
+      ],
+      "visual_patch_token_layer_W": 6400,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro matched-W token-var ablation",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T160_A2_LATE",
+      "model": "next13",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        320,
+        72,
+        52
+      ],
+      "visual_patch_token_layer_W": 6400,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: more retained at late decoder layers",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T160_A3_LESS_S1",
+      "model": "next13",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        288,
+        112,
+        40
+      ],
+      "visual_patch_token_layer_W": 6400,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: reduce Stage1 candidate size moderately",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T160_A4_STRONG_LATE",
+      "model": "next13",
+      "budget_T": 160,
+      "compression_pct": 94.444,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        256,
+        128,
+        64
+      ],
+      "visual_patch_token_layer_W": 6400,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: lighter Stage1, larger mid/late pool",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T320_A0_PAPER",
+      "model": "next13",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        640,
+        160,
+        80
+      ],
+      "visual_patch_token_layer_W": 12800,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro exact reference schedule",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T320_A1_PAPER_VAR",
+      "model": "next13",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        640,
+        168,
+        68
+      ],
+      "visual_patch_token_layer_W": 12800,
+      "source": "STAR-Pro paper Table 5/Table 12",
+      "purpose": "Paper STAR-Pro matched-W token-var ablation",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T320_A2_LATE",
+      "model": "next13",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        640,
+        144,
+        104
+      ],
+      "visual_patch_token_layer_W": 12800,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: more retained at late decoder layers",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T320_A3_LESS_S1",
+      "model": "next13",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        576,
+        224,
+        80
+      ],
+      "visual_patch_token_layer_W": 12800,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: reduce Stage1 candidate size moderately",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    },
+    {
+      "arm_id": "NEXT13_T320_A4_STRONG_LATE",
+      "model": "next13",
+      "budget_T": 320,
+      "compression_pct": 88.889,
+      "reference_patch_N": 2880,
+      "layers": 40,
+      "cuts_after_layers": [
+        15,
+        30
+      ],
+      "stage_k": [
+        512,
+        256,
+        128
+      ],
+      "visual_patch_token_layer_W": 12800,
+      "source": "BELA proposed matched-W candidate, NOT paper result",
+      "purpose": "BELA candidate: lighter Stage1, larger mid/late pool",
+      "stage1": "BELA_DUAL_COVER",
+      "qa_swaps": 8,
+      "stage2": "Q_ATTN_ALL",
+      "crop_policy": "equal_valid_crops",
+      "sampling_policy": "locked_paper_five_crop"
+    }
+  ],
+  "secondary_sweep": {
+    "QA_B_T160": [
+      0,
+      8,
+      16
+    ],
+    "QA_B_T320": [
+      0,
+      8,
+      24,
+      32
+    ],
+    "test_only_on_frozen_schedule": true,
+    "crop_quotas": [
+      "uniform",
+      "thumbnail_boost_1.5"
+    ],
+    "crop_boost_test_only_after_qa_gate": true
+  },
+  "evaluation_task_sets": {
+    "screen": [
+      "gqa",
+      "pope",
+      "textvqa",
+      "mme"
+    ],
+    "final": [
+      "seed",
+      "gqa",
+      "scienceqa_img",
+      "textvqa",
+      "pope",
+      "mme",
+      "mmbench_en",
+      "mmbench_cn",
+      "ai2d",
+      "mmmu"
+    ]
+  },
+  "gpu_run_gate": {
+    "require_exact_visible_gpu_ids": 4,
+    "num_layers_7b": 32,
+    "num_layers_13b": 40,
+    "no_flash_attn2_on_v100": true,
+    "bf16_disabled_on_v100": true,
+    "13b_model_parallel_approval_before_run": true
+  }
+}

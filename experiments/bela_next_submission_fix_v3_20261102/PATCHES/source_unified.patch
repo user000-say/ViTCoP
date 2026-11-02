@@ -1,0 +1,2409 @@
+--- a/next_forward/apply_llava_next.py
++++ b/bela_next_forward/apply_llava_next.py
+@@ -1,493 +1,428 @@
+-"""Wire native NeXT BELA (FIX KIT 20261102) into HF LlavaNext TF5.20.
+-
+-BELA_NEXT_V2_ENABLE=0 → stock Dense forward/generate untouched.
+-ENABLE=1 → Stage1: stock spatial_unpad+newline + Dual COVER (ViT L9+pen) +
+-global QA B8 + structural newline keep; Stage2 Q_ATTN physical cuts;
+-RoPE keeps original absolute positions.
+-
+-Do NOT force image_grid_pinpoints=[[672,672]] here — match Dense processor.
+-Do NOT prune inside get_image_features (no question there); Stage1 runs in
+-prefill forward with input_ids so QA sees the real question.
++"""BELA NeXT7 native packing, actual CLS Dual COVER, QA B8 and L12/L20 cuts.
++
++Version-locked Transformers 5.20.2 implementation. Disabling BELA passes
++through the original model without mutating its Dense input arguments.
++This experimental generate path supports strict greedy decoding only.
+ """
+ from __future__ import annotations
+-
++import hashlib
+ import json
+ import os
+-import sys
+ import types
+ from pathlib import Path
+-
+ import torch
+-
+ from .native_stage1 import run_native_stage1
+-from .stage2 import Stage2State, select_and_prune
+-
++from .stage2 import Stage2State, select_and_prune, _layer_qk
++from .bela_next_compat import original_dual, original_qa
++
++_ROOT = Path(__file__).resolve().parents[1]
+ _ARMS = None
+-_PKG = Path(__file__).resolve().parents[1]
+-if str(_PKG) not in sys.path:
+-    sys.path.insert(0, str(_PKG))
+-if str(_PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/src") not in sys.path:
+-    sys.path.insert(0, str(_PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/src"))
++
++
++def enabled():
++    return os.environ.get('BELA_NEXT_V2_ENABLE', '0').lower() in ('1', 'true', 'yes')
+ 
+ 
+ def _arms():
+     global _ARMS
+     if _ARMS is None:
+-        p = _PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/configs/arms.json"
+-        _ARMS = {a["arm_id"]: a for a in json.loads(p.read_text())["arm_matrix"]}
++        data = json.loads((_ROOT/'next_configs'/'arms.json').read_text())
++        arms = {}
++        for arm in data['arm_matrix']:
++            a,b = map(int, arm['cuts_after_layers'])
++            k0,k1,k2 = map(int, arm['stage_k'])
++            layers = int(arm['layers'])
++            w = a*k0 + (b-a)*k1 + (layers-b)*k2
++            if w != int(arm['visual_patch_token_layer_W']) or w != layers*int(arm['budget_T']):
++                raise RuntimeError(f'BUDGET_MISMATCH: {arm["arm_id"]} {w}')
++            if arm['arm_id'] in arms:
++                raise RuntimeError('duplicate arm ID')
++            arms[arm['arm_id']] = arm
++        _ARMS = arms
+     return _ARMS
+ 
+ 
+-def enabled() -> bool:
+-    return os.environ.get("BELA_NEXT_V2_ENABLE", "0").strip() in ("1", "true", "TRUE", "yes")
+-
+-
+ def current_arm():
+-    aid = os.environ.get("BELA_NEXT_ARM", "").strip()
+-    if not aid:
+-        raise RuntimeError("BELA_NEXT_ARM must be set when BELA_NEXT_V2_ENABLE=1")
+-    arms = _arms()
+-    if aid not in arms:
+-        raise RuntimeError(f"unknown BELA_NEXT_ARM={aid}")
+-    return arms[aid]
+-
+-
+-def _rewrite_image_placeholders(input_ids, attention_mask, image_token_id: int, n_keep: int):
+-    assert input_ids.shape[0] == 1
++    arm_id = os.environ.get('BELA_NEXT_ARM', '').strip()
++    if arm_id not in _arms():
++        raise RuntimeError(f'BELA_NEXT_ARM invalid/missing: {arm_id!r}')
++    arm = _arms()[arm_id]
++    if arm['model'] != 'next7' or arm['layers'] != 32 or tuple(arm['cuts_after_layers']) != (12,20):
++        raise RuntimeError('This fixed implementation is verified only for NeXT-7B 32-layer L12/L20')
++    return arm
++
++
++def _verify_runtime():
++    if os.environ.get('BELA_REQUIRE_RUNTIME_HASH', '1') == '0':
++        return
++    import transformers
++    if transformers.__version__ != '5.20.2':
++        raise RuntimeError(f'Version mismatch: need transformers 5.20.2, found {transformers.__version__}')
++    import transformers.models.llama.modeling_llama as llama
++    import transformers.models.llava_next.modeling_llava_next as next_model
++    meta = json.loads((_ROOT/'reference'/'original_runtime_tf520'/'IMPORT_PATHS.json').read_text())
++    for key, mod in (('modeling_llama', llama), ('modeling_llava_next', next_model)):
++        path = Path(mod.__file__).resolve()
++        digest = hashlib.sha256(path.read_bytes()).hexdigest()
++        if digest != meta['files'][key]['sha256']:
++            raise RuntimeError(f'RUNTIME_HASH_MISMATCH {key}: expected {meta["files"][key]["sha256"]}, got {digest}')
++
++
++def _rewrite_image_placeholders(input_ids, attention_mask, image_token_id, replacement_count):
++    if input_ids is None or input_ids.ndim != 2 or input_ids.shape[0] != 1:
++        raise RuntimeError('BATCH1_ONLY: model prompt must have shape [1,L]')
+     ids = input_ids[0]
+-    pos = (ids == image_token_id).nonzero(as_tuple=True)[0]
+-    if pos.numel() == 0:
+-        raise RuntimeError("PRUNING_NOT_ACTIVE: no image placeholders in input_ids")
+-    start, end = int(pos[0]), int(pos[-1]) + 1
+-    if int(pos[-1] - pos[0] + 1) != int(pos.numel()):
+-        raise RuntimeError("PRUNING_NOT_ACTIVE: image placeholders not contiguous")
+-    prefix = ids[:start]
+-    suffix = ids[end:]
+-    mid = ids.new_full((n_keep,), image_token_id)
+-    new_ids = torch.cat([prefix, mid, suffix], dim=0).unsqueeze(0)
++    matches = torch.where(ids == image_token_id)[0]
++    if matches.numel() == 0 or replacement_count <= 0:
++        raise RuntimeError('IMAGE_PLACEHOLDER_MISSING')
++    start, end = int(matches[0]), int(matches[-1])+1
++    if matches.numel() != end-start:
++        raise RuntimeError('NONCONTIGUOUS_IMAGE_PLACEHOLDERS: multi-image unsupported')
++    output = torch.cat((ids[:start], ids.new_full((replacement_count,), image_token_id), ids[end:])).unsqueeze(0)
+     if attention_mask is None:
+-        new_mask = None
++        new_mask = torch.ones_like(output)
+     else:
++        if attention_mask.shape != input_ids.shape:
++            raise RuntimeError('attention_mask does not match original prompt')
+         am = attention_mask[0]
+-        new_mask = torch.cat([am[:start], am.new_ones(n_keep), am[end:]], dim=0).unsqueeze(0)
+-    return new_ids, new_mask, start
+-
+-
+-def _past_len(past_key_values) -> int:
+-    if past_key_values is None:
+-        return 0
+-    if hasattr(past_key_values, "get_seq_length"):
+-        try:
+-            return int(past_key_values.get_seq_length())
+-        except Exception:
+-            return 0
+-    return 0
+-
+-
+-def apply_patch(model) -> bool:
+-    if getattr(model, "_bela_next_v2_patched", False):
++        new_mask = torch.cat((am[:start], am.new_ones(replacement_count), am[end:])).unsqueeze(0)
++    return output, new_mask, start
++
++
++def _past_len(past):
++    return 0 if past is None else int(past.get_seq_length())
++
++
++def _remap_text_start(keep_abs: torch.Tensor, old_text_start: int, old_seq_len: int) -> int:
++    """Map the FIRST true text position through Stage2 physical gathers.
++
++    Keeping `max(patch_pos)+1` is WRONG if the last kept patch is followed by
++    one or more surviving AnyRes image_newline markers: that would turn those
++    structural markers into question queries for the second prune.
++    """
++    if old_seq_len < 1 or not 0 < int(old_text_start) < old_seq_len:
++        raise RuntimeError('TEXT_START_INVALID: must have a nonempty question suffix')
++    keep = torch.as_tensor(keep_abs, dtype=torch.long).reshape(-1)
++    if keep.numel() == 0 or keep.unique().numel() != keep.numel():
++        raise RuntimeError('TEXT_REMAP_INVALID_KEEP: empty or duplicate gather')
++    if int(keep.min()) < 0 or int(keep.max()) >= old_seq_len or not bool((keep[1:] > keep[:-1]).all()):
++        raise RuntimeError('TEXT_REMAP_INVALID_KEEP: gather not sorted, unique or in range')
++    if not bool((keep >= old_text_start).any()):
++        raise RuntimeError('TEXT_REMAP_NO_TEXT: pruning attempted to remove all text')
++    return int((keep < old_text_start).sum())
++
++
++def _verify_native_placeholders(input_ids, attention_mask, image_token_id, original_packed_length):
++    """Check native Dense image packing BEFORE any BELA placeholder rewriting."""
++    if input_ids is None or input_ids.ndim != 2 or input_ids.shape[0] != 1:
++        raise RuntimeError('BATCH1_ONLY: image input IDs required')
++    patch_positions = torch.where(input_ids[0] == image_token_id)[0]
++    if patch_positions.numel() != original_packed_length:
++        raise RuntimeError(
++            f'NATIVE_PLACEHOLDER_MISMATCH: processor={patch_positions.numel()} '
++            f'native_packer={original_packed_length}; do not conceal a Dense AnyRes error'
++        )
++    if not patch_positions.numel() or (int(patch_positions[-1] - patch_positions[0] + 1) != patch_positions.numel()):
++        raise RuntimeError('NONCONTIGUOUS_IMAGE_PLACEHOLDERS: image layout unsupported')
++    if attention_mask is not None:
++        if attention_mask.shape != input_ids.shape or not bool(attention_mask[0,patch_positions].bool().all()):
++            raise RuntimeError('IMAGE_PLACEHOLDER_ATTENTION_MASK_MISMATCH')
++    return int(patch_positions[0])
++
++
++def _llama_forward_with_cuts(llama, *, inputs_embeds, attention_mask, position_ids,
++                             past_key_values, use_cache, state: Stage2State, parent):
++    from transformers.cache_utils import DynamicCache
++    from transformers.masking_utils import create_causal_mask
++    from transformers.modeling_outputs import BaseModelOutputWithPast
++    if inputs_embeds.shape[0] != 1 or not use_cache or past_key_values is not None:
++        raise RuntimeError('BELA only supports batch1, empty cache, use_cache=True prefill')
++    cache = DynamicCache(config=llama.config)
++    if position_ids is None:
++        position_ids = torch.arange(inputs_embeds.shape[1], device=inputs_embeds.device).unsqueeze(0)
++    if position_ids.shape != (1, inputs_embeds.shape[1]):
++        raise RuntimeError('Invalid prefill position_ids')
++    if attention_mask is None or attention_mask.shape != position_ids.shape:
++        raise RuntimeError('Expected exact 2-D prefill attention mask')
++    hs = inputs_embeds
++    text_start = int(parent._bela_text_start)
++    cuts = dict(zip(state.cut_layers, state.k_targets))
++    for index, layer in enumerate(llama.layers[:llama.config.num_hidden_layers]):
++        # create_causal_mask in HF5.20 uses *physical index* while RoPE receives
++        # original Stage1 position_ids. Keep these namespaces independent.
++        causal = create_causal_mask(config=llama.config, inputs_embeds=hs,
++                                    attention_mask=attention_mask, past_key_values=None,
++                                    position_ids=position_ids)
++        rope = llama.rotary_emb(hs, position_ids=position_ids)
++        layer_num = index+1
++        q = k = None
++        if layer_num in cuts and state.patch_pos.numel() > cuts[layer_num]:
++            q, k = _layer_qk(layer, hs, rope)
++        hs = layer(hs, attention_mask=causal, position_embeddings=rope,
++                   position_ids=position_ids, past_key_values=cache, use_cache=True)
++        if layer_num in cuts and state.patch_pos.numel() > cuts[layer_num]:
++            before = int(hs.shape[1])
++            hs, position_ids, cache, state = select_and_prune(
++                state=state, hidden_states=hs, position_ids=position_ids,
++                past_key_values=cache, decoder_layer=layer, position_embeddings=rope,
++                layer_1based=layer_num, k_target=cuts[layer_num], layers_filled=index+1,
++                text_start=text_start, q=q, k=k, valid_token_mask=attention_mask)
++            idx = state.last_keep_abs.to(device=attention_mask.device)
++            if idx.numel() >= before:
++                raise RuntimeError('Layer pruning did not reduce physical sequence length')
++            # DO NOT reset padding to ones; retain original mask semantics.
++            attention_mask = attention_mask.index_select(-1, idx)
++            if int(cache.get_seq_length()) != hs.shape[1]:
++                raise RuntimeError('post-cut DynamicCache sequence length mismatch')
++            # Preserve true text boundary through physical gather; trailing
++            # image_newline is not a text Query in Q_ATTN.
++            next_text_start = _remap_text_start(idx, text_start, before)
++            state.events[-1]['true_text_start_before'] = int(text_start)
++            state.events[-1]['true_text_start_after'] = int(next_text_start)
++            state.events[-1]['padding_after'] = int((attention_mask == 0).sum())
++            text_start = next_text_start
++            if text_start <= int(state.patch_pos.max()):
++                raise RuntimeError('TEXT_START_MAPPING: text boundary overlapped an image patch')
++            parent._bela_text_start = text_start
++    hs = llama.norm(hs)
++    parent._bela_position_ids = position_ids.detach()
++    parent._bela_rope_next_pos = int(position_ids.max())+1
++    parent._bela_last_prefill_mask = attention_mask.detach()
++    parent._bela_last_prefill_seq = hs.shape[1]
++    return BaseModelOutputWithPast(last_hidden_state=hs, past_key_values=cache)
++
++
++def _generation_parameters(model, input_ids, kwargs):
++    """Fail-closed API: unsupported sampling/beams/extra processors are errors."""
++    generation_cfg = kwargs.get('generation_config') or getattr(model, 'generation_config', None)
++    def opt(name, fallback):
++        if name in kwargs and kwargs[name] is not None:
++            return kwargs[name]
++        return getattr(generation_cfg, name, fallback) if generation_cfg is not None else fallback
++    allow_keys = {'input_ids','pixel_values','image_sizes','attention_mask','max_new_tokens',
++                  'generation_config','eos_token_id','pad_token_id','do_sample','num_beams',
++                  'stopping_criteria','return_dict_in_generate','output_scores',
++                  'temperature','top_p','use_cache','max_length', 'repetition_penalty'}
++    extra = {k:v for k,v in kwargs.items() if k not in allow_keys and v is not None}
++    if extra:
++        raise RuntimeError(f'UNSUPPORTED_GENERATION_OPTIONS: {sorted(extra)}')
++    if bool(opt('do_sample', False)) or int(opt('num_beams', 1)) != 1:
++        raise RuntimeError('Only greedy non-sampling, single-beam generation is supported')
++    if float(opt('repetition_penalty', 1.0)) != 1.0:
++        raise RuntimeError('repetition_penalty alters logits; unsupported')
++    t = opt('temperature', 1.0)
++    if t is not None and float(t) not in (0., 1.):
++        raise RuntimeError('Nontrivial temperature unsupported')
++    p = opt('top_p', 1.0)
++    if p is not None and float(p) != 1.0:
++        raise RuntimeError('top_p unsupported for this strict greedy decoder')
++    if not bool(opt('use_cache', True)):
++        raise RuntimeError('BELA pruned generation requires use_cache=True')
++    if bool(opt('return_dict_in_generate', False)) or bool(opt('output_scores', False)):
++        raise RuntimeError('Generation scores/dict output unsupported: expected plain token IDs')
++    if int(opt('num_return_sequences', 1)) != 1:
++        raise RuntimeError('BELA only supports one generated candidate')
++    # Non-default logits processors / output constraints must not be silently skipped.
++    unsupported_active = {
++        'min_length': (0, None), 'min_new_tokens': (0, None),
++        'forced_bos_token_id': (None,), 'forced_eos_token_id': (None,),
++        'bad_words_ids': (None, []), 'force_words_ids': (None, []),
++        'no_repeat_ngram_size': (0, None), 'encoder_no_repeat_ngram_size': (0, None),
++        'suppress_tokens': (None, []), 'begin_suppress_tokens': (None, []),
++        'sequence_bias': (None, {}), 'stop_strings': (None, []),
++        'constraints': (None, []), 'max_time': (None,),
++        'exponential_decay_length_penalty': (None,),
++        'watermarking_config': (None,), 'guidance_scale': (None, 1.0),
++    }
++    for key, inactive in unsupported_active.items():
++        value = opt(key, None)
++        if value not in inactive:
++            raise RuntimeError(f'UNSUPPORTED_NONDEFAULT_GENERATION_CONFIG: {key}={value!r}')
++    max_new = opt('max_new_tokens', None)
++    max_len = opt('max_length', None)
++    if max_new is None:
++        if max_len is None:
++            raise RuntimeError('max_new_tokens or max_length required for reproducible eval')
++        max_new = int(max_len) - int(input_ids.shape[-1])
++    max_new = int(max_new)
++    if max_new <= 0:
++        raise RuntimeError('Invalid max_new_tokens or max_length')
++    if max_len is not None and 'max_new_tokens' not in kwargs and max_new + input_ids.shape[-1] > int(max_len):
++        raise RuntimeError('max_length violated')
++    eos = opt('eos_token_id', None)
++    eos_ids = set() if eos is None else ({int(x) for x in eos} if isinstance(eos,(list,tuple)) else {int(eos)})
++    return max_new, eos_ids
++
++
++def apply_patch(model):
++    """Patch the existing HF instance, never its global class or site-packages."""
++    if getattr(model, '_bela_next_v2_patched', False):
+         return False
+-
+-    from bela_next_compat import original_dual, original_qa
+-
++    _verify_runtime()
++    if model.training:
++        raise RuntimeError('BELA requires .eval() model')
+     llava = model.model
+-    lm = llava.language_model
+-    llama_model = lm.model if hasattr(lm, "model") else lm
+-
+-    orig_llava_fwd = llava.forward
+-    orig_get_feats = llava.get_image_features
+-
+-    def hooked_get_image_features(self_m, *args, **kwargs):
+-        # Never prune here — no question available. Stock Dense pack only.
+-        return orig_get_feats(*args, **kwargs)
+-
+-    def _llama_forward_with_cuts(
+-        self_lm,
+-        *,
+-        inputs_embeds,
+-        attention_mask,
+-        position_ids,
+-        past_key_values,
+-        use_cache,
+-        state: Stage2State,
+-        parent,
+-    ):
+-        from transformers.cache_utils import DynamicCache
+-        from transformers.masking_utils import create_causal_mask
+-        from transformers.modeling_outputs import BaseModelOutputWithPast
+-
+-        if use_cache and past_key_values is None:
+-            past_key_values = DynamicCache(config=self_lm.config)
+-
+-        if position_ids is None:
+-            position_ids = torch.arange(
+-                inputs_embeds.shape[1], device=inputs_embeds.device, dtype=torch.long
+-            ).unsqueeze(0)
+-
+-        hidden_states = inputs_embeds
+-        text_start = int(getattr(parent, "_bela_text_start", int(state.patch_pos.max().item()) + 1))
+-        cut_map = {state.cut_layers[0]: state.k_targets[0], state.cut_layers[1]: state.k_targets[1]}
+-
+-        from .stage2 import _layer_qk
+-
+-        for layer_idx, decoder_layer in enumerate(self_lm.layers[: self_lm.config.num_hidden_layers]):
+-            causal_mask = create_causal_mask(
+-                config=self_lm.config,
+-                inputs_embeds=hidden_states,
+-                attention_mask=attention_mask,
+-                past_key_values=None,
+-                position_ids=position_ids,
+-            )
+-            position_embeddings = self_lm.rotary_emb(hidden_states, position_ids=position_ids)
+-            layer_1based = layer_idx + 1
+-            # Score with Q/K of this layer's INPUT (1.5 Dual+QA contract), then
+-            # prune the OUTPUT + cache. Never re-probe post-layer states.
+-            q_score = k_score = None
+-            if layer_1based in cut_map and state.patch_pos.numel() > cut_map[layer_1based]:
+-                q_score, k_score = _layer_qk(decoder_layer, hidden_states, position_embeddings)
+-            hidden_states = decoder_layer(
+-                hidden_states,
+-                attention_mask=causal_mask,
+-                position_embeddings=position_embeddings,
+-                position_ids=position_ids,
+-                past_key_values=past_key_values,
+-                use_cache=use_cache,
+-            )
+-            if layer_1based in cut_map:
+-                k_tgt = cut_map[layer_1based]
+-                if state.patch_pos.numel() > k_tgt:
+-                    hidden_states, position_ids, past_key_values, state = select_and_prune(
+-                        state=state,
+-                        hidden_states=hidden_states,
+-                        position_ids=position_ids,
+-                        past_key_values=past_key_values,
+-                        decoder_layer=decoder_layer,
+-                        position_embeddings=position_embeddings,
+-                        layer_1based=layer_1based,
+-                        k_target=k_tgt,
+-                        layers_filled=layer_idx + 1,
+-                        text_start=text_start,
+-                        q=q_score,
+-                        k=k_score,
+-                    )
+-                    text_start = int(state.patch_pos.max().item()) + 1
+-                    parent._bela_text_start = text_start
+-                    if attention_mask is not None:
+-                        attention_mask = torch.ones(
+-                            hidden_states.shape[0],
+-                            hidden_states.shape[1],
+-                            device=hidden_states.device,
+-                            dtype=attention_mask.dtype,
+-                        )
+-
+-        hidden_states = self_lm.norm(hidden_states)
+-        parent._bela_position_ids = position_ids.detach()
+-        parent._bela_rope_next_pos = int(position_ids.max().item()) + 1
+-        return BaseModelOutputWithPast(
+-            last_hidden_state=hidden_states,
+-            past_key_values=past_key_values,
+-        )
+-
+-    def hooked_llava_forward(
+-        self_m,
+-        input_ids=None,
+-        pixel_values=None,
+-        image_sizes=None,
+-        attention_mask=None,
+-        position_ids=None,
+-        past_key_values=None,
+-        inputs_embeds=None,
+-        vision_feature_layer=None,
+-        vision_feature_select_strategy=None,
+-        use_cache=None,
+-        mm_encoder_outputs=None,
+-        **kwargs,
+-    ):
++    llama = llava.language_model.model if hasattr(llava.language_model, 'model') else llava.language_model
++    if int(llama.config.num_hidden_layers) != 32:
++        raise RuntimeError('Expected NeXT7 32 decoder layers')
++    orig_fwd, orig_gen = llava.forward, model.generate
++
++    def hooked_llava_forward(self_m, input_ids=None, pixel_values=None, image_sizes=None,
++                             attention_mask=None, position_ids=None, past_key_values=None,
++                             inputs_embeds=None, vision_feature_layer=None,
++                             vision_feature_select_strategy=None, use_cache=None,
++                             mm_encoder_outputs=None, **kwargs):
+         if not enabled():
+-            # TF generate may leave both pixels and mm_encoder_outputs; stock forbids both.
+-            kw = dict(kwargs)
+-            mm = mm_encoder_outputs if mm_encoder_outputs is not None else kw.get("mm_encoder_outputs")
+-            has_mm = False
+-            if isinstance(mm, dict):
+-                has_mm = mm.get("image") is not None
+-            elif mm is not None:
+-                has_mm = True
+-            pv = pixel_values if pixel_values is not None else kw.get("pixel_values")
+-            if pv is not None and has_mm:
+-                pixel_values = None
+-                image_sizes = None
+-                kw.pop("pixel_values", None)
+-                kw.pop("image_sizes", None)
+-            return orig_llava_fwd(
+-                input_ids=input_ids,
+-                pixel_values=pixel_values,
+-                image_sizes=image_sizes,
+-                attention_mask=attention_mask,
+-                position_ids=position_ids,
+-                past_key_values=past_key_values,
+-                inputs_embeds=inputs_embeds,
+-                vision_feature_layer=vision_feature_layer,
+-                vision_feature_select_strategy=vision_feature_select_strategy,
+-                use_cache=use_cache,
+-                mm_encoder_outputs=mm_encoder_outputs,
+-                **kw,
+-            )
+-
+-        past_len = _past_len(past_key_values)
+-        if past_len > 0:
+-            return orig_llava_fwd(
+-                input_ids=input_ids,
+-                pixel_values=None,
+-                image_sizes=None,
+-                attention_mask=attention_mask,
+-                position_ids=position_ids,
+-                past_key_values=past_key_values,
+-                inputs_embeds=inputs_embeds,
+-                use_cache=use_cache,
+-                mm_encoder_outputs=None,
+-                **kwargs,
+-            )
+-
++            # PASS-THROUGH: do not silently change Dense inputs or failure semantics.
++            return orig_fwd(input_ids=input_ids, pixel_values=pixel_values,
++                           image_sizes=image_sizes, attention_mask=attention_mask,
++                           position_ids=position_ids, past_key_values=past_key_values,
++                           inputs_embeds=inputs_embeds, vision_feature_layer=vision_feature_layer,
++                           vision_feature_select_strategy=vision_feature_select_strategy,
++                           use_cache=use_cache, mm_encoder_outputs=mm_encoder_outputs, **kwargs)
++        if _past_len(past_key_values) > 0:
++            if pixel_values is not None or mm_encoder_outputs is not None:
++                raise RuntimeError('DECODE_IMAGE_REUSE: multimodal inputs forbidden after prefill')
++            return orig_fwd(input_ids=input_ids, pixel_values=None, image_sizes=None,
++                           attention_mask=attention_mask, position_ids=position_ids,
++                           past_key_values=past_key_values, inputs_embeds=inputs_embeds,
++                           vision_feature_layer=vision_feature_layer,
++                           vision_feature_select_strategy=vision_feature_select_strategy,
++                           use_cache=use_cache, mm_encoder_outputs=None, **kwargs)
++        if mm_encoder_outputs is not None or pixel_values is None or image_sizes is None:
++            raise RuntimeError('PRUNING_NOT_ACTIVE: pruned prefill requires real pixels + image_sizes')
++        if inputs_embeds is not None or input_ids is None or use_cache is False:
++            raise RuntimeError('BELA prefill requires input_ids and use_cache=True')
++        if kwargs.get('labels') is not None:
++            raise RuntimeError('BELA is inference-only; labels/training unsupported')
+         arm = current_arm()
+-        if pixel_values is None or pixel_values.numel() == 0:
+-            raise RuntimeError(
+-                "PRUNING_NOT_ACTIVE: ENABLE=1 prefill requires pixel_values "
+-                "(QA needs joint vision+question; refuse mm_encoder-only pruned path)"
+-            )
+-        if input_ids is None:
+-            raise RuntimeError("BELA NeXT Stage1 requires input_ids for QA question span")
+-
+-        s1 = run_native_stage1(
+-            self_m,
+-            pixel_values,
+-            image_sizes,
+-            input_ids,
+-            arm,
+-            dual_fn=original_dual,
+-            qa_fn=original_qa,
+-            vision_feature_layer=vision_feature_layer,
+-            vision_feature_select_strategy=vision_feature_select_strategy,
+-        )
+-        image_features = s1.packed_features
+-        n_img = int(image_features.shape[0])
++        stage = run_native_stage1(self_m, pixel_values, image_sizes, input_ids, arm,
++                                  dual_fn=original_dual, qa_fn=original_qa,
++                                  vision_feature_layer=vision_feature_layer,
++                                  vision_feature_select_strategy=vision_feature_select_strategy)
++        image_feats = stage.packed_features
++        native_packed_length = stage.native_patch_count + stage.native_newlines
++        _verify_native_placeholders(input_ids, attention_mask,
++                                    int(self_m.config.image_token_id), native_packed_length)
++        new_ids, new_mask, image_start = _rewrite_image_placeholders(
++            input_ids, attention_mask, int(self_m.config.image_token_id), int(image_feats.shape[0]))
++        embeds = self_m.get_input_embeddings()(new_ids)
++        image_feats = image_feats.to(device=embeds.device, dtype=embeds.dtype)
++        patch_mask = (new_ids == int(self_m.config.image_token_id)).unsqueeze(-1).expand_as(embeds)
++        embeds = embeds.masked_scatter(patch_mask, image_feats)
++        local_patch = torch.where(stage.is_patch)[0].to(device=embeds.device, dtype=torch.long)
++        physical_patch = local_patch + image_start
++        state = Stage2State(patch_pos=physical_patch,
++                            k_targets=(stage.k1, stage.k2), cut_layers=stage.cut_layers,
++                            patch_uids=stage.patch_uids)
++        model._bela_text_start = image_start + image_feats.shape[0]
+         model._bela_stage1 = {
+-            "arm": s1.arm_id,
+-            "k0": s1.k0,
+-            "k1": s1.k1,
+-            "k2": s1.k2,
+-            "packed_len": n_img,
+-            "packed_patches": s1.n_patches,
+-            "packed_newlines": s1.n_newlines,
+-            "native_patches": s1.native_patch_count,
+-            "native_newlines": s1.native_newlines,
+-            "pack_mode": s1.pack_mode,
+-            "mid_layer": s1.mid_layer,
+-            "qa_log": s1.qa_log,
+-            "selector": "NATIVE_DUAL_COVER_L9_PLUS_QA_B8",
++            'arm': stage.arm_id, 'k0': stage.k0,'k1': stage.k1,'k2': stage.k2,
++            'packed_len': int(image_feats.shape[0]), 'packed_patches': stage.n_patches,
++            'packed_newlines': stage.n_newlines, 'native_patches': stage.native_patch_count,
++            'native_newlines': stage.native_newlines,
++            'native_packed_length': native_packed_length,
++            'pack_mode': stage.pack_mode,
++            'mid_layer': stage.mid_layer, 'qa_log': stage.qa_log,
++            'img_start': image_start, 'seq_after_stage1': int(new_ids.shape[1]),
++            'true_text_start': int(image_start+image_feats.shape[0]),
+         }
+-        model._bela_visual_is_patch = s1.is_patch
+-        model._bela_visual_patch_local = torch.where(s1.is_patch)[0].to(dtype=torch.long)
+-        model._bela_prefill_hits = int(getattr(model, "_bela_prefill_hits", 0)) + 1
+-
+-        image_token_id = self_m.config.image_token_id
+-        new_ids, new_mask, img_start = _rewrite_image_placeholders(
+-            input_ids, attention_mask, image_token_id, n_img
+-        )
+-        inputs_embeds = self_m.get_input_embeddings()(new_ids)
+-        special = (new_ids == image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
+-        inputs_embeds = inputs_embeds.masked_scatter(
+-            special, image_features.to(inputs_embeds.device, inputs_embeds.dtype)
+-        )
+-
+-        patch_local = model._bela_visual_patch_local.to(dtype=torch.long)
+-        patch_pos = patch_local + int(img_start)
+-        model._bela_patch_pos = patch_pos
+-        model._bela_text_start = int(img_start + n_img)
+-        model._bela_stage1["img_start"] = int(img_start)
+-        model._bela_stage1["seq_after_stage1"] = int(new_ids.shape[1])
+-
+-        state = Stage2State(
+-            patch_pos=patch_pos.clone(),
+-            k_targets=(s1.k1, s1.k2),
+-            cut_layers=s1.cut_layers,
+-        )
+-        outputs = _llama_forward_with_cuts(
+-            llama_model,
+-            inputs_embeds=inputs_embeds,
+-            attention_mask=new_mask,
+-            position_ids=None,
+-            past_key_values=None,
+-            use_cache=True if use_cache is None else use_cache,
+-            state=state,
+-            parent=model,
+-        )
++        out = _llama_forward_with_cuts(llama, inputs_embeds=embeds, attention_mask=new_mask,
++                                       position_ids=position_ids, past_key_values=None,
++                                       use_cache=True, state=state, parent=model)
+         model._bela_stage2 = {
+-            "events": list(state.events),
+-            "final_patches": int(state.patch_pos.numel()),
+-            "rope_next_pos": int(getattr(model, "_bela_rope_next_pos", -1)),
++            'events': state.events, 'final_patches': int(state.patch_pos.numel()),
++            'final_patch_uid_sample': [] if state.patch_uids is None else state.patch_uids[:16].tolist(),
++            'rope_next_pos': int(model._bela_rope_next_pos),
+         }
+         model._bela_patch_pos = state.patch_pos
+-        model._bela_last_prefill_seq = int(outputs.last_hidden_state.shape[1])
+-
++        model._bela_prefill_hits = int(getattr(model, '_bela_prefill_hits', 0))+1
++        if len(state.events) != 2 or int(state.patch_pos.numel()) != stage.k2:
++            raise RuntimeError('PRUNING_NOT_ACTIVE: Stage2 events incomplete')
+         from transformers.models.llava_next.modeling_llava_next import LlavaNextModelOutputWithPast
+-
+-        return LlavaNextModelOutputWithPast(
+-            last_hidden_state=outputs.last_hidden_state,
+-            past_key_values=outputs.past_key_values,
+-            hidden_states=None,
+-            attentions=None,
+-            image_hidden_states=None,
+-        )
+-
+-    llava.get_image_features = types.MethodType(hooked_get_image_features, llava)
++        return LlavaNextModelOutputWithPast(last_hidden_state=out.last_hidden_state,
++                                            past_key_values=out.past_key_values,
++                                            hidden_states=None, attentions=None, image_hidden_states=None)
++
+     llava.forward = types.MethodType(hooked_llava_forward, llava)
+-    if hasattr(model, "get_image_features"):
+-        model.get_image_features = types.MethodType(
+-            lambda self, *a, **k: llava.get_image_features(*a, **k), model
+-        )
+-
+-    orig_generate = model.generate
+-
++
++    @torch.no_grad()
+     def hooked_generate(self, *args, **kwargs):
+         if not enabled():
+-            return orig_generate(*args, **kwargs)
+-
+-        input_ids = kwargs.get("input_ids", None)
+-        if input_ids is None and len(args) > 0:
+-            input_ids = args[0]
+-        if input_ids is None:
+-            raise RuntimeError("BELA generate requires input_ids")
+-        pixel_values = kwargs.get("pixel_values", None)
+-        attention_mask = kwargs.get("attention_mask", None)
+-        image_sizes = kwargs.get("image_sizes", None)
+-        # Match Dense protocol: do not silently shrink vs task yaml unless OOM env set.
+-        # Default cap 256 — enough for VQA; override with BELA_NEXT_MAX_NEW.
+-        max_new_tokens = kwargs.get("max_new_tokens", None)
+-        if max_new_tokens is None:
+-            gen_cfg = kwargs.get("generation_config", None) or getattr(self, "generation_config", None)
+-            max_new_tokens = getattr(gen_cfg, "max_new_tokens", None) if gen_cfg is not None else None
+-        max_new_tokens = int(max_new_tokens or 32)
+-        max_new_tokens = max(1, min(max_new_tokens, int(os.environ.get("BELA_NEXT_MAX_NEW", "256"))))
+-        eos_id = kwargs.get("eos_token_id", None)
+-        if eos_id is None:
+-            eos_id = getattr(self.config, "eos_token_id", None)
+-        if isinstance(eos_id, (list, tuple)):
+-            eos_ids = set(int(x) for x in eos_id)
+-        elif eos_id is None:
+-            eos_ids = set()
+-        else:
+-            eos_ids = {int(eos_id)}
+-
+-        past = None
+-        if torch.cuda.is_available():
+-            torch.cuda.empty_cache()
+-        try:
+-            pre = self(
+-                input_ids=input_ids,
+-                pixel_values=pixel_values,
+-                attention_mask=attention_mask,
+-                image_sizes=image_sizes,
+-                use_cache=True,
+-                return_dict=True,
+-            )
+-            if getattr(self, "_bela_stage2", None) is None:
+-                raise RuntimeError("PRUNING_NOT_ACTIVE: generate prefill missing Stage2")
+-            s1 = getattr(self, "_bela_stage1", {}) or {}
+-            if not s1.get("qa_log", {}).get("legacy_dual_called"):
+-                raise RuntimeError("PRUNING_NOT_ACTIVE: Dual COVER not called")
+-            if int(s1.get("qa_log", {}).get("qa_swaps_cfg", 0)) > 0 and not s1.get("qa_log", {}).get(
+-                "legacy_qa_called"
+-            ):
+-                raise RuntimeError("PRUNING_NOT_ACTIVE: QA B8 not called")
+-            past = pre.past_key_values
+-            short_len = int(pre.logits.shape[1])
+-            next_token = pre.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+-            del pre
+-            new_list = [next_token]
+-            device = input_ids.device
+-            dtype = attention_mask.dtype if attention_mask is not None else input_ids.dtype
+-            attn = torch.ones(input_ids.shape[0], short_len, device=device, dtype=dtype)
+-            next_pos = int(getattr(self, "_bela_rope_next_pos", short_len))
+-
+-            for _ in range(max(0, max_new_tokens - 1)):
+-                tok = int(next_token.item())
+-                if eos_ids and tok in eos_ids:
+-                    break
+-                attn = torch.cat(
+-                    [attn, torch.ones(attn.shape[0], 1, device=device, dtype=dtype)], dim=1
+-                )
+-                pos = torch.tensor([[next_pos]], device=device, dtype=torch.long)
+-                step = self(
+-                    input_ids=next_token,
+-                    attention_mask=attn,
+-                    past_key_values=past,
+-                    position_ids=pos,
+-                    use_cache=True,
+-                    return_dict=True,
+-                )
+-                past = step.past_key_values
+-                next_pos += 1
+-                self._bela_rope_next_pos = next_pos
+-                next_token = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+-                del step
+-                new_list.append(next_token)
+-
+-            return torch.cat([input_ids] + new_list, dim=1)
+-        except torch.cuda.OutOfMemoryError:
+-            if torch.cuda.is_available():
+-                torch.cuda.empty_cache()
+-            return input_ids
+-        finally:
+-            past = None
+-            if hasattr(self, "_bela_position_ids"):
+-                self._bela_position_ids = None
+-            if torch.cuda.is_available():
+-                torch.cuda.empty_cache()
++            return orig_gen(*args, **kwargs)
++        if args:
++            if len(args) != 1 or 'input_ids' in kwargs:
++                raise RuntimeError('Ambiguous positional generation arguments')
++            kwargs = dict(kwargs, input_ids=args[0])
++        input_ids = kwargs.get('input_ids')
++        if input_ids is None or input_ids.ndim != 2 or input_ids.shape[0] != 1:
++            raise RuntimeError('BELA generation requires batch1 input_ids')
++        max_new, eos_ids = _generation_parameters(self, input_ids, kwargs)
++        if kwargs.get('pixel_values') is None or kwargs.get('image_sizes') is None:
++            raise RuntimeError('BELA generation requires a real image')
++        self._bela_stage2 = None
++        pre = self(input_ids=input_ids, attention_mask=kwargs.get('attention_mask'),
++                   image_sizes=kwargs['image_sizes'], pixel_values=kwargs['pixel_values'],
++                   use_cache=True, logits_to_keep=1, return_dict=True)
++        if not getattr(self, '_bela_stage2', None):
++            raise RuntimeError('PRUNING_NOT_ACTIVE: missing pruned prefill')
++        evidence = self._bela_stage1['qa_log']
++        if not evidence['legacy_dual_called'] or (evidence['qa_swaps_cfg'] and not evidence['legacy_qa_called']):
++            raise RuntimeError('PRUNING_NOT_ACTIVE: missing required BELA operators')
++        past = pre.past_key_values
++        mask = self._bela_last_prefill_mask.clone()
++        next_pos = int(self._bela_rope_next_pos)
++        token = pre.logits[:, -1, :].argmax(-1, keepdim=True)
++        if not bool(torch.isfinite(pre.logits).all()):
++            raise RuntimeError('NONFINITE_LOGITS at pruned prefill')
++        generated = [token]
++        del pre
++        stopping = kwargs.get('stopping_criteria')
++        if stopping is not None and not callable(stopping):
++            raise RuntimeError('stopping_criteria must be callable')
++        def should_stop():
++            if int(token.item()) in eos_ids:
++                return True
++            if stopping is None:
++                return False
++            sequences = torch.cat([input_ids]+generated, dim=-1)
++            value = stopping(sequences, scores=None)
++            if isinstance(value, torch.Tensor):
++                if value.numel() != 1:
++                    raise RuntimeError('stopping_criteria must return one bool for batch1')
++                return bool(value.item())
++            return bool(value)
++        for _ in range(max_new - 1):
++            if should_stop():
++                break
++            mask = torch.cat((mask, mask.new_ones((1,1))), -1)
++            pos = torch.tensor([[next_pos]], device=token.device, dtype=torch.long)
++            output = self(input_ids=token, attention_mask=mask,
++                          past_key_values=past, position_ids=pos,
++                          use_cache=True, logits_to_keep=1, return_dict=True)
++            if not bool(torch.isfinite(output.logits).all()):
++                raise RuntimeError('NONFINITE_LOGITS at pruned decode')
++            past = output.past_key_values
++            token = output.logits[:,-1,:].argmax(-1, keepdim=True)
++            generated.append(token)
++            next_pos += 1
++            del output
++        # One-token output is valid even if it immediately matches EOS/stop.
++        self._bela_rope_next_pos = next_pos
++        return torch.cat([input_ids]+generated, -1)
+ 
+     model.generate = types.MethodType(hooked_generate, model)
+-
+-    # ForConditionalGeneration.forward also receives both; strip before model.model
+-    if hasattr(model, "forward"):
+-        orig_cg_fwd = model.forward
+-
+-        def hooked_cg_forward(self, *args, **kwargs):
+-            if not enabled():
+-                pv = kwargs.get("pixel_values", None)
+-                mm = kwargs.get("mm_encoder_outputs", None)
+-                has_mm = isinstance(mm, dict) and mm.get("image") is not None
+-                if pv is not None and has_mm:
+-                    kwargs = dict(kwargs)
+-                    kwargs["pixel_values"] = None
+-                    kwargs["image_sizes"] = None
+-            return orig_cg_fwd(*args, **kwargs)
+-
+-        model.forward = types.MethodType(hooked_cg_forward, model)
+-        model._bela_orig_cg_fwd = orig_cg_fwd
+-
+     model._bela_next_v2_patched = True
+-    model._bela_llama = llama_model
+-    model._bela_orig_llava_fwd = orig_llava_fwd
+-    model._bela_orig_get_feats = orig_get_feats
+-    model._bela_orig_generate = orig_generate
++    model._bela_orig_generate = orig_gen
++    model._bela_orig_llava_fwd = orig_fwd
+     model._bela_prefill_hits = 0
+-    try:
+-        n_layers = int(model.config.text_config.num_hidden_layers)
+-    except Exception:
+-        n_layers = int(getattr(llama_model.config, "num_hidden_layers", -1))
+-    model._bela_num_layers = n_layers
+     return True
+ 
+ 
+-def summarize_trace(model) -> dict:
+-    return {
+-        "enabled": enabled(),
+-        "arm": os.environ.get("BELA_NEXT_ARM"),
+-        "stage1": getattr(model, "_bela_stage1", None),
+-        "stage2": getattr(model, "_bela_stage2", None),
+-        "prefill_hits": getattr(model, "_bela_prefill_hits", None),
+-        "last_prefill_seq": getattr(model, "_bela_last_prefill_seq", None),
+-        "patch_pos_n": None
+-        if getattr(model, "_bela_patch_pos", None) is None
+-        else int(model._bela_patch_pos.numel()),
+-        "rope_next_pos": getattr(model, "_bela_rope_next_pos", None),
+-    }
++def summarize_trace(model):
++    return dict(enabled=enabled(), arm=os.environ.get('BELA_NEXT_ARM'),
++                stage1=getattr(model, '_bela_stage1', None),
++                stage2=getattr(model, '_bela_stage2', None),
++                prefill_hits=getattr(model, '_bela_prefill_hits', None),
++                last_prefill_seq=getattr(model, '_bela_last_prefill_seq', None),
++                rope_next_pos=getattr(model, '_bela_rope_next_pos', None))
+--- a/next_forward/bela_next_compat.py
++++ b/bela_next_forward/bela_next_compat.py
+@@ -1,162 +1,117 @@
+-"""Original 1.5-7B Dual COVER + QA-COVER wrappers for native NeXT packed space.
++"""BELA historical operators applied to *native packed patch* namespace.
+ 
+-Selection IDs are indices into the *packed patch-only* stream (newlines excluded),
+-matching BELA_NEXT_NATIVE_FIX_KIT's run_original_bela contract.
++No external absolute-path imports. No saliency proxy in the default arm.
+ """
+ from __future__ import annotations
+-
+ from typing import Any, Dict, Optional
+-
+ import torch
+-
+-from bela_next_forward.dual_cover import dual_cover_one_crop
++from .dual_cover import dual_cover_one_crop
++from bela_next_budget.crops import crop_quota_from_ids
++from bela_query_anchor.llava_adapter import apply_llava_query_anchor
++from bela_query_anchor.query_anchor import AnchorConfig
+ 
+ 
+-def original_dual(
+-    *,
+-    mid: torch.Tensor,
+-    pen: torch.Tensor,
+-    keep: int,
+-    slots: int,
+-    seed: int,
+-    context: Optional[Dict[str, Any]] = None,
+-) -> torch.Tensor:
+-    """Crop-grouped Dual COVER on native packed patch features."""
+-    context = context or {}
+-    layout = context.get("native_layout")
+-    if layout is None:
+-        # Fallback: treat whole packed stream as one group
+-        return dual_cover_one_crop(mid, pen, int(keep), slots=int(slots), seed=int(seed))
+-
+-    crop = layout.origin_crop[layout.patch_mask].to(device=mid.device, dtype=torch.long)
+-    if int(crop.numel()) != int(mid.shape[0]):
+-        raise RuntimeError(
+-            f"native_layout patch crop map {crop.numel()} != mid N {mid.shape[0]}"
+-        )
+-    # Preserve first-seen crop order (base then tiles)
+-    uniq = []
+-    for c in crop.tolist():
+-        if c not in uniq:
+-            uniq.append(int(c))
+-    capacities = [int((crop == c).sum().item()) for c in uniq]
+-    from bela_next_budget.crops import crop_quota_from_ids
+-
+-    quotas = crop_quota_from_ids(capacities, int(keep), policy="uniform", min_per_crop=1)
+-    # CRITICAL: slots is a GLOBAL Dual COVER budget (32 on 1.5-7B / one 576 grid).
+-    # Re-applying slots=32 on EVERY NeXT crop inflates COVER ~Nx (e.g. 5×160/320),
+-    # which destroys saliency anchors and collapses ACC despite higher resolution.
+-    # Distribute the same global slot budget proportionally across crop quotas.
+-    keep_i = int(keep)
+-    slots_i = int(slots)
+-    qq_list = []
+-    for c, q in zip(uniq, quotas):
+-        rows_n = int((crop == c).sum().item())
+-        qq_list.append(min(int(q), rows_n))
+-    qq_sum = sum(qq_list) or 1
+-    raw = [slots_i * qq / qq_sum for qq in qq_list]
+-    slots_per = [int(x) for x in raw]
+-    rem = slots_i - sum(slots_per)
+-    order = sorted(range(len(raw)), key=lambda i: (raw[i] - slots_per[i], -qq_list[i], i), reverse=True)
+-    for i in order:
+-        if rem <= 0:
+-            break
+-        slots_per[i] += 1
+-        rem -= 1
+-    parts = []
+-    for c, qq, slots_c in zip(uniq, qq_list, slots_per):
+-        rows = torch.nonzero(crop == c, as_tuple=True)[0]
+-        if qq <= 0:
+-            continue
+-        # Cap per-crop COVER so anchors still dominate (mirror 1.5 ratio).
+-        slots_c = max(0, min(int(slots_c), int(qq) - 1 if qq > 1 else 0, 32))
+-        local = dual_cover_one_crop(
+-            mid.index_select(0, rows),
+-            pen.index_select(0, rows),
+-            qq,
+-            slots=slots_c,
+-            seed=int(seed) + int(c),
+-        )
+-        parts.append(rows.index_select(0, local))
+-    if isinstance(context, dict):
+-        context["dual_slots_per_crop"] = list(slots_per)
+-        context["dual_quotas"] = list(qq_list)
+-        context["dual_slots_global"] = slots_i
+-    out = torch.cat(parts, dim=0).sort().values
+-    if int(out.numel()) != int(keep):
+-        # capacities may have forced fewer than keep when unpad is harsh
+-        if int(out.numel()) < int(keep):
+-            raise RuntimeError(f"Dual COVER emitted {out.numel()} < keep={keep}")
+-        out = out[:keep]
+-    return out
++def _assign_slots(quotas, capacities, slots):
++    """Largest-remainder allocation, respecting each group's actual residual capacity."""
++    caps = [max(0, min(32, q-1, capacity-q)) for q, capacity in zip(quotas, capacities)]
++    usable = min(int(slots), sum(caps))
++    if usable <= 0:
++        return [0]*len(quotas), 0
++    w = [float(q) if cap else 0.0 for q, cap in zip(quotas, caps)]
++    alloc = [0]*len(quotas)
++    for _ in range(usable):
++        valid = [i for i in range(len(quotas)) if alloc[i] < caps[i]]
++        chosen = max(valid, key=lambda i: (w[i]/(alloc[i]+1), -i))
++        alloc[chosen] += 1
++    return alloc, usable
+ 
+ 
+-def original_qa(
+-    *,
+-    mid: torch.Tensor,
+-    pen: torch.Tensor,
+-    question: torch.Tensor,
+-    question_ids: Optional[torch.Tensor],
+-    initial_keep: torch.Tensor,
+-    max_swaps: int,
+-    donor: int,
+-    drop: int,
+-    seed: int,
+-    context: Optional[Dict[str, Any]] = None,
+-) -> torch.Tensor:
+-    """Global B8 QA-COVER via historical bela_query_anchor donor-swap."""
+-    context = context or {}
+-    model = context.get("model")
+-    if model is None:
+-        raise RuntimeError("QA requires context['model']")
+-    if question_ids is None or int(question_ids.numel()) == 0:
+-        raise RuntimeError("QA requires real question_ids")
++@torch.no_grad()
++def original_dual(*, mid: torch.Tensor, pen: torch.Tensor, keep: int, slots: int,
++                  seed: int, context: Optional[Dict[str, Any]] = None) -> torch.Tensor:
++    if context is None:
++        context = {}
++    layout = context.get('native_layout')
++    saliency = context.get('packed_cls_scores')
++    mode = context.get('saliency_mode', 'cls_attention')
++    if layout is None:
++        raise RuntimeError('NATIVE_LAYOUT_REQUIRED: crop provenance is mandatory on NeXT')
++    if mode == 'cls_attention' and saliency is None:
++        raise RuntimeError('REAL_CLS_REQUIRED: actual penultimate CLS attention unavailable')
++    crop = layout.origin_crop[layout.patch_mask].to(device=mid.device, dtype=torch.long)
++    local_ids = layout.origin_local_patch[layout.patch_mask].to(device=mid.device, dtype=torch.long)
++    if crop.numel() != mid.shape[0] or pen.shape[0] != mid.shape[0]:
++        raise RuntimeError('crop provenance/feature length mismatch')
++    if saliency is not None:
++        saliency = saliency.to(device=mid.device, dtype=torch.float32)
++        if saliency.shape != (mid.shape[0],):
++            raise RuntimeError('CLS saliency does not match packed patch namespace')
++    uniq = list(dict.fromkeys(int(c) for c in crop.tolist()))
++    if not uniq or any(c < 0 for c in uniq):
++        raise RuntimeError('invalid crop IDs')
++    capacities = [int((crop == c).sum()) for c in uniq]
++    policy = context.get('crop_policy', 'uniform')
++    if policy not in ('uniform', 'thumbnail_boost'):
++        raise RuntimeError(f'Unknown crop policy: {policy}')
++    quotas = crop_quota_from_ids(capacities, int(keep), policy=policy,
++                                 thumbnail_crop=0, global_weight=float(context.get('thumbnail_weight', 1.5)),
++                                 min_per_crop=1)
++    alloc, usable = _assign_slots(quotas, capacities, int(slots))
++    parts = []
++    for c, qq, b in zip(uniq, quotas, alloc):
++        rows = torch.where(crop == c)[0]
++        picked = dual_cover_one_crop(
++            mid.index_select(0, rows), pen.index_select(0, rows), int(qq),
++            slots=b, seed=int(seed)+int(c),
++            cls_scores=None if saliency is None else saliency.index_select(0, rows),
++            local_patch_ids=local_ids.index_select(0, rows), saliency_mode=mode,
++        )
++        parts.append(rows.index_select(0, picked))
++    result = torch.cat(parts).sort().values
++    if result.numel() != int(keep) or result.unique().numel() != int(keep):
++        raise RuntimeError('Dual COVER invalid global selection count')
++    context['dual_slots_per_crop'] = alloc
++    context['dual_quotas'] = quotas
++    context['dual_crop_ids'] = uniq
++    context['dual_slots_global'] = int(slots)
++    context['dual_slots_effective'] = usable
++    context['dual_saliency_mode'] = mode
++    return result
+ 
+-    import sys
+-    from pathlib import Path
+ 
+-    root = str(Path("/home/xiangyue/ViTCoP/experiments"))
+-    if root not in sys.path:
+-        sys.path.insert(0, root)
+-    from bela_query_anchor.llava_adapter import apply_llava_query_anchor
+-    from bela_query_anchor.query_anchor import AnchorConfig
+-
+-    # Dual metric = concat(mid, pen) as in e013 REPLACE/COVER
+-    metric = torch.cat([mid.float(), pen.float()], dim=-1)
+-    mm_proj = model.multi_modal_projector
+-    embed = model.get_input_embeddings()
+-    cfg = AnchorConfig(
+-        max_swaps=int(max_swaps),
+-        donor_pool=int(donor),
+-        drop_pool=int(drop),
++@torch.no_grad()
++def original_qa(*, mid: torch.Tensor, pen: torch.Tensor, question: torch.Tensor,
++                question_ids: Optional[torch.Tensor], initial_keep: torch.Tensor,
++                max_swaps: int, donor: int, drop: int, seed: int,
++                context: Optional[Dict[str, Any]] = None) -> torch.Tensor:
++    if context is None:
++        context = {}
++    model = context.get('model')
++    if model is None or question_ids is None or question_ids.numel() == 0:
++        raise RuntimeError('QA requires model and validated original question IDs')
++    projected = context.get('projected_full_vision')
++    if projected is None or projected.shape[0] != pen.shape[0]:
++        raise RuntimeError('QA requires packed original projected visual features [N,D]')
++    metric = torch.cat((mid.float(), pen.float()), dim=-1)
++    result = apply_llava_query_anchor(
++        mode='s1_anchor', native_keep_ids=initial_keep.long(), dual_metric=metric,
++        full_vision_features_for_projector=pen,
++        projected_full_vision=projected,
++        question_only_ids=question_ids.long().reshape(-1),
++        mm_projector=model.multi_modal_projector,
++        llm_input_embeddings=model.get_input_embeddings(),
++        config=AnchorConfig(max_swaps=int(max_swaps), donor_pool=int(donor), drop_pool=int(drop)),
++        random_seed=int(seed), diagnostics=True,
+     )
+-    result = apply_llava_query_anchor(
+-        mode="s1_anchor",
+-        native_keep_ids=initial_keep.long(),
+-        dual_metric=metric,
+-        full_vision_features_for_projector=pen,
+-        question_only_ids=question_ids.long().reshape(-1),
+-        mm_projector=mm_proj,
+-        llm_input_embeddings=embed,
+-        config=cfg,
+-        random_seed=int(seed),
+-        diagnostics=True,
+-    )
+-    # AnchorResult: .keep or .ids — support both
+-    keep = getattr(result, "keep_ids", None)
+-    if keep is None:
+-        keep = getattr(result, "keep", None)
+-    if keep is None:
+-        keep = getattr(result, "selected_ids", None)
+-    if keep is None:
+-        raise RuntimeError(f"QA result missing keep ids: {type(result)} {dir(result)}")
+-    keep = keep.long().to(device=initial_keep.device).sort().values
+-    if int(keep.numel()) != int(initial_keep.numel()):
+-        raise RuntimeError(f"QA changed K: {keep.numel()} vs {initial_keep.numel()}")
+-    # Surface QA reason for smoke/ACC traces (was silent no_safe_query_anchor).
+-    if isinstance(context, dict):
+-        context["qa_reason"] = getattr(result, "reason", None)
+-        context["qa_swaps_reported"] = int(getattr(result, "swaps", 0) or 0)
+-        context["qa_records_n"] = (
+-            len(result.records) if getattr(result, "records", None) is not None else 0
+-        )
+-    return keep
++    ids = result.keep_ids.long().to(initial_keep.device).sort().values
++    if ids.numel() != initial_keep.numel() or ids.unique().numel() != ids.numel():
++        raise RuntimeError('QA changed K or generated duplicate IDs')
++    if int(result.swaps) != int((~torch.isin(ids, initial_keep)).sum()):
++        raise RuntimeError('QA swap count disagrees with final kept set')
++    context['qa_reason'] = result.reason
++    context['qa_swaps_reported'] = int(result.swaps)
++    context['qa_records_n'] = len(result.records or [])
++    # QA deliberately remains global: measure crop drift rather than silently altering its algorithm.
++    crop = context['native_layout'].origin_crop[context['native_layout'].patch_mask]
++    context['qa_crop_counts'] = {str(int(c)): int((crop[ids] == c).sum()) for c in crop.unique()}
++    return ids
+--- a/next_forward/dual_cover.py
++++ b/bela_next_forward/dual_cover.py
+@@ -1,31 +1,43 @@
+-"""Historical Dual COVER (e013 REPLACE/COVER) applied crop-wise for NeXT grids.
++"""BELA Dual COVER with *real* CLS scores and AnyRes-aware spatial coordinates.
+ 
+-NeXT A0–A4 per-crop quotas (e.g. 64/58/52) are outside the LLaVA-1.5 e013
+-core_k whitelist; formula is identical — only the whitelist is lifted here.
+-
+-When a crop has an unpad-valid pool smaller than 576, COVER runs inside that
+-pool and returns original local patch IDs.
++Faithful to historical e013 REPLACE/COVER: anchors = CLS Top(K-B),
++residual = complement of original CLS TopK, then B novelty replacements.
++No norm-based proxy is used unless the caller explicitly requests an ablation.
+ """
+ from __future__ import annotations
++from typing import Optional
++import torch
++import torch.nn.functional as F
+ 
+-import importlib.util
+-from pathlib import Path
+-from typing import List, Optional, Sequence, Tuple
+-
+-import torch
+-
+-_E013 = None
++GRID = 24
++CELLS = 4
+ 
+ 
+-def _e013():
+-    global _E013
+-    if _E013 is None:
+-        p = Path("/home/xiangyue/ViTCoP/LLaVA/llava/model/multimodal_encoder/e013_stage1_support.py")
+-        spec = importlib.util.spec_from_file_location("e013_stage1_support", p)
+-        mod = importlib.util.module_from_spec(spec)
+-        spec.loader.exec_module(mod)
+-        _E013 = mod
+-    return _E013
++def _validate_ids(local_patch_ids: Optional[torch.Tensor], n: int, device) -> torch.Tensor:
++    ids = torch.arange(n, device=device, dtype=torch.long) if local_patch_ids is None else (
++        torch.as_tensor(local_patch_ids, device=device, dtype=torch.long).flatten()
++    )
++    if ids.numel() != n or n > GRID * GRID or (n and (bool((ids < 0).any()) or bool((ids >= GRID*GRID).any()))):
++        raise ValueError('local patch coordinates must be unique IDs in the original 24x24 crop')
++    if ids.unique().numel() != n:
++        raise ValueError('duplicate original crop-local patch IDs (unpad mapping corrupt)')
++    return ids
++
++
++def _relative_coverage(metric, saliency, anchors, residual, source_local_ids):
++    """Historical 4x4 prototype formula, using original crop-local coordinates."""
++    if residual.numel() == 0:
++        return saliency[:0]
++    cell_src = (source_local_ids // GRID // (GRID // CELLS)) * CELLS + (
++        (source_local_ids % GRID) // (GRID // CELLS)
++    )
++    features = F.normalize(metric.float(), p=2, dim=-1, eps=1e-8)
++    means = torch.zeros(CELLS * CELLS, features.shape[-1], device=metric.device, dtype=torch.float32)
++    means.index_add_(0, cell_src.index_select(0, anchors), features.index_select(0, anchors))
++    means = F.normalize(means, p=2, dim=-1, eps=1e-8)
++    cos = (features.index_select(0, residual) * means.index_select(0, cell_src.index_select(0, residual))).sum(-1)
++    novelty = 1 - cos.clamp(0, 1)
++    return saliency.float().index_select(0, residual) * novelty
+ 
+ 
+ @torch.no_grad()
+@@ -35,107 +47,46 @@
+     k: int,
+     slots: int = 32,
+     seed: int = 20261009,
++    *,
++    cls_scores: Optional[torch.Tensor] = None,
++    local_patch_ids: Optional[torch.Tensor] = None,
++    saliency_mode: str = 'cls_attention',
+ ) -> torch.Tensor:
+-    """Return sorted *row* IDs in [0,N) for one feature table (REPLACE/COVER)."""
+-    if mid_nd.ndim != 2 or pen_nd.ndim != 2:
+-        raise ValueError("mid/pen must be [N,D]")
+-    if mid_nd.shape[0] != pen_nd.shape[0]:
+-        raise ValueError("mid/pen N mismatch")
+-    n = int(mid_nd.shape[0])
++    """Select sorted row IDs of an AnyRes crop's *valid packed* patch table.
++
++    cls_scores must be the ViT's real CLS->patch attention, already packed using
++    the exact native AnyRes geometry. norm_proxy is ONLY a declared control.
++    """
++    if mid_nd.ndim != 2 or pen_nd.ndim != 2 or mid_nd.shape != pen_nd.shape:
++        raise ValueError('mid and pen must have identical [N,D] shape')
++    n = mid_nd.shape[0]
+     if not (0 < k <= n):
+-        raise ValueError(f"invalid k={k} for N={n}")
+-    e = _e013()
+-    scores = pen_nd.float().norm(dim=-1)
+-    metric = torch.cat([mid_nd.float(), pen_nd.float()], dim=-1)
+-    b = max(0, min(int(slots), 32, k - 1 if k > 1 else 0))
+-    try:
+-        if n == 576:
+-            sel, _extra, _orig = e.e013_choose(
+-                metric, scores, "REPLACE", "COVER", b, seed, 0, core_k=k
+-            )
+-            ids = sel.long().sort().values
+-        else:
+-            raise ValueError("non-576 uses lifted path")
+-    except ValueError:
+-        # Lifted COVER for unpad pools != 576. When k≈n (small crop / full-pool
+-        # quota), residual is empty — clamp slots so topk never asks for >|residual|.
+-        total_k = int(k)
+-        if total_k >= n:
+-            ids = torch.arange(n, device=scores.device, dtype=torch.long)
+-        else:
+-            b_eff = min(int(b), n - total_k)
+-            if b_eff <= 0:
+-                ids = scores.topk(total_k, largest=True, sorted=False).indices.sort().values
+-            else:
+-                anchors_k = total_k - b_eff
+-                anchors = scores.topk(anchors_k, largest=True, sorted=False).indices.sort().values
+-                base_mask = torch.ones(n, dtype=torch.bool, device=metric.device)
+-                base_mask[anchors] = False
+-                residual = torch.where(base_mask)[0]
+-                utility = e._core_relative_coverage(metric, scores, anchors, residual)
+-                if int(utility.numel()) < b_eff:
+-                    raise RuntimeError(
+-                        f"COVER utility size {utility.numel()} < slots {b_eff}"
+-                    )
+-                local = utility.topk(b_eff, largest=True, sorted=False).indices
+-                chosen = residual.index_select(0, local)
+-                ids = torch.cat((anchors, chosen), dim=0).sort().values
+-    if int(ids.unique().numel()) != k:
+-        raise RuntimeError(f"COVER unique={ids.unique().numel()} != k={k}")
+-    if int(ids.min()) < 0 or int(ids.max()) >= n:
+-        raise RuntimeError("COVER id out of range")
+-    return ids
+-
+-
+-@torch.no_grad()
+-def dual_cover_one_crop_pool(
+-    mid_576: torch.Tensor,
+-    pen_576: torch.Tensor,
+-    k: int,
+-    pool_local_ids: Optional[torch.Tensor] = None,
+-    slots: int = 32,
+-    seed: int = 20261009,
+-) -> torch.Tensor:
+-    """COVER on full 576 or a valid local-id pool; returns sorted original local ids."""
+-    if mid_576.ndim != 2 or mid_576.shape[0] != 576:
+-        raise ValueError("mid must be [576,D]")
+-    if pool_local_ids is None:
+-        return dual_cover_one_crop(mid_576, pen_576, k, slots=slots, seed=seed)
+-    pool = pool_local_ids.to(device=mid_576.device, dtype=torch.long).unique().sort().values
+-    if pool.numel() == 0:
+-        raise RuntimeError("empty valid pool")
+-    kk = min(int(k), int(pool.numel()))
+-    if kk <= 0:
+-        raise RuntimeError("k<=0 after pool clamp")
+-    mid_p = mid_576.index_select(0, pool)
+-    pen_p = pen_576.index_select(0, pool)
+-    row = dual_cover_one_crop(mid_p, pen_p, kk, slots=slots, seed=seed)
+-    return pool.index_select(0, row).sort().values
+-
+-
+-@torch.no_grad()
+-def dual_cover_five_crops(
+-    mid_b576d: torch.Tensor,
+-    pen_b576d: torch.Tensor,
+-    quotas: Sequence[int],
+-    slots: int = 32,
+-    valid_pools: Optional[Sequence[Optional[torch.Tensor]]] = None,
+-) -> Tuple[torch.Tensor, List[torch.Tensor]]:
+-    """mid/pen: [C,576,D] → flat keep ids in global crop*576+local and per-crop ids."""
+-    n_crops = int(mid_b576d.shape[0])
+-    if pen_b576d.shape[0] != n_crops:
+-        raise ValueError("mid/pen crop count mismatch")
+-    if len(quotas) != n_crops:
+-        raise ValueError("need quotas for each crop")
+-    if valid_pools is not None and len(valid_pools) != n_crops:
+-        raise ValueError("valid_pools length mismatch")
+-    per = []
+-    flat = []
+-    for ci, k in enumerate(quotas):
+-        pool = None if valid_pools is None else valid_pools[ci]
+-        local = dual_cover_one_crop_pool(
+-            mid_b576d[ci], pen_b576d[ci], int(k), pool_local_ids=pool, slots=slots
+-        )
+-        per.append(local)
+-        flat.append(local + ci * 576)
+-    return torch.cat(flat, dim=0).sort().values, per
++        raise ValueError(f'invalid k={k} for crop capacity {n}')
++    local_ids = _validate_ids(local_patch_ids, n, mid_nd.device)
++    if saliency_mode == 'cls_attention':
++        if cls_scores is None:
++            raise RuntimeError('REAL_CLS_REQUIRED: missing CLS->patch attention')
++        scores = torch.as_tensor(cls_scores, dtype=torch.float32, device=mid_nd.device)
++    elif saliency_mode == 'norm_proxy':
++        scores = pen_nd.float().norm(dim=-1)
++    else:
++        raise ValueError('saliency_mode must be cls_attention or norm_proxy')
++    if scores.shape != (n,) or not bool(torch.isfinite(scores).all()):
++        raise ValueError('CLS scores must be finite, aligned to native packed crop rows')
++    b = min(int(slots), 32, k-1, n-k)
++    if b < 0 or slots < 0:
++        raise ValueError('slots must be nonnegative')
++    base = scores.topk(k, largest=True, sorted=False).indices.sort().values
++    if b == 0:
++        return base
++    anchors = scores.topk(k-b, largest=True, sorted=False).indices.sort().values
++    mask = torch.ones(n, dtype=torch.bool, device=scores.device)
++    mask[base] = False  # IMPORTANT: exclude original full TopK, not just Top(K-B)
++    residual = torch.where(mask)[0]
++    metric = torch.cat((mid_nd.float(), pen_nd.float()), dim=-1)
++    utility = _relative_coverage(metric, scores, anchors, residual, local_ids)
++    chosen = residual.index_select(0, utility.topk(b, largest=True, sorted=False).indices)
++    picked = torch.cat((anchors, chosen)).sort().values
++    if picked.numel() != k or picked.unique().numel() != k:
++        raise RuntimeError('COVER produced invalid count or duplicate patch')
++    return picked
+--- a/next_forward/native_stage1.py
++++ b/bela_next_forward/native_stage1.py
+@@ -1,31 +1,27 @@
+-"""Native NeXT Stage1: stock pack + Dual COVER (L9+pen) + global QA B8.
+-
+-Follows BELA_NEXT_NATIVE_FIX_KIT contracts on Transformers 5.20 LlavaNext:
+-vision tower once → projector crops → pack_image_features (spatial_unpad+newline)
+-→ Dual COVER crop-grouped in packed patch space → QA B8 → structural newline keep.
++"""BELA native LLaVA-NeXT Stage1, with explicit original-patch identity.
++
++Transformers 5.20.2 contract: trim processor padding by image_sizes; ViT once;
++real penultimate CLS->patch attention; stock pack_image_features; spatially
++correct Dual COVER and question-only QA on *packed patch-only* IDs.
+ """
+ from __future__ import annotations
+-
+ from dataclasses import dataclass
+-from typing import Any, Dict, Optional, Tuple
+-
++from typing import Tuple
++import os
+ import torch
+-
+-from bela_next_fix.legacy_bridge import ARMS, BelaConfig, run_original_bela
++from bela_next_fix.legacy_bridge import BelaConfig, run_original_bela
+ from bela_next_fix.native_layout import (
+-    map_native_packing,
+-    pack_dual_depth,
+-    structural_keep_mask,
+-    _normalize_packer_result,
++    map_native_packing, pack_dual_depth, structural_keep_mask, _normalize_packer_result,
+ )
+ 
+ 
+ @dataclass
+ class NativeStage1Result:
+-    packed_features: torch.Tensor  # [L, D] after Stage1 keep (patches+kept newlines)
+-    is_patch: torch.Tensor  # [L] bool
++    packed_features: torch.Tensor
++    is_patch: torch.Tensor
+     n_patches: int
+     n_newlines: int
++    patch_uids: torch.Tensor
+     native_patch_count: int
+     native_newlines: int
+     qa_log: dict
+@@ -34,236 +30,265 @@
+     k1: int
+     k2: int
+     cut_layers: Tuple[int, int]
+-    pack_mode: str = "spatial_unpad_newline"
++    pack_mode: str = 'spatial_unpad_newline'
+     mid_layer: int = 9
+ 
+ 
+-def _arm_to_cfg(arm: dict) -> BelaConfig:
+-    k0, k1, k2 = [int(x) for x in arm["stage_k"]]
+-    c1, c2 = [int(x) for x in arm["cuts_after_layers"]]
+-    return BelaConfig(
+-        stage1=k0,
+-        cut12=k1,
+-        cut20=k2,
+-        slots=32,
+-        qa_swaps=int(arm.get("qa_swaps", 8)),
+-        donor=16,
+-        drop=12,
+-        seed=17,
+-        # Production Dual L9: capture_outputs puts block-9 output at hs[9]
+-        # (hs[0]=layer0 input). Do NOT use hs[10] — that was in the ~82 R4 run.
+-        mid_layer=9,
+-        pen_layer=-2,
+-        require_true_qa=True,
+-    )
+-
+-
+-_TOK_CACHE = {}
+-
+-
+-def _tokenizer_for(llava_model):
+-    """Lazy tokenizer for question-only span (Vicuna USER/ASSISTANT strip)."""
+-    for obj in (llava_model, getattr(llava_model, "config", None)):
+-        if obj is None:
+-            continue
+-        tok = getattr(obj, "tokenizer", None) or getattr(obj, "_tokenizer", None)
+-        if tok is not None:
+-            return tok
+-    name = getattr(getattr(llava_model, "config", None), "_name_or_path", None) or getattr(
+-        getattr(llava_model, "config", None), "name_or_path", None
+-    )
+-    if not name:
+-        name = "llava-hf/llava-v1.6-vicuna-7b-hf"
+-    if name not in _TOK_CACHE:
+-        from transformers import AutoTokenizer
+-
+-        _TOK_CACHE[name] = AutoTokenizer.from_pretrained(name, use_fast=False)
+-    return _TOK_CACHE[name]
+-
+-
+-def _find_subseq(hay: torch.Tensor, needle: list) -> int:
+-    """Return start index of needle in hay, or -1."""
+-    if not needle or hay.numel() < len(needle):
++def _arm_to_cfg(arm):
++    k0, k1, k2 = map(int, arm['stage_k'])
++    return BelaConfig(stage1=k0, cut12=k1, cut20=k2,
++                      slots=int(arm.get('slots', 32)), qa_swaps=int(arm.get('qa_swaps', 8)),
++                      donor=int(arm.get('donor_pool', 16)), drop=int(arm.get('drop_pool', 12)),
++                      seed=int(arm.get('seed', 17)), mid_layer=int(arm.get('mid_layer', 9)),
++                      pen_layer=int(arm.get('pen_layer', -2)), require_true_qa=True)
++
++
++def _tokenizer_for(model):
++    """Require the exact tokenizer instance that encoded the prompt.
++
++    Inferring a tokenizer from a model path is not equivalent: chat templates,
++    added tokens, and the fast/slow implementation can change QA boundaries.
++    The lmms-eval entry is responsible for explicitly attaching this instance.
++    """
++    tok = getattr(model, '_tokenizer', None)
++    if tok is None:
++        raise RuntimeError(
++            'QA_TOKENIZER_IDENTITY_REQUIRED: attach the same lmms-eval tokenizer '
++            'to llava_model._tokenizer; AutoTokenizer fallback forbidden'
++        )
++    return tok
++
++
++def _find_subseq(hay, needle, *, last=False, start=0):
++    if not needle or int(hay.numel()) < len(needle):
+         return -1
+-    n = len(needle)
+-    for i in range(int(hay.numel()) - n + 1):
+-        if all(int(hay[i + j].item()) == int(needle[j]) for j in range(n)):
++    positions = (range(int(hay.numel())-len(needle), start-1, -1) if last
++                 else range(start, int(hay.numel())-len(needle)+1))
++    for i in positions:
++        if hay[i:i+len(needle)].tolist() == list(needle):
+             return i
+     return -1
+ 
+ 
+-def _question_ids_from_input(
+-    input_ids: torch.Tensor, image_token_id: int, tokenizer=None
+-) -> torch.Tensor:
+-    """Return QUESTION-ONLY ids by slicing the original token span.
+-
+-    Drop image placeholders and Vicuna USER:/ASSISTANT: wrappers without
+-    decode→re-encode (SentencePiece re-tokenization ≠ original ids).
+-    """
+-    assert input_ids.ndim == 1
+-    mask = input_ids != image_token_id
+-    ids = input_ids[mask]
+-    if ids.numel() and int(ids[0].item()) == 0:
++def _question_ids_from_input(input_ids, image_token_id, tokenizer=None):
++    """Slice original token IDs only; never decode/re-tokenize or silently take prompt.
++
++    Supports single-turn Vicuna USER...ASSISTANT template. Unknown templates
++    fail rather than poisoning QA with dialogue wrappers or answer tokens.
++    """
++    if input_ids.ndim != 1 or tokenizer is None:
++        raise ValueError('1-D input and actual tokenizer required')
++    ids = input_ids[input_ids != image_token_id]
++    if ids.numel() and getattr(tokenizer, 'bos_token_id', None) is not None and int(ids[0]) == int(tokenizer.bos_token_id):
+         ids = ids[1:]
+-    if tokenizer is None or ids.numel() == 0:
+-        return ids
+-    start = 0
+-    for mark in ("USER:", "User:"):
+-        mid = tokenizer(mark, add_special_tokens=False).input_ids
+-        at = _find_subseq(ids, mid)
+-        if at >= 0:
+-            start = at + len(mid)
+-            break
+-    end = int(ids.numel())
+-    for mark in ("ASSISTANT:", "Assistant:"):
+-        mid = tokenizer(mark, add_special_tokens=False).input_ids
+-        at = _find_subseq(ids[start:], mid)
+-        if at >= 0:
+-            end = start + at
+-            break
+-    out = ids[start:end]
+-    while out.numel():
+-        piece = tokenizer.decode([int(out[0].item())], skip_special_tokens=False)
+-        if piece.strip() == "":
+-            out = out[1:]
+-            continue
+-        break
+-    return out if out.numel() else ids
++    starts = []
++    for marker in ('USER:', 'User:', 'user:'):
++        tok = tokenizer(marker, add_special_tokens=False).input_ids
++        i = _find_subseq(ids, tok, last=True)
++        if i >= 0:
++            starts.append((i, i + len(tok)))
++    if not starts:
++        raise RuntimeError('QA_QUESTION_BOUNDARY: USER: not found as original token subsequence; audit prompt template')
++    start = max(starts)[1]
++    ends = []
++    for marker in ('ASSISTANT:', 'Assistant:', 'assistant:'):
++        tok = tokenizer(marker, add_special_tokens=False).input_ids
++        i = _find_subseq(ids, tok, start=start)
++        if i >= 0:
++            ends.append(i)
++    if not ends:
++        raise RuntimeError('QA_QUESTION_BOUNDARY: ASSISTANT: not found; refuse templated/full prompt fallback')
++    end = min(ends)
++    if end <= start:
++        raise RuntimeError('QA_QUESTION_BOUNDARY: empty/inverted question span')
++    result = ids[start:end]
++    # Remove whitespace-only token pieces *without* re-tokenizing any other token.
++    while result.numel() and not tokenizer.decode([int(result[0])], skip_special_tokens=False).strip():
++        result = result[1:]
++    while result.numel() and not tokenizer.decode([int(result[-1])], skip_special_tokens=False).strip():
++        result = result[:-1]
++    if not result.numel():
++        raise RuntimeError('QA_QUESTION_BOUNDARY: empty question-only token sequence')
++    return result
++
++
++def _trim_to_native_crops(pixel_values, image_sizes, config):
++    """Mirror HF get_image_features.image_size_to_num_patches for one image."""
++    if image_sizes is None or len(image_sizes) != 1:
++        raise RuntimeError('SINGLE_IMAGE_ONLY: one image_sizes record required')
++    from transformers.models.llava_next.modeling_llava_next import image_size_to_num_patches
++    required = int(image_size_to_num_patches(image_size=image_sizes[0],
++                   grid_pinpoints=config.image_grid_pinpoints, patch_size=config.vision_config.image_size))
++    if pixel_values.ndim == 5:
++        if pixel_values.shape[0] != 1:
++            raise RuntimeError('BATCH1_ONLY: split batch before pruning')
++        crops = pixel_values[0]
++    elif pixel_values.ndim == 4:
++        crops = pixel_values
++    else:
++        raise RuntimeError('Invalid NeXT pixel_values shape')
++    if required <= 0 or required > crops.shape[0]:
++        raise RuntimeError(f'AnyRes crop capacity mismatch: needed={required}, provided={crops.shape[0]}')
++    return crops[:required].contiguous(), required
+ 
+ 
+ @torch.no_grad()
+-def run_native_stage1(
+-    llava_model,
+-    pixel_values: torch.Tensor,
+-    image_sizes: torch.Tensor,
+-    input_ids: torch.Tensor,
+-    arm: dict,
+-    *,
+-    dual_fn,
+-    qa_fn,
+-    vision_feature_layer=None,
+-    vision_feature_select_strategy=None,
+-) -> NativeStage1Result:
++def cls_scores_from_clip_qk(vision_tower, hidden_states, *, pen_index=-2):
++    """Exact CLS softmax via CLIP penultimate block input LN/Q/K, O(C*H*S).
++
++    Uses the same tensors/projections as TF5.20 CLIPAttention, but computes
++    only its CLS query row instead of all S² rows in every ViT block.
++    Compare to actual eager attentions[-2] in the oracle smoke.
++    """
++    try:
++        layer = vision_tower.vision_model.encoder.layers[pen_index]
++    except (AttributeError, IndexError) as exc:
++        raise RuntimeError('CLIP_CLS_QK_UNSUPPORTED: expected CLIPVisionModel.encoder.layers') from exc
++    if layer.training:
++        raise RuntimeError('CLS probe requires eval()')
++    # hs[0] = embeddings; hs[-3] = input to the penultimate ViT block.
++    pre_h = hidden_states[pen_index - 1]
++    h = layer.layer_norm1(pre_h)
++    attn = layer.self_attn
++    batch, length, _ = h.shape
++    heads, dim = int(attn.num_heads), int(attn.head_dim)
++    qcls = attn.q_proj(h[:, :1, :]).view(batch, 1, heads, dim).transpose(1, 2)
++    k = attn.k_proj(h).view(batch, length, heads, dim).transpose(1, 2)
++    weights = torch.matmul(qcls.float(), k.float().transpose(-1, -2)) * float(attn.scale)
++    # CLS query's normalized distribution includes CLS key, then discard it.
++    scores = weights.softmax(-1)[:, :, 0, 1:].mean(dim=1)
++    if not bool(torch.isfinite(scores).all()):
++        raise RuntimeError('Nonfinite true CLS attention')
++    return scores
++
++
++def _packed_cls_saliency(pack_fn, src_cls, layout, n_crops, image_sizes, strategy):
++    if strategy != 'default':
++        raise RuntimeError('CLS_NATIVE_UNSUPPORTED: only default CLS-removed vision strategy verified')
++    if src_cls.ndim != 2 or src_cls.shape != (n_crops, layout.base_image_patch_counts[0]):
++        raise RuntimeError('Real CLS scores do not match native crop patch count')
++    native, lens = _normalize_packer_result(pack_fn(
++        [src_cls.unsqueeze(-1)], image_sizes, vision_feature_select_strategy=strategy,
++        image_newline=torch.zeros(1, device=src_cls.device, dtype=src_cls.dtype)))
++    if native.shape != (layout.patch_ids.numel(), 1) or not torch.equal(lens, layout.image_lens):
++        raise RuntimeError('CLS saliency packing mismatches native packed layout')
++    scores = native[:,0][layout.patch_mask]
++    if not bool(torch.isfinite(scores).all()):
++        raise RuntimeError('CLS packed scores nonfinite')
++    return scores
++
++
++def _require_paper_crop_protocol(arm: dict, native_n_crops: int) -> None:
++    """Fail closed when a nominal 2880-patch five-crop evaluation drifts.
++
++    Without this gate, dynamic 1/3/5-crop inputs could be scored as a fixed
++    94.4%-compression experiment despite incomparable native patch counts.
++    """
++    policy = arm.get('sampling_policy')
++    if policy == 'locked_paper_five_crop' and int(native_n_crops) != 5:
++        raise RuntimeError(
++            f'PAPER_CROP_PROTOCOL_MISMATCH: expected 5 native crops, '
++            f'got {native_n_crops}; audit processor/grid and matched-W before ACC'
++        )
++
++
++@torch.no_grad()
++def run_native_stage1(llava_model, pixel_values, image_sizes, input_ids, arm, *,
++                      dual_fn, qa_fn, vision_feature_layer=None, vision_feature_select_strategy=None):
+     cfg = _arm_to_cfg(arm)
+     cfg.check()
+-
+-    if pixel_values.dim() == 5:
+-        assert pixel_values.shape[0] == 1
+-        crops = pixel_values[0]
+-    else:
+-        crops = pixel_values
+-
+-    vfl = (
+-        vision_feature_layer
+-        if vision_feature_layer is not None
+-        else llava_model.config.vision_feature_layer
+-    )
+-    vfs = (
+-        vision_feature_select_strategy
+-        or llava_model.config.vision_feature_select_strategy
+-    )
+-
+-    out = llava_model.vision_tower(crops, output_hidden_states=True, return_dict=True)
++    if llava_model.training:
++        raise RuntimeError('BELA pruning is eval-only')
++    if input_ids.ndim != 2 or input_ids.shape[0] != 1:
++        raise RuntimeError('BELA is batch1-only, must not mix image placeholders across samples')
++    crops, native_n_crops = _trim_to_native_crops(pixel_values, image_sizes, llava_model.config)
++    _require_paper_crop_protocol(arm, native_n_crops)
++    vfl = (vision_feature_layer if vision_feature_layer is not None else llava_model.config.vision_feature_layer)
++    vfs = (vision_feature_select_strategy if vision_feature_select_strategy is not None
++           else llava_model.config.vision_feature_select_strategy)
++    if vfs != 'default':
++        raise RuntimeError('Unsupported NeXT vision_feature_select_strategy; audit before enabling')
++    mode = os.environ.get('BELA_STAGE1_SALIENCY', 'cls_attention')
++    if mode not in ('cls_attention', 'norm_proxy'):
++        raise RuntimeError('Unknown BELA_STAGE1_SALIENCY mode')
++    # Only the norm_proxy control skips true attentions; default requires real CLS.
++    oracle = os.environ.get('BELA_VIT_CLS_ORACLE', '0') == '1' and mode == 'cls_attention'
++    out = llava_model.vision_tower(crops, output_hidden_states=True,
++                                  output_attentions=oracle, return_dict=True)
+     hs = out.hidden_states
+-    if isinstance(vfl, int):
+-        selected = hs[vfl]
+-    else:
+-        selected = torch.cat([hs[i] for i in vfl], dim=-1)
+-    if vfs == "default":
+-        selected = selected[:, 1:]
+-    projected = llava_model.multi_modal_projector(selected)  # [C,576,D]
++    selected = hs[vfl] if isinstance(vfl, int) else torch.cat([hs[i] for i in vfl], dim=-1)
++    selected = selected[:, 1:]
++    projected = llava_model.multi_modal_projector(selected)
++    pack_fn = llava_model.pack_image_features
+     per_image = [projected]
+-
+-    pack_fn = llava_model.pack_image_features
+-    native_packed, native_lens = _normalize_packer_result(
+-        pack_fn(
+-            per_image,
+-            image_sizes,
+-            vision_feature_select_strategy=vfs,
+-            image_newline=llava_model.image_newline,
+-        )
+-    )
++    native_packed, native_lens = _normalize_packer_result(pack_fn(
++        per_image, image_sizes, vision_feature_select_strategy=vfs, image_newline=llava_model.image_newline))
+     layout = map_native_packing(pack_fn, per_image, image_sizes, strategy=vfs)
+-    if not torch.equal(layout.image_lens.to(native_lens.device), native_lens):
+-        raise RuntimeError("native layout lens != packed lens")
+-
+-    mid_p, pen_p = pack_dual_depth(
+-        pack_fn,
+-        hs,
+-        per_image,
+-        image_sizes,
+-        layout,
+-        mid_index=cfg.mid_layer,
+-        pen_index=cfg.pen_layer,
+-        strategy=vfs,
+-    )
+-    # free tower states
+-    try:
+-        out.hidden_states = None
+-    except Exception:
+-        pass
+-    del hs, selected, out
+-
+-    ids_1d = input_ids[0] if input_ids.ndim == 2 else input_ids
+-    image_token_id = int(llava_model.config.image_token_id)
++    if os.environ.get('BELA_NATIVE_DENSE_ORACLE','0') == '1':
++        # Expensive, one-sample GPU smoke ONLY: same original processor inputs,
++        # actual HF get_image_features path (no BELA, no altered image grid).
++        dense_visual = llava_model.get_image_features(
++            pixel_values=pixel_values, image_sizes=image_sizes,
++            vision_feature_layer=vfl, vision_feature_select_strategy=vfs,
++            return_dict=True)
++        dense_packed = torch.cat(dense_visual.pooler_output, dim=0)
++        if dense_packed.shape != native_packed.shape or not torch.allclose(
++                dense_packed.float(), native_packed.float(), atol=2e-3, rtol=2e-3):
++            raise RuntimeError('NATIVE_DENSE_PACK_ORACLE_MISMATCH: AnyRes projected stream differs from Dense')
++        del dense_visual, dense_packed
++    if not torch.equal(layout.image_lens, native_lens):
++        raise RuntimeError('AnyRes native pack lengths disagree with UID probe')
++    mid_p, pen_p = pack_dual_depth(pack_fn, hs, per_image, image_sizes, layout,
++                                   mid_index=cfg.mid_layer, pen_index=cfg.pen_layer, strategy=vfs)
++    cls_scores = None
++    if mode == 'cls_attention':
++        cls_source = cls_scores_from_clip_qk(llava_model.vision_tower, hs, pen_index=cfg.pen_layer)
++        if oracle:
++            att = getattr(out, 'attentions', None)
++            if att is None or att[cfg.pen_layer] is None:
++                raise RuntimeError('CLS_EAGER_ORACLE_MISSING: use eager ViT attention in oracle mode')
++            eager = att[cfg.pen_layer].float()[:, :, 0, 1:].mean(dim=1)
++            if not torch.allclose(cls_source, eager, atol=2e-3, rtol=2e-3):
++                raise RuntimeError('CLS_QK_VS_EAGER: manual input-Q/K disagrees with true ViT attention')
++        cls_scores = _packed_cls_saliency(pack_fn, cls_source, layout, native_n_crops, image_sizes, vfs)
+     tok = _tokenizer_for(llava_model)
+-    q_ids = _question_ids_from_input(ids_1d, image_token_id, tokenizer=tok)
+-    # question embeddings via LLM embed (same space QA expects after projector on vision)
+-    q_emb = llava_model.get_input_embeddings()(q_ids.unsqueeze(0))[0]
+-
++    question_ids = _question_ids_from_input(input_ids[0], int(llava_model.config.image_token_id), tok)
++    question_emb = llava_model.get_input_embeddings()(question_ids.unsqueeze(0))[0]
+     context = {
+-        "model": llava_model,
+-        "native_layout": layout,
+-        "pixel_values": pixel_values,
+-        "image_sizes": image_sizes,
++        'model': llava_model, 'native_layout': layout, 'packed_cls_scores': cls_scores,
++        'saliency_mode': mode, 'projected_full_vision': native_packed[layout.patch_mask],
++        'crop_policy': 'uniform' if arm.get('crop_policy', 'equal_valid_crops') == 'equal_valid_crops'
++                        else arm.get('crop_policy'),
+     }
+-    keep_ids, qa_log = run_original_bela(
+-        mid_p,
+-        pen_p,
+-        q_emb,
+-        cfg,
+-        dual_fn,
+-        qa_fn,
+-        question_ids=q_ids,
+-        extra_context=context,
+-    )
+-    qa_log = dict(qa_log)
+-    qa_log.update(
+-        {
+-            "legacy_dual_called": True,
+-            "legacy_qa_called": bool(cfg.qa_swaps > 0),
+-            "mid_layer": cfg.mid_layer,
+-            "qa_swaps_cfg": cfg.qa_swaps,
+-            "dual_slots_per_crop": context.get("dual_slots_per_crop"),
+-            "dual_quotas": context.get("dual_quotas"),
+-            "dual_slots_global": context.get("dual_slots_global"),
+-            "qa_reason": context.get("qa_reason"),
+-            "qa_swaps_reported": context.get("qa_swaps_reported"),
+-            "question_n_tokens": int(q_ids.numel()),
+-        }
+-    )
+-
+-    local_keep = structural_keep_mask(layout, keep_ids)
+-    packed = native_packed[local_keep]
+-    is_patch = layout.patch_mask[local_keep]
+-    n_patches = int(is_patch.sum().item())
+-    n_nl = int((~is_patch).sum().item())
+-    if n_patches != int(cfg.stage1):
+-        raise RuntimeError(f"Stage1 patches {n_patches} != K0 {cfg.stage1}")
+-
+-    c1, c2 = [int(x) for x in arm["cuts_after_layers"]]
+-    return NativeStage1Result(
+-        packed_features=packed,
+-        is_patch=is_patch.detach().cpu(),
+-        n_patches=n_patches,
+-        n_newlines=n_nl,
+-        native_patch_count=int(layout.patch_count),
+-        native_newlines=int(layout.newline_mask.sum().item()),
+-        qa_log=qa_log,
+-        arm_id=str(arm["arm_id"]),
+-        k0=int(cfg.stage1),
+-        k1=int(cfg.cut12),
+-        k2=int(cfg.cut20),
+-        cut_layers=(c1, c2),
+-        mid_layer=cfg.mid_layer,
+-    )
++    keep_ids, qa_log = run_original_bela(mid_p, pen_p, question_emb, cfg, dual_fn, qa_fn,
++                                        question_ids=question_ids, extra_context=context)
++    qa_log.update({
++        'legacy_dual_called': True, 'legacy_qa_called': bool(cfg.qa_swaps),
++        'qa_swaps_cfg': cfg.qa_swaps, 'qa_reason': context.get('qa_reason'),
++        'qa_swaps_reported': context.get('qa_swaps_reported'),
++        'dual_slots_per_crop': context['dual_slots_per_crop'],
++        'dual_slots_effective': context['dual_slots_effective'],
++        'dual_slots_global': context['dual_slots_global'],
++        'dual_quotas': context['dual_quotas'],
++        'qa_crop_counts': context.get('qa_crop_counts'),
++        'saliency_mode': mode, 'cls_attention_verified': mode == 'cls_attention',
++        'question_n_tokens': int(question_ids.numel()),
++        'native_crop_count': native_n_crops,
++        'native_uid_count': int(layout.patch_count),
++        # User-visible example probe: exact patch provenance, no raw image or text.
++        'selected_patch_uid_sample': layout.patch_ids[layout.patch_mask][keep_ids[:16]].tolist(),
++    })
++    select = structural_keep_mask(layout, keep_ids)
++    packed = native_packed[select]
++    patch_mask = layout.patch_mask[select]
++    n_patches = int(patch_mask.sum())
++    if n_patches != cfg.stage1:
++        raise RuntimeError(f'BELA Stage1 physical patch count {n_patches} != K0 {cfg.stage1}')
++    c1, c2 = map(int, arm['cuts_after_layers'])
++    if (c1, c2) != (12, 20) or int(arm['layers']) != 32:
++        raise RuntimeError('NeXT7 decoder schedule unsupported: requires 32 layers and L12/L20')
++    return NativeStage1Result(packed, patch_mask.detach().cpu(), n_patches,
++                              int((~patch_mask).sum()), layout.patch_ids[select][patch_mask].detach().cpu(), layout.patch_count,
++                              int(layout.newline_mask.sum()), qa_log,
++                              str(arm['arm_id']), cfg.stage1, cfg.cut12, cfg.cut20,
++                              (c1, c2), mid_layer=cfg.mid_layer)
+--- a/next_forward/stage2.py
++++ b/bela_next_forward/stage2.py
+@@ -1,168 +1,183 @@
+-"""Stage2 Q_ATTN physical prune for TF 5.20 Llama inside LlavaNext."""
++"""BELA NeXT7 Q_ATTN: score input-Q/K, prune layer output + already-filled KV.
++
++Index namespace: `patch_pos` are positions in *current physical* decoder
++sequence, while `patch_uids` preserve identities in the native AnyRes stream.
++RoPE position_ids refer to original Stage1 positions and must never be reset.
++"""
+ from __future__ import annotations
+-
+ from dataclasses import dataclass, field
+ from typing import Optional, Tuple
+-
+ import torch
++import os
+ 
+ 
+ @dataclass
+ class Stage2State:
+-    patch_pos: torch.Tensor  # absolute indices of surviving visual patches
++    patch_pos: torch.Tensor
+     k_targets: Tuple[int, int]
+-    cut_layers: Tuple[int, int]  # 1-based "after this layer"
++    cut_layers: Tuple[int, int]
++    patch_uids: Optional[torch.Tensor] = None
+     events: list = field(default_factory=list)
++    last_keep_abs: Optional[torch.Tensor] = None
+ 
+ 
+-def q_attn_scores_from_qk(
+-    q: torch.Tensor, k: torch.Tensor, patch_pos: torch.Tensor, text_start: int
+-) -> torch.Tensor:
+-    """q,k: [B,H,S,Dh] after RoPE. Mean text→patch attention over heads/queries."""
+-    assert q.shape[0] == 1
+-    qq, kk = q[0].float(), k[0].float()
+-    scale = kk.shape[-1] ** -0.5
+-    logits = torch.matmul(qq, kk.transpose(-1, -2)) * scale
+-    s = logits.shape[-1]
+-    causal = torch.ones(s, s, device=logits.device, dtype=torch.bool).triu(1)
+-    logits = logits.masked_fill(causal.unsqueeze(0), float("-inf"))
++def q_attn_scores_from_qk(q: torch.Tensor, k: torch.Tensor, patch_pos: torch.Tensor,
++                          text_start: int, valid_token_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
++    """Correct causal text->visual score (head-avg), respecting GQA expanded K."""
++    if q.ndim != 4 or k.ndim != 4 or q.shape[:3] != k.shape[:3] or q.shape[-1] != k.shape[-1] or q.shape[0] != 1:
++        raise ValueError('q and expanded k must be [1,H,S,D] and identical shapes')
++    seq = q.shape[-2]
++    patch_pos = patch_pos.to(device=q.device, dtype=torch.long)
++    if patch_pos.numel() == 0 or bool((patch_pos < 0).any()) or bool((patch_pos >= seq).any()) or patch_pos.unique().numel()!=patch_pos.numel():
++        raise ValueError('invalid Stage2 physical patch positions')
++    if not (0 <= text_start < seq):
++        raise RuntimeError('Q_ATTN_NO_TEXT: no text queries after image')
++    # Physical sequence coordinates only. RoPE coordinates may be sparse after
++    # pruning; causality is the physical order of keys actually stored in cache.
++    # Exclude padded query rows and padded key columns, matching Dense attention.
++    if valid_token_mask is None:
++        valid = torch.ones(seq, dtype=torch.bool, device=q.device)
++    else:
++        if valid_token_mask.shape != (1, seq):
++            raise RuntimeError('Q_ATTN_MASK_SHAPE: expected [1,physical_seq_len]')
++        valid = valid_token_mask[0].to(device=q.device).bool()
++    text_rows = torch.where(valid & (torch.arange(seq, device=q.device) >= text_start))[0]
++    if text_rows.numel() == 0:
++        raise RuntimeError('Q_ATTN_NO_VALID_TEXT: all suffix query positions padded')
++    if not bool(valid.index_select(0, patch_pos).all()):
++        raise RuntimeError('Q_ATTN_PADDED_PATCH: selected patch cannot be padding')
++    qq = q[0].index_select(-2, text_rows).float()
++    kk = k[0].float()
++    logits = torch.matmul(qq, kk.transpose(-1,-2)) * (kk.shape[-1] ** -0.5)
++    causal = (torch.arange(seq, device=q.device).view(1, 1, seq)
++              <= text_rows.view(1, -1, 1))
++    permitted = causal & valid.view(1,1,-1)
++    logits = logits.masked_fill(~permitted, -torch.inf)
+     probs = torch.softmax(logits, dim=-1)
+-    if text_start >= s:
+-        return torch.ones(patch_pos.numel(), device=logits.device)
+-    text = probs[:, text_start:, :]
+-    cols = patch_pos.to(device=probs.device, dtype=torch.long)
+-    patch_p = text.index_select(-1, cols)
+-    return patch_p.mean(dim=(0, 1))
++    scores = probs.index_select(-1, patch_pos).mean(dim=(0,1))
++    if not bool(torch.isfinite(scores).all()):
++        raise RuntimeError('Q_ATTN_NAN_INF: corrupt input Q/K or attention mask')
++    return scores
+ 
+ 
+-def _layer_qk(decoder_layer, hs, position_embeddings):
++def _layer_qk(decoder_layer, hidden_states, position_embeddings):
++    """Replicate TF5.20.2 LlamaAttention input LN, projection, RoPE and GQA."""
+     attn = decoder_layer.self_attn
+     cfg = attn.config
+-    normed = decoder_layer.input_layernorm(hs)
+-    bsz, q_len, _ = normed.shape
+-    head_dim = attn.head_dim
+-    num_heads = int(cfg.num_attention_heads)
+-    num_kv = int(cfg.num_key_value_heads)
+-    q = attn.q_proj(normed).view(bsz, q_len, num_heads, head_dim).transpose(1, 2)
+-    k = attn.k_proj(normed).view(bsz, q_len, num_kv, head_dim).transpose(1, 2)
+-    if num_kv != num_heads:
+-        k = k.repeat_interleave(num_heads // num_kv, dim=1)
+-    cos, sin = position_embeddings
++    h = decoder_layer.input_layernorm(hidden_states)
++    b, s, _ = h.shape
++    hdim = attn.head_dim
++    heads = int(cfg.num_attention_heads)
++    kvheads = int(cfg.num_key_value_heads)
++    if heads % kvheads:
++        raise RuntimeError('invalid GQA head ratio')
++    q = attn.q_proj(h).view(b, s, heads, hdim).transpose(1, 2)
++    k = attn.k_proj(h).view(b, s, kvheads, hdim).transpose(1, 2)
++    if kvheads != heads:
++        k = k.repeat_interleave(heads//kvheads, dim=1)
+     from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+-
+-    q, k = apply_rotary_pos_emb(q, k, cos, sin)
++    q, k = apply_rotary_pos_emb(q, k, *position_embeddings)
+     return q, k
+ 
+ 
+-def gather_seq(x: torch.Tensor, keep_abs: torch.Tensor, dim: int) -> torch.Tensor:
+-    return x.index_select(dim, keep_abs.to(device=x.device))
++def _checked_keep(seq: int, patch_pos: torch.Tensor, keep_patch: torch.Tensor, device):
++    if seq <= 0 or patch_pos.ndim != 1 or keep_patch.ndim != 1:
++        raise RuntimeError('invalid keep/index rank')
++    if bool((patch_pos < 0).any()) or bool((patch_pos >= seq).any()) or patch_pos.unique().numel()!=patch_pos.numel():
++        raise RuntimeError('Stage2 stale/out-of-range patch coordinate')
++    if not bool(torch.isin(keep_patch, patch_pos).all()) or keep_patch.unique().numel()!=keep_patch.numel():
++        raise RuntimeError('Stage2 non-nested or duplicated patch keep')
++    is_patch = torch.zeros(seq, dtype=torch.bool, device=device)
++    is_patch[patch_pos] = True
++    is_patch[keep_patch] = False
++    keep = torch.where(~is_patch)[0]
++    if keep.numel() != seq - (patch_pos.numel() - keep_patch.numel()):
++        raise RuntimeError('physical prune length mismatch')
++    return keep
+ 
+ 
+-def prune_cache(past_key_values, keep_abs: torch.Tensor, layers_filled: int):
+-    """Physically index-select seq dim on already-filled TF5.20 DynamicCache layers."""
+-    if past_key_values is None or layers_filled <= 0:
+-        return past_key_values
++def prune_cache(past_key_values, keep_abs: torch.Tensor, layers_filled: int, expected_seq: int):
++    """Require all filled cache layers to have exactly the pre-prune length."""
++    if past_key_values is None:
++        raise RuntimeError('CACHE_REQUIRED: need real DynamicCache for generation')
+     from transformers.cache_utils import DynamicCache
+-
+-    if isinstance(past_key_values, DynamicCache):
+-        for i in range(min(layers_filled, len(past_key_values.layers))):
+-            layer = past_key_values.layers[i]
+-            if not getattr(layer, "is_initialized", False):
+-                continue
+-            if layer.get_seq_length() == 0:
+-                continue
+-            idx = keep_abs.to(device=layer.keys.device)
+-            # keys/values: [B, H, S, Dh] — select along S
+-            if layer.keys.shape[-2] != keep_abs.numel() and layer.keys.shape[-2] != int(
+-                # allow when keep_abs indexes into current S
+-                layer.keys.shape[-2]
+-            ):
+-                pass
+-            if int(keep_abs.max()) >= int(layer.keys.shape[-2]):
+-                raise RuntimeError(
+-                    f"prune_cache keep max {int(keep_abs.max())} >= cache S {layer.keys.shape[-2]}"
+-                )
+-            layer.keys = layer.keys.index_select(-2, idx)
+-            layer.values = layer.values.index_select(-2, idx)
+-        return past_key_values
+-    out = []
+-    for i, layer in enumerate(past_key_values):
+-        if i >= layers_filled:
+-            out.append(layer)
+-            continue
+-        kk, vv = layer[0], layer[1]
+-        idx = keep_abs.to(device=kk.device)
+-        out.append((kk.index_select(2, idx), vv.index_select(2, idx)))
+-    return tuple(out)
++    if not isinstance(past_key_values, DynamicCache):
++        raise RuntimeError(f'CACHE_API_UNSUPPORTED: {type(past_key_values)}; only DynamicCache verified')
++    if len(past_key_values.layers) < layers_filled:
++        raise RuntimeError('cache contains fewer layers than executed decoder blocks')
++    idx = keep_abs.long()
++    if idx.ndim != 1 or idx.unique().numel() != idx.numel() or (idx.numel() and (int(idx.min()) < 0 or int(idx.max()) >= expected_seq)):
++        raise RuntimeError('cache gather out-of-bounds or duplicate indices')
++    for i in range(layers_filled):
++        layer = past_key_values.layers[i]
++        if not getattr(layer, 'is_initialized', False):
++            raise RuntimeError(f'CACHE_MISSING: layer {i} was not initialized')
++        kk, vv = layer.keys, layer.values
++        if kk.ndim != 4 or vv.ndim != 4 or kk.shape[-2] != expected_seq or vv.shape[-2] != expected_seq:
++            raise RuntimeError(f'CACHE_LENGTH: layer {i} K/V must both have exactly {expected_seq} positions')
++        layer.keys = kk.index_select(-2, idx.to(kk.device))
++        layer.values = vv.index_select(-2, idx.to(vv.device))
++    return past_key_values
+ 
+ 
+ @torch.no_grad()
+-def select_and_prune(
+-    *,
+-    state: Stage2State,
+-    hidden_states: torch.Tensor,
+-    position_ids: Optional[torch.Tensor],
+-    past_key_values,
+-    decoder_layer,
+-    position_embeddings,
+-    layer_1based: int,
+-    k_target: int,
+-    layers_filled: int,
+-    text_start: int,
+-    score_hidden_states: Optional[torch.Tensor] = None,
+-    q: Optional[torch.Tensor] = None,
+-    k: Optional[torch.Tensor] = None,
+-):
+-    """Physically prune layer *output* using Q/K from that layer's *input*.
+-
+-    LLaVA-1.5 Dual+QA ranks with the attention Q/K computed on the pre-layer
+-    residual, then gathers the post-layer hidden states + cache. Scoring the
+-    post-layer states through input_layernorm+q/k_proj again is a different
+-    probe and was the primary NeXT Stage2 contract bug.
+-    """
+-    device = hidden_states.device
+-    patch_pos = state.patch_pos.to(device=device, dtype=torch.long)
+-    if q is None or k is None:
+-        score_hs = hidden_states if score_hidden_states is None else score_hidden_states
+-        q, k = _layer_qk(decoder_layer, score_hs, position_embeddings)
+-    scores = q_attn_scores_from_qk(q, k, patch_pos, text_start=int(text_start))
+-    if scores.numel() != patch_pos.numel():
+-        raise RuntimeError("score/patch size mismatch")
+-    if k_target > patch_pos.numel():
+-        raise RuntimeError(f"k_target {k_target} > alive patches {patch_pos.numel()}")
+-    if torch.isnan(scores).any() or torch.isinf(scores).any():
+-        raise RuntimeError("NaN/Inf in Stage2 scores")
+-    top_local = scores.topk(k_target, largest=True).indices
+-    keep_patch = patch_pos.index_select(0, top_local).sort().values
++def select_and_prune(*, state: Stage2State, hidden_states: torch.Tensor,
++                     position_ids: Optional[torch.Tensor], past_key_values, decoder_layer,
++                     position_embeddings, layer_1based: int, k_target: int,
++                     layers_filled: int, text_start: int,
++                     score_hidden_states: Optional[torch.Tensor] = None,
++                     q: Optional[torch.Tensor] = None, k: Optional[torch.Tensor] = None,
++                     valid_token_mask: Optional[torch.Tensor] = None):
++    if hidden_states.ndim != 3 or hidden_states.shape[0] != 1:
++        raise RuntimeError('BELA Stage2 only supports batch1')
++    dev = hidden_states.device
++    patch_pos = state.patch_pos.to(device=dev, dtype=torch.long)
+     seq = hidden_states.shape[1]
+-    is_patch = torch.zeros(seq, dtype=torch.bool, device=device)
+-    is_patch[patch_pos] = True
+-    non_patch = torch.where(~is_patch)[0]
+-    keep_abs = torch.cat([non_patch, keep_patch], dim=0).sort().values
+-
+-    hs = gather_seq(hidden_states, keep_abs, dim=1)
+-    # Always index_select current position_ids by keep_abs.
+-    # Cut1: position_ids are 0..S-1 so this equals keep_abs (absolute).
+-    # Cut2+: position_ids already hold absolute RoPE ids; must NOT replace with
+-    # local keep_abs (that desyncs RoPE vs cached K/V).
+-    if position_ids is not None:
+-        position_ids = position_ids.index_select(
+-            -1, keep_abs.to(device=position_ids.device)
+-        )
+-    past_key_values = prune_cache(past_key_values, keep_abs, layers_filled)
+-
+-    old_to_new = torch.full((seq,), -1, dtype=torch.long, device=device)
+-    old_to_new[keep_abs] = torch.arange(keep_abs.numel(), device=device)
+-    new_patch = old_to_new[keep_patch]
++    if k_target <= 0 or k_target > patch_pos.numel():
++        raise RuntimeError('invalid Stage2 k_target')
++    if (q is None) != (k is None):
++        raise RuntimeError('must supply both Q and K from same layer input')
++    if q is None:
++        if score_hidden_states is None:
++            raise RuntimeError('INPUT_QK_REQUIRED: post-layer Q/K fallback forbidden')
++        q, k = _layer_qk(decoder_layer, score_hidden_states, position_embeddings)
++    scores = q_attn_scores_from_qk(q, k, patch_pos, text_start=int(text_start), valid_token_mask=valid_token_mask)
++    order = torch.argsort(scores, descending=True, stable=True)[:k_target]
++    keep_patch = patch_pos.index_select(0, order).sort().values
++    keep_abs = _checked_keep(seq, patch_pos, keep_patch, dev)
++    if position_ids is None or position_ids.shape != (1,seq):
++        raise RuntimeError('POSITION_IDS_REQUIRED: preserve original Stage1 RoPE coordinates')
++    kept_positions = position_ids.index_select(-1, keep_abs.to(position_ids.device))
++    if kept_positions.numel() > 1 and not bool((kept_positions[:,1:] > kept_positions[:,:-1]).all()):
++        raise RuntimeError('RoPE original position order not strictly increasing after prune')
++    cache = prune_cache(past_key_values, keep_abs, layers_filled, seq)
++    new_h = hidden_states.index_select(1, keep_abs)
++    mapping = torch.full((seq,), -1, dtype=torch.long, device=dev)
++    mapping[keep_abs] = torch.arange(keep_abs.numel(), device=dev)
++    new_patch = mapping[keep_patch]
++    if bool((new_patch < 0).any()):
++        raise RuntimeError('Stage2 patch identity was lost during gather')
++    if state.patch_uids is not None:
++        if state.patch_uids.numel() != patch_pos.numel():
++            raise RuntimeError('Stage2 patch UID/position length drift')
++        old_ids = state.patch_uids.to(device=dev, dtype=torch.long)
++        retained = torch.isin(patch_pos, keep_patch)
++        new_uids = old_ids[retained]
++        if new_uids.unique().numel() != k_target:
++            raise RuntimeError('Stage2 UID duplicated or resurrected')
++        state.patch_uids = new_uids.detach().cpu()
+     state.patch_pos = new_patch.detach().cpu()
+-    state.events.append(
+-        {
+-            "layer_1based": layer_1based,
+-            "k_before": int(patch_pos.numel()),
+-            "k_after": int(k_target),
+-            "seq_before": int(seq),
+-            "seq_after": int(hs.shape[1]),
+-            "unique_patch": int(new_patch.unique().numel()),
+-        }
+-    )
+-    return hs, position_ids, past_key_values, state
++    state.last_keep_abs = keep_abs.detach().cpu()
++    event = dict(layer_1based=int(layer_1based),
++                 k_before=int(patch_pos.numel()), k_after=k_target,
++                 seq_before=seq, seq_after=int(new_h.shape[1]),
++                 unique_patch=int(new_patch.unique().numel()),
++                 kept_uid_sample=[] if state.patch_uids is None else state.patch_uids[:16].tolist(),
++                 kept_rope_max=int(kept_positions.max()))
++    # Full UID and keep-position proof on a FEW selected smoke examples only.
++    if os.environ.get('BELA_TRACE_FULL_UID','0') == '1':
++        event['full_keep_abs'] = keep_abs.detach().cpu().tolist()
++        event['full_patch_uids'] = [] if state.patch_uids is None else state.patch_uids.tolist()
++        event['full_position_ids'] = kept_positions.detach().cpu()[0].tolist()
++    state.events.append(event)
++    return new_h, kept_positions, cache, state
+--- a/next_fix/legacy_bridge.py
++++ b/bela_next_fix/legacy_bridge.py
+@@ -24,9 +24,12 @@
+     require_true_qa: bool = True
+ 
+     def check(self):
+-        assert 0 < self.cut20 <= self.cut12 <= self.stage1
+-        assert self.qa_swaps <= self.stage1 and self.qa_swaps >= 0
+-        assert self.slots > 0
++        if not 0 < self.cut20 <= self.cut12 <= self.stage1:
++            raise ValueError("BELA token budget requires 0 < K2 <= K1 <= K0")
++        if not 0 <= self.qa_swaps <= self.stage1:
++            raise ValueError("QA swap count exceeds capacity")
++        if self.slots < 0 or self.donor < 0 or self.drop < 0:
++            raise ValueError("COVER slots and QA pools must be nonnegative")
+         return self
+ 
+ 
+@@ -51,8 +54,8 @@
+ 
+ def _verified_ids(ids, n, k, label, device):
+     ids = torch.as_tensor(ids,device=device,dtype=torch.long).flatten()
+-    if len(ids) != k or len(ids.unique()) != k or (len(ids) and (ids.min()<0 or ids.max()>=n)):
+-        raise AssertionError(f'{label}: wrong count, duplicate, or out-of-range patch IDs')
++    if len(ids) != k or len(ids.unique()) != k or (len(ids) and (bool((ids.min()<0).item()) or bool((ids.max()>=n).item()))):
++        raise RuntimeError(f'{label}: wrong count, duplicate, or out-of-range patch IDs')
+     return ids
+ 
+ 
+@@ -75,11 +78,11 @@
+     if question_embeddings is None and cfg.qa_swaps and cfg.require_true_qa:
+         raise RuntimeError('BELA_QUESTION_MISSING: QA B8 requires real question representation')
+     if mid_patches.ndim!=2 or pen_patches.ndim!=2 or mid_patches.shape[0]!=pen_patches.shape[0]:
+-        raise AssertionError('Dual-depth feature input shape is invalid')
++        raise RuntimeError('Dual-depth feature input shape is invalid')
+     n, device = mid_patches.shape[0],mid_patches.device
+     if n<cfg.stage1:
+-        raise AssertionError(f'Only {n} native patches but stage1 requires {cfg.stage1}')
+-    context = extra_context or {}
++        raise RuntimeError(f'Only {n} native patches but stage1 requires {cfg.stage1}')
++    context = {} if extra_context is None else extra_context
+     base = _verified_ids(native_dual_fn(mid=mid_patches,pen=pen_patches,keep=cfg.stage1,
+                          slots=cfg.slots,seed=cfg.seed,context=context),n,cfg.stage1,'Dual COVER',device)
+     if cfg.qa_swaps == 0:
+@@ -90,5 +93,5 @@
+                 n,cfg.stage1,'QA-COVER',device)
+     swaps = len(set(qa.tolist()) - set(base.tolist()))
+     if swaps > cfg.qa_swaps:
+-        raise AssertionError(f'QA changed {swaps} entries but B={cfg.qa_swaps}')
++        raise RuntimeError(f'QA changed {swaps} entries but B={cfg.qa_swaps}')
+     return qa, {'swaps':swaps, 'dual_ids':base.tolist(),'qa_ids':qa.tolist()}
+--- a/next_budget/crops.py
++++ b/bela_next_budget/crops.py
+@@ -29,11 +29,12 @@
+     # At most 1280 iterations, 5 crop groups for canonical paper setup.
+     while left:
+         elig=[i for i in active if quota[i]<capacities[i]]
+-        if not elig: raise AssertionError("Unexpected unfilled quota")
++        if not elig: raise RuntimeError("Unexpected unfilled quota")
+         chosen=min(elig,key=lambda i:(-(weights[i]/(quota[i]-baseline[i]+1)),i))
+         quota[chosen]+=1
+         left-=1
+-    assert sum(quota)==total
++    if sum(quota) != total:
++        raise RuntimeError("Internal crop quota budget mismatch")
+     return quota
+ 
+ def crop_quota_from_ids(crop_sizes, total, *,
+--- a/next_scripts/gate_next7_arm_r4.py
++++ b/next_scripts/gate_next7_arm_r4.py
+@@ -17,11 +17,8 @@
+ import json
+ from pathlib import Path
+ 
+-DENSE = json.loads(
+-    Path(
+-        "/home/xiangyue/ViTCoP/experiments/bela_v100_4model_qacover_20261028/results/next7_dense6_absolute.json"
+-    ).read_text()
+-)["absolute"]
++DEFAULT_DENSE = Path(__file__).resolve().parents[1] / 'reference/original_evidence/next7_dense6_absolute.json'
++DENSE = json.loads(DEFAULT_DENSE.read_text(encoding='utf-8'))['absolute']
+ DENSE_MAP = {
+     "gqa": float(DENSE["gqa"]),
+     "pope": float(DENSE["pope_f1"]),
+@@ -76,6 +73,8 @@
+         if not hits:
+             missing.append(t)
+             continue
++        if len(hits) != 1:
++            raise RuntimeError(f'AMBIGUOUS_RESULTS: {t} has {len(hits)} results; select one run, never guess')
+         a = extract_abs(t, json.loads(hits[0].read_text()))
+         if a is None:
+             missing.append(t)
+--- a/next_scripts/lmms_bela_next_entry.py
++++ b/next_scripts/lmms_bela_next_entry.py
+@@ -1,54 +1,53 @@
+ #!/usr/bin/env python3
+-"""lmms_eval entry that applies BELA NeXT Dual COVER + Stage2 after LlavaHf load."""
++"""Portable lmms-eval BELA NeXT-7B entry: no absolute legacy source imports.
++
++Use on a clean copy of the users' transformers 5.20.2 environment. GPU
++jobs and the user's existing queue are intentionally NOT managed here.
++"""
+ from __future__ import annotations
++import hashlib
++import os
++from pathlib import Path
++import sys
+ 
+-import os
+-import sys
+-from pathlib import Path
+-
+-PKG = Path("/home/xiangyue/ViTCoP/experiments/bela_next_7b13b_v100_20261101")
+-sys.path.insert(0, str(PKG))
+-sys.path.insert(0, str(PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/src"))
+-sys.path.insert(0, "/home/xiangyue/ViTCoP/lmms-eval")
+-
+-os.environ.setdefault("HF_HUB_OFFLINE", "1")
+-os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
+-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+-os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+-
+-# Must set before model load
+-if os.environ.get("BELA_NEXT_V2_ENABLE", "0") not in ("1", "true", "TRUE", "yes"):
+-    raise SystemExit("BELA_NEXT_V2_ENABLE=1 required for this entry (refuse Dense-as-pruned)")
+-if not os.environ.get("BELA_NEXT_ARM", "").strip():
+-    raise SystemExit("BELA_NEXT_ARM required")
++PACKAGE_ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(PACKAGE_ROOT))
++if os.environ.get('LMMS_EVAL_ROOT'):
++    sys.path.insert(0, str(Path(os.environ['LMMS_EVAL_ROOT']).expanduser().resolve()))
++for key, value in (
++    ('HF_HUB_OFFLINE', '1'), ('HF_DATASETS_OFFLINE','1'),
++    ('TRANSFORMERS_OFFLINE','1'), ('TOKENIZERS_PARALLELISM','false')
++):
++    os.environ.setdefault(key,value)
++if os.environ.get('BELA_NEXT_V2_ENABLE','0').lower() not in ('1','true','yes'):
++    raise SystemExit('BELA_NEXT_V2_ENABLE=1 is required: do not label Dense as pruned')
++if not os.environ.get('BELA_NEXT_ARM','').strip():
++    raise SystemExit('BELA_NEXT_ARM is required')
+ 
+ from lmms_eval.models.llava_hf import LlavaHf
+ from bela_next_forward.apply_llava_next import apply_patch
+-
+-_orig_init = LlavaHf.__init__
++_old_init = LlavaHf.__init__
+ 
+ 
+-def _patched_init(self, *args, **kwargs):
+-    _orig_init(self, *args, **kwargs)
++def _installed_init(self, *args, **kwargs):
++    _old_init(self,*args,**kwargs)
++    # Tokenizer MUST be the same instance used to build original input IDs.
++    # Do not let Stage1 silently load a different repo/template.
++    tokenizer = getattr(self,'_tokenizer',None)
++    if tokenizer is None:
++        processor = getattr(self, '_processor',None)
++        tokenizer = getattr(processor,'tokenizer',None)
++    if tokenizer is None:
++        raise RuntimeError('TOKENIZER_MISSING: lmms-eval adapter did not expose the real tokenizer')
++    self._model.model._tokenizer = tokenizer
+     apply_patch(self._model)
+-    # NATIVE FIX KIT: do NOT force [[672,672]] — match 2026-10-28 Dense processor.
+-    pin = None
+-    try:
+-        pin = getattr(getattr(self._image_processor, "image_processor", self._image_processor), "image_grid_pinpoints", None)
+-    except Exception:
+-        pass
+-    print(
+-        f"[BELA_NEXT] patched arm={os.environ['BELA_NEXT_ARM']} "
+-        f"enable={os.environ.get('BELA_NEXT_V2_ENABLE')} "
+-        f"model_patched={getattr(self._model, '_bela_next_v2_patched', False)} "
+-        f"pinpoints={pin} (native, not forced)",
+-        flush=True,
+-    )
++    checksum = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]
++    print(f'[BELA_NEXT] patch={checksum} arm={os.environ["BELA_NEXT_ARM"]} '
++          f'processor_pinpoints={getattr(getattr(self, "_image_processor", None), "image_grid_pinpoints", "unknown")} '
++          f'packed=True',flush=True)
+ 
+-
+-LlavaHf.__init__ = _patched_init
++LlavaHf.__init__ = _installed_init
+ 
+ from lmms_eval.__main__ import cli_evaluate
+-
+-if __name__ == "__main__":
++if __name__ == '__main__':
+     cli_evaluate()

@@ -1,0 +1,17 @@
+{
+  "transformers_version": "5.20.2",
+  "files": {
+    "modeling_llava_next": {
+      "path": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llava_next/modeling_llava_next.py",
+      "sha256": "48aaa44b127c97692880f24b2aa5d16e9799b7ea18d7dbe63a5cacbece640ddc"
+    },
+    "processing_llava_next": {
+      "path": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llava_next/processing_llava_next.py",
+      "sha256": "98d6d85313df8106be2135221c38717bdb2366ee19672271257944cbd857abf4"
+    },
+    "modeling_llama": {
+      "path": "/home/xiangyue/envs/vitcop-v100-4model/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py",
+      "sha256": "affc6a4ab36b562a6b4c90b84c4e7939c5417a69ad7bd37e858be5583f189830"
+    }
+  }
+}

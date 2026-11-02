@@ -1,0 +1,452 @@
+{
+  "title": "BELA NeXT7B production source repair V3",
+  "origin_zip": "BELA_NEXT7B_CORE_CODE_FOR_AGENT_20261102.zip",
+  "origin_git_commit": "fc4c08c463f71d2df083b622842f29ae6de9d5cf (reported by origin docs, unverified against live repo)",
+  "important": "CPU verified; GPU/checkpoint precision NOT run; diff is not necessarily a directly apply-able patch owing to module renames",
+  "original_file_count": 31,
+  "new_source_file_count": 34,
+  "modified_files": [
+    "bela_next_forward/apply_llava_next.py",
+    "bela_next_forward/bela_next_compat.py",
+    "bela_next_forward/dual_cover.py",
+    "bela_next_forward/native_stage1.py",
+    "bela_next_forward/stage2.py",
+    "bela_next_fix/legacy_bridge.py",
+    "bela_next_budget/crops.py",
+    "next_scripts/gate_next7_arm_r4.py",
+    "next_scripts/lmms_bela_next_entry.py"
+  ],
+  "new_files": [
+    "bela_legacy_cover/__init__.py",
+    "next_scripts/run_one_task.sh",
+    "tests/test_clip_cls_qk.py",
+    "tests/test_dual_cover.py",
+    "tests/test_index_cache_and_generation.py",
+    "tools/preflight.py"
+  ],
+  "source_file_hashes": [
+    {
+      "new": "bela_next_forward/__init__.py",
+      "sha256": "5e2aee9202da805042ecdbf54f8f6def042b6c6362fc1ec13fc6a024a8ca069d",
+      "bytes": 206,
+      "original": "next_forward/__init__.py",
+      "original_sha256": "5e2aee9202da805042ecdbf54f8f6def042b6c6362fc1ec13fc6a024a8ca069d",
+      "changed": false
+    },
+    {
+      "new": "bela_next_forward/apply_llava_next.py",
+      "sha256": "db3f1c8e4fa65b32853f9e8dc8e20ea51fb18a680ae8edf9de23d3d313606f5a",
+      "bytes": 24352,
+      "original": "next_forward/apply_llava_next.py",
+      "original_sha256": "931c449fcce351102d1d7e9a8ba2d1cca53b3089053446994894d55fa80dc727",
+      "changed": true
+    },
+    {
+      "new": "bela_next_forward/bela_next_compat.py",
+      "sha256": "387204ea24ba8edda565e6b8be99915cfc773c9505a959be09366555204b35e2",
+      "bytes": 6091,
+      "original": "next_forward/bela_next_compat.py",
+      "original_sha256": "0db0d33d343e6356c449c03bfe15e274fc0abbf57571c0b45f99da28e0fe8489",
+      "changed": true
+    },
+    {
+      "new": "bela_next_forward/dual_cover.py",
+      "sha256": "4e9d0c7fc4cb89446bea2464d56cb8b0985804f1535d05e580266f5ab4a6efd4",
+      "bytes": 4357,
+      "original": "next_forward/dual_cover.py",
+      "original_sha256": "36e0ce3cdd4954835acc97dae306fd5a3ddfd4a4e0551ed2c1405f11f4c3d29f",
+      "changed": true
+    },
+    {
+      "new": "bela_next_forward/native_stage1.py",
+      "sha256": "d6792e1c2ac2be7f44ff231481efd0ccb26a9036321ef6ef70a1eaae3e8f1dc0",
+      "bytes": 15240,
+      "original": "next_forward/native_stage1.py",
+      "original_sha256": "978200a4b85503fccc02453203bd1236e7fa38b8c751534c576c89402a359112",
+      "changed": true
+    },
+    {
+      "new": "bela_next_forward/next_pack.py",
+      "sha256": "f8e62ae82962962426a8ae39b4c310010c9c57f9d158f6259e14c88218a42c0c",
+      "bytes": 9875,
+      "original": "next_forward/next_pack.py",
+      "original_sha256": "f8e62ae82962962426a8ae39b4c310010c9c57f9d158f6259e14c88218a42c0c",
+      "changed": false
+    },
+    {
+      "new": "bela_next_forward/stage2.py",
+      "sha256": "eb37954b9c19dd2711b50fb4bf7035b6b110d35766eb59fc9eb3ffe0a306c8b9",
+      "bytes": 10197,
+      "original": "next_forward/stage2.py",
+      "original_sha256": "b4c359d8539c2cb30f8ac6a20b64eeb7dfcc4cccf51b1ec41a5178690e698c26",
+      "changed": true
+    },
+    {
+      "new": "bela_next_fix/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": "next_fix/__init__.py",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "changed": false
+    },
+    {
+      "new": "bela_next_fix/legacy_bridge.py",
+      "sha256": "575e3d5871669fa7364d2943fbfc7e7b9ff52b5cbc8e09256a133e253b4ddd95",
+      "bytes": 4217,
+      "original": "next_fix/legacy_bridge.py",
+      "original_sha256": "0171fd7757551034d254e0988bcbf060b6f9a0d1a4225775344969327e2bbc91",
+      "changed": true
+    },
+    {
+      "new": "bela_next_fix/native_layout.py",
+      "sha256": "5481a6302bb8b36ab207b70b1e36c65f7a4c13dff0592b33980a3e0527be8d8f",
+      "bytes": 7695,
+      "original": "next_fix/native_layout.py",
+      "original_sha256": "5481a6302bb8b36ab207b70b1e36c65f7a4c13dff0592b33980a3e0527be8d8f",
+      "changed": false
+    },
+    {
+      "new": "bela_next_fix/progressive_hooks.py",
+      "sha256": "4f4d8bb29cbca7c19220644e1e9047b04cb5360978d33f9cc59e83b83e83e0ca",
+      "bytes": 8623,
+      "original": "next_fix/progressive_hooks.py",
+      "original_sha256": "4f4d8bb29cbca7c19220644e1e9047b04cb5360978d33f9cc59e83b83e83e0ca",
+      "changed": false
+    },
+    {
+      "new": "bela_next_fix/runner.py",
+      "sha256": "4a6177ad0a41649a99c3585b8cb519678835e56713e91dccccc4f6be9dbc57ae",
+      "bytes": 11430,
+      "original": "next_fix/runner.py",
+      "original_sha256": "4a6177ad0a41649a99c3585b8cb519678835e56713e91dccccc4f6be9dbc57ae",
+      "changed": false
+    },
+    {
+      "new": "bela_next_fix/scoring.py",
+      "sha256": "56cfe62a36599eddfd5265acb01c6a716fe5b41e7dbdeb06f7dac493a7f37fbc",
+      "bytes": 773,
+      "original": "next_fix/scoring.py",
+      "original_sha256": "56cfe62a36599eddfd5265acb01c6a716fe5b41e7dbdeb06f7dac493a7f37fbc",
+      "changed": false
+    },
+    {
+      "new": "bela_next_budget/__init__.py",
+      "sha256": "061590724a76b1e5859b73db718fdd8f7fc26de7088d3ffcecc42b5eebe1bc27",
+      "bytes": 256,
+      "original": "next_budget/__init__.py",
+      "original_sha256": "061590724a76b1e5859b73db718fdd8f7fc26de7088d3ffcecc42b5eebe1bc27",
+      "changed": false
+    },
+    {
+      "new": "bela_next_budget/budget.py",
+      "sha256": "4bfc37f5fded6811ab9ad320a40197195612eabb2cce93386110885e38b0d022",
+      "bytes": 4845,
+      "original": "next_budget/budget.py",
+      "original_sha256": "4bfc37f5fded6811ab9ad320a40197195612eabb2cce93386110885e38b0d022",
+      "changed": false
+    },
+    {
+      "new": "bela_next_budget/crops.py",
+      "sha256": "d2da27fa2a15bcb2d2623c0ffaca07b7a5a577e823bd8b3dce7482176fdaa31e",
+      "bytes": 2443,
+      "original": "next_budget/crops.py",
+      "original_sha256": "1d242a44b70fc676ef932103a91de8d5e2b7b6d662889f7d54d04b43ec93a05a",
+      "changed": true
+    },
+    {
+      "new": "bela_next_budget/preserve.py",
+      "sha256": "cc0b6470f94f20d884b1b3825113d605af56aa939584a38e30e2931cc0563724",
+      "bytes": 2765,
+      "original": "next_budget/preserve.py",
+      "original_sha256": "cc0b6470f94f20d884b1b3825113d605af56aa939584a38e30e2931cc0563724",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/LIVE_CALLMAP.md",
+      "sha256": "68bf8176aab557c0dd9efae6cd09b87dae64edc93477b864cf5ef043cd86a58a",
+      "bytes": 2256,
+      "original": "qa_cover/LIVE_CALLMAP.md",
+      "original_sha256": "68bf8176aab557c0dd9efae6cd09b87dae64edc93477b864cf5ef043cd86a58a",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/__init__.py",
+      "sha256": "e26a74fe9e3cb559483f06c2dc9886632791da254954b13218ab9eb64e29c310",
+      "bytes": 109,
+      "original": "qa_cover/__init__.py",
+      "original_sha256": "e26a74fe9e3cb559483f06c2dc9886632791da254954b13218ab9eb64e29c310",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/llava_adapter.py",
+      "sha256": "72445202da47884b7f62070abe827dd9696f601dfe7ed3395e4048ee6f61d6dc",
+      "bytes": 4653,
+      "original": "qa_cover/llava_adapter.py",
+      "original_sha256": "72445202da47884b7f62070abe827dd9696f601dfe7ed3395e4048ee6f61d6dc",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/query_anchor.py",
+      "sha256": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+      "bytes": 12634,
+      "original": "qa_cover/query_anchor.py",
+      "original_sha256": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/question_protocol.py",
+      "sha256": "82fdc4603c70da9154980253e420e50c777eb99a1fc4275ddaa511f435f093b8",
+      "bytes": 1074,
+      "original": "qa_cover/question_protocol.py",
+      "original_sha256": "82fdc4603c70da9154980253e420e50c777eb99a1fc4275ddaa511f435f093b8",
+      "changed": false
+    },
+    {
+      "new": "bela_query_anchor/request_context.py",
+      "sha256": "8a77369a799d742a6d80c34e725e59386361c18fecc4d04ed0d617910ab77f1c",
+      "bytes": 2526,
+      "original": "qa_cover/request_context.py",
+      "original_sha256": "8a77369a799d742a6d80c34e725e59386361c18fecc4d04ed0d617910ab77f1c",
+      "changed": false
+    },
+    {
+      "new": "bela_legacy_cover/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "original": null,
+      "changed": true
+    },
+    {
+      "new": "bela_legacy_cover/e013_stage1_support.py",
+      "sha256": "93808893217036e7953e8447896d2a71ad7f04c0b057de54f193b14a43b609e7",
+      "bytes": 6719,
+      "original": "legacy_cover/e013_stage1_support.py",
+      "original_sha256": "93808893217036e7953e8447896d2a71ad7f04c0b057de54f193b14a43b609e7",
+      "changed": false
+    },
+    {
+      "new": "next_scripts/gate_next7_arm_r4.py",
+      "sha256": "9d210013276a61281cda5809974cd24a1763ffe330db1bee846ea69342ff4f8c",
+      "bytes": 4875,
+      "original": "next_scripts/gate_next7_arm_r4.py",
+      "original_sha256": "401242f5ee25236d6eb9236320f433dfc9e35b2137d8df5d3ca95ccad34d5747",
+      "changed": true
+    },
+    {
+      "new": "next_scripts/lmms_bela_next_entry.py",
+      "sha256": "1a5539124269368ecf0a64d34c1ac417eaa911513013516cd21fbfb1e8887c96",
+      "bytes": 2191,
+      "original": "next_scripts/lmms_bela_next_entry.py",
+      "original_sha256": "8eaf17d45725b9242b1be0053be247e966dc2977b9d419114bebe05c428d5b24",
+      "changed": true
+    },
+    {
+      "new": "next_scripts/run_one_task.sh",
+      "sha256": "3ba8ddedacce9bed062b424e2b375c2fdcb90e2cf58c8032e7a4910db71d940d",
+      "bytes": 1507,
+      "original": null,
+      "changed": true
+    },
+    {
+      "new": "next_configs/arms.json",
+      "sha256": "f402392cdc2d87aec078f5430de9e7c8b650932e24e29e66ea7e1e1ca2155f05",
+      "bytes": 15442,
+      "original": "next_configs/arms.json",
+      "original_sha256": "f402392cdc2d87aec078f5430de9e7c8b650932e24e29e66ea7e1e1ca2155f05",
+      "changed": false
+    },
+    {
+      "new": "next_configs/arms.tsv",
+      "sha256": "f6ef961a70e7d07ca5aa461500bfab0e25d46b4f79797bc6d9d01f7d4d119679",
+      "bytes": 2281,
+      "original": "next_configs/arms.tsv",
+      "original_sha256": "f6ef961a70e7d07ca5aa461500bfab0e25d46b4f79797bc6d9d01f7d4d119679",
+      "changed": false
+    },
+    {
+      "new": "tests/test_clip_cls_qk.py",
+      "sha256": "1cd068b84fff11c7be518c6597f83c6de18585edbf411f03e2fd19351820678d",
+      "bytes": 1353,
+      "original": null,
+      "changed": true
+    },
+    {
+      "new": "tests/test_dual_cover.py",
+      "sha256": "93634142a4bcf7fefb9c2095d801642c7e13f829b48936cbe4bd17d32d0c3cde",
+      "bytes": 3522,
+      "original": null,
+      "changed": true
+    },
+    {
+      "new": "tests/test_index_cache_and_generation.py",
+      "sha256": "8bc0349a9f32b54d0672d365195ede9b773b8c764e610c86fa6931fb2dd44e67",
+      "bytes": 9391,
+      "original": null,
+      "changed": true
+    },
+    {
+      "new": "tools/preflight.py",
+      "sha256": "5a7d77790a0ecaabf811a7b2f885d8735e0a81c65da93c2d2f75010b78d92c3d",
+      "bytes": 2173,
+      "original": null,
+      "changed": true
+    }
+  ],
+  "original_file_hashes": [
+    {
+      "original": "next_forward/__init__.py",
+      "sha256": "5e2aee9202da805042ecdbf54f8f6def042b6c6362fc1ec13fc6a024a8ca069d",
+      "bytes": 206
+    },
+    {
+      "original": "next_forward/apply_llava_next.py",
+      "sha256": "931c449fcce351102d1d7e9a8ba2d1cca53b3089053446994894d55fa80dc727",
+      "bytes": 19816
+    },
+    {
+      "original": "next_forward/bela_next_compat.py",
+      "sha256": "0db0d33d343e6356c449c03bfe15e274fc0abbf57571c0b45f99da28e0fe8489",
+      "bytes": 6096
+    },
+    {
+      "original": "next_forward/dual_cover.py",
+      "sha256": "36e0ce3cdd4954835acc97dae306fd5a3ddfd4a4e0551ed2c1405f11f4c3d29f",
+      "bytes": 5532
+    },
+    {
+      "original": "next_forward/native_stage1.py",
+      "sha256": "978200a4b85503fccc02453203bd1236e7fa38b8c751534c576c89402a359112",
+      "bytes": 8390
+    },
+    {
+      "original": "next_forward/next_pack.py",
+      "sha256": "f8e62ae82962962426a8ae39b4c310010c9c57f9d158f6259e14c88218a42c0c",
+      "bytes": 9875
+    },
+    {
+      "original": "next_forward/stage2.py",
+      "sha256": "b4c359d8539c2cb30f8ac6a20b64eeb7dfcc4cccf51b1ec41a5178690e698c26",
+      "bytes": 6878
+    },
+    {
+      "original": "next_fix/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "next_fix/legacy_bridge.py",
+      "sha256": "0171fd7757551034d254e0988bcbf060b6f9a0d1a4225775344969327e2bbc91",
+      "bytes": 3934
+    },
+    {
+      "original": "next_fix/native_layout.py",
+      "sha256": "5481a6302bb8b36ab207b70b1e36c65f7a4c13dff0592b33980a3e0527be8d8f",
+      "bytes": 7695
+    },
+    {
+      "original": "next_fix/progressive_hooks.py",
+      "sha256": "4f4d8bb29cbca7c19220644e1e9047b04cb5360978d33f9cc59e83b83e83e0ca",
+      "bytes": 8623
+    },
+    {
+      "original": "next_fix/runner.py",
+      "sha256": "4a6177ad0a41649a99c3585b8cb519678835e56713e91dccccc4f6be9dbc57ae",
+      "bytes": 11430
+    },
+    {
+      "original": "next_fix/scoring.py",
+      "sha256": "56cfe62a36599eddfd5265acb01c6a716fe5b41e7dbdeb06f7dac493a7f37fbc",
+      "bytes": 773
+    },
+    {
+      "original": "next_budget/__init__.py",
+      "sha256": "061590724a76b1e5859b73db718fdd8f7fc26de7088d3ffcecc42b5eebe1bc27",
+      "bytes": 256
+    },
+    {
+      "original": "next_budget/budget.py",
+      "sha256": "4bfc37f5fded6811ab9ad320a40197195612eabb2cce93386110885e38b0d022",
+      "bytes": 4845
+    },
+    {
+      "original": "next_budget/crops.py",
+      "sha256": "1d242a44b70fc676ef932103a91de8d5e2b7b6d662889f7d54d04b43ec93a05a",
+      "bytes": 2380
+    },
+    {
+      "original": "next_budget/preserve.py",
+      "sha256": "cc0b6470f94f20d884b1b3825113d605af56aa939584a38e30e2931cc0563724",
+      "bytes": 2765
+    },
+    {
+      "original": "qa_cover/LIVE_CALLMAP.md",
+      "sha256": "68bf8176aab557c0dd9efae6cd09b87dae64edc93477b864cf5ef043cd86a58a",
+      "bytes": 2256
+    },
+    {
+      "original": "qa_cover/__init__.py",
+      "sha256": "e26a74fe9e3cb559483f06c2dc9886632791da254954b13218ab9eb64e29c310",
+      "bytes": 109
+    },
+    {
+      "original": "qa_cover/llava_adapter.py",
+      "sha256": "72445202da47884b7f62070abe827dd9696f601dfe7ed3395e4048ee6f61d6dc",
+      "bytes": 4653
+    },
+    {
+      "original": "qa_cover/query_anchor.py",
+      "sha256": "78ee057e595f3f14e87cd737a055559cf639dc892222e9cf035433c4d2453581",
+      "bytes": 12634
+    },
+    {
+      "original": "qa_cover/question_protocol.py",
+      "sha256": "82fdc4603c70da9154980253e420e50c777eb99a1fc4275ddaa511f435f093b8",
+      "bytes": 1074
+    },
+    {
+      "original": "qa_cover/request_context.py",
+      "sha256": "8a77369a799d742a6d80c34e725e59386361c18fecc4d04ed0d617910ab77f1c",
+      "bytes": 2526
+    },
+    {
+      "original": "legacy_cover/e013_stage1_support.py",
+      "sha256": "93808893217036e7953e8447896d2a71ad7f04c0b057de54f193b14a43b609e7",
+      "bytes": 6719
+    },
+    {
+      "original": "next_scripts/gate_next7_arm_r4.py",
+      "sha256": "401242f5ee25236d6eb9236320f433dfc9e35b2137d8df5d3ca95ccad34d5747",
+      "bytes": 4727
+    },
+    {
+      "original": "next_scripts/gpu_hold.py",
+      "sha256": "93edc633065a72295b3245a050a9190028d9b4dcfb25ea24ab07a9af352c007c",
+      "bytes": 1133
+    },
+    {
+      "original": "next_scripts/lmms_bela_next_entry.py",
+      "sha256": "8eaf17d45725b9242b1be0053be247e966dc2977b9d419114bebe05c428d5b24",
+      "bytes": 1874
+    },
+    {
+      "original": "next_scripts/run_next7_s2qk_gated.sh",
+      "sha256": "f823f6fda9f1b64a464af450d2873a2a223ecc1f87884d0d8ac15a12f0f1f4d6",
+      "bytes": 9565
+    },
+    {
+      "original": "next_scripts/smoke_next7_a0_a4.py",
+      "sha256": "29fbd859d0ddff06f0fe516ed85f62c7b3a68bc494215eb66c5f120ac10df2cd",
+      "bytes": 9340
+    },
+    {
+      "original": "next_configs/arms.json",
+      "sha256": "f402392cdc2d87aec078f5430de9e7c8b650932e24e29e66ea7e1e1ca2155f05",
+      "bytes": 15442
+    },
+    {
+      "original": "next_configs/arms.tsv",
+      "sha256": "f6ef961a70e7d07ca5aa461500bfab0e25d46b4f79797bc6d9d01f7d4d119679",
+      "bytes": 2281
+    }
+  ]
+}

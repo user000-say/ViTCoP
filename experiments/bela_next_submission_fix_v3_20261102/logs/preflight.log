@@ -1,0 +1,48 @@
+{
+  "arm": "NEXT7_T160_A0_PAPER",
+  "arm_config": {
+    "arm_id": "NEXT7_T160_A0_PAPER",
+    "model": "next7",
+    "budget_T": 160,
+    "compression_pct": 94.444,
+    "reference_patch_N": 2880,
+    "layers": 32,
+    "cuts_after_layers": [
+      12,
+      20
+    ],
+    "stage_k": [
+      320,
+      91,
+      46
+    ],
+    "visual_patch_token_layer_W": 5120,
+    "source": "STAR-Pro paper Table 5/Table 12",
+    "purpose": "Paper STAR-Pro exact reference schedule",
+    "stage1": "BELA_DUAL_COVER",
+    "qa_swaps": 8,
+    "stage2": "Q_ATTN_ALL",
+    "crop_policy": "equal_valid_crops",
+    "sampling_policy": "locked_paper_five_crop"
+  },
+  "python": "3.10.20",
+  "torch": null,
+  "transformers": null,
+  "runtime_hash_checks": "NOT_RUN",
+  "source_sha256": {
+    "bela_next_forward/__init__.py": "5e2aee9202da805042ecdbf54f8f6def042b6c6362fc1ec13fc6a024a8ca069d",
+    "bela_next_forward/apply_llava_next.py": "db3f1c8e4fa65b32853f9e8dc8e20ea51fb18a680ae8edf9de23d3d313606f5a",
+    "bela_next_forward/bela_next_compat.py": "387204ea24ba8edda565e6b8be99915cfc773c9505a959be09366555204b35e2",
+    "bela_next_forward/dual_cover.py": "4e9d0c7fc4cb89446bea2464d56cb8b0985804f1535d05e580266f5ab4a6efd4",
+    "bela_next_forward/native_stage1.py": "d6792e1c2ac2be7f44ff231481efd0ccb26a9036321ef6ef70a1eaae3e8f1dc0",
+    "bela_next_forward/next_pack.py": "f8e62ae82962962426a8ae39b4c310010c9c57f9d158f6259e14c88218a42c0c",
+    "bela_next_forward/stage2.py": "eb37954b9c19dd2711b50fb4bf7035b6b110d35766eb59fc9eb3ffe0a306c8b9"
+  },
+  "known_limitations": [
+    "batch1",
+    "single image",
+    "HF5.20.2",
+    "greedy only",
+    "no GPU verified in this artifact"
+  ]
+}
