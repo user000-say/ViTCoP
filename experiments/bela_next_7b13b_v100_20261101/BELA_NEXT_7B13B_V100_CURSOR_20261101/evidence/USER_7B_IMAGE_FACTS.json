@@ -1,0 +1,48 @@
+{
+  "origin": "User's prior conversation 2026, historical LLaVA-1.5-7B image V100 results; not NeXT.",
+  "model": "LLaVA-1.5-7B image (NOT LLaVA-Video, NOT NeXT)",
+  "w4096": {
+    "layers": 32,
+    "cuts_after": [
+      12,
+      20
+    ],
+    "stage_k": [
+      256,
+      74,
+      36
+    ],
+    "W": 4096,
+    "dual_cover_slots": 32,
+    "QA_B": 8,
+    "QA_donor_pool": 16,
+    "QA_drop_pool": 12,
+    "seed": 17,
+    "S1_RDRIFT_then_QATTN_R6": 98.49,
+    "P3_QATTN_both_R6": 98.77,
+    "P3_absolute": {
+      "GQA": 60.42,
+      "POPE_F1": 87.0,
+      "MME": 1775.17,
+      "MMBench": 64.52,
+      "ScienceQA": 68.72,
+      "TextVQA": 57.18
+    },
+    "status": "User-reported historical summary, not re-evaluated here"
+  },
+  "w2048": {
+    "E3_QA_QATTN_R6": 96.74,
+    "E3_QA_RDRIFT_R6": 97.06,
+    "status": "Other prior user-reported measurements; no claim that RDRIFT is universally better"
+  },
+  "W1024": {
+    "P3_QATTN_R6": 95.43,
+    "S1_RDRIFT_R6": 95.34,
+    "status": "Different historical budget; cannot directly compare with NeXT"
+  },
+  "prior_video_A800": {
+    "S56_Video_MME": 60.07,
+    "status": "separate video research, not used to claim NeXT image accuracy"
+  },
+  "NeXT_A800_or_V100_accuracy_new": "NOT RUN"
+}

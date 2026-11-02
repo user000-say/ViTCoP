@@ -1,0 +1,27 @@
+{
+  "time": "2026-11-02T10:38+08:00",
+  "verdict": "PRUNE_ACTIVE",
+  "note": "A0/A1 predictions differ from Dense and from each other on GQA/POPE/MME/SciQA. Not the v1 byte-identical Dense bug.",
+  "vs_dense_diff_pct": {
+    "mme_A0": 20.6,
+    "pope_A0": 14.43,
+    "gqa_A0": 32.41,
+    "scienceqa_A0": 87.06
+  },
+  "A0_vs_A1_diff_pct": {
+    "mme": 0.59,
+    "pope": 0.24,
+    "gqa": 6.53,
+    "scienceqa": 39.46
+  },
+  "abs_rel_snapshot": {
+    "A0": {"gqa": [53.6, 83.37], "pope": [71.99, 83.2], "mme": [1552.79, 85.01], "scienceqa": [9.67, 13.79]},
+    "A1": {"gqa": [54.65, 85.01], "pope": [71.92, 83.11], "mme": [1542.03, 84.42], "scienceqa": [9.17, 13.08]}
+  },
+  "failures": {
+    "mmbench_en_dev": "OOM then lmms TypeError on first/early samples (max_new_tokens=1024 decode)",
+    "textvqa_val_ocr": "OOM leak ~sample 42 then crash",
+    "scienceqa_quality": "pruned but accuracy collapsed; generation quality issue under review"
+  },
+  "followup": "Capped BELA generate max_new_tokens (default 128), single vision forward, empty_cache; will requeue mmbench/textvqa"
+}

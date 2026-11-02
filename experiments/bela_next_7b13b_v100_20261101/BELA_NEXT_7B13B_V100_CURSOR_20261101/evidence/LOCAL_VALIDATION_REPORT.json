@@ -1,0 +1,26 @@
+{
+  "as_of": "2026-11-01",
+  "origin": "Local CPU validation of standalone proposed modules (NOT user V100)",
+  "python_version": "3.13.5",
+  "pytorch_version": "2.10.0+cpu",
+  "unit_tests_run": 18,
+  "unit_test_result": "PASS",
+  "synthetic_test_coverage": [
+    "all 20 exact W image schedules",
+    "4 model/budget paper configs, output W=32/40 layers×160/320",
+    "variable actual AnyRes N ratio-plan",
+    "five-crop quota split and thumbnail boost",
+    "preserve all nonpatch tokens incl image_newline",
+    "explicit V100 four GPU ID parsing and layer-config validation",
+    "dev-only scorer rejects FINAL_TEST and mismatched dense",
+    "paired dev scorer duplicate sample rejection",
+    "real-trace manifest format validator on SYNTHETIC ONLY"
+  ],
+  "real_v100_gpu_run": "NOT RUN",
+  "actual_model_checkpoint_sha": "UNKNOWN",
+  "actual_dense_parity": "NOT RUN",
+  "actual_QK_cache_position_validation": "NOT RUN",
+  "NeXT_7B_or_13B_accuracy_new": "NOT MEASURED",
+  "gpu_speedup": "NOT MEASURED",
+  "requires": "Cursor to integrate against actual V100 repository and run tests"
+}
