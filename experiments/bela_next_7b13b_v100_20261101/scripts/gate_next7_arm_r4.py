@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Per-arm R4 gate for NeXT-7B v4.
+"""Per-arm R4 gate for NeXT-7B.
 
-Prints one line starting with GO or SKIP_6ACC for the shell queue.
-Rules:
-  - R4 mean relative ACC must be >= --r4-min (default 92)
-  - Every R4 task relative ACC must be >= --single-floor (default 85)
+Prints one line for the shell queue:
+  PENDING incomplete_r4 ...  — missing tasks, no weak score yet (do not mark gated)
+  SKIP_6ACC single_below_F ... — any finished task rel < F (early abort OK)
+  SKIP_6ACC r4_below_... / GO ... — full R4 present
+
+Rules (2026-11-02 user):
+  - Every finished R4 task relative ACC must be >= --single-floor (default 88)
+  - Full R4 mean relative ACC must be >= --r4-min (default 92)
 Relative = 100 * abs / NeXT-7B Dense (next7_dense6_absolute.json).
 """
 from __future__ import annotations
@@ -57,7 +61,7 @@ def main() -> int:
     ap.add_argument("--arm", required=True)
     ap.add_argument("--out-root", required=True)
     ap.add_argument("--r4-min", type=float, default=92.0)
-    ap.add_argument("--single-floor", type=float, default=85.0)
+    ap.add_argument("--single-floor", type=float, default=88.0)
     args = ap.parse_args()
     root = Path(args.out_root)
     abs_s: dict[str, float] = {}
@@ -79,6 +83,7 @@ def main() -> int:
         abs_s[t] = a
         rel_s[t] = 100.0 * a / DENSE_MAP[t]
 
+    weak = {t: rel_s[t] for t in rel_s if rel_s[t] < args.single_floor}
     payload = {
         "arm": args.arm,
         "r4_min": args.r4_min,
@@ -87,34 +92,49 @@ def main() -> int:
         "rel": rel_s,
         "missing": missing,
         "dense_ref": DENSE_MAP,
+        "weak": weak,
     }
-    if missing:
-        payload["verdict"] = "SKIP_6ACC"
-        payload["reason"] = f"incomplete_r4:{missing}"
-        print(f"SKIP_6ACC incomplete_r4 missing={missing}")
-    else:
-        r4 = sum(rel_s[t] for t in R4) / 4.0
-        weak = {t: rel_s[t] for t in R4 if rel_s[t] < args.single_floor}
-        payload["r4_mean_rel"] = r4
-        payload["weak"] = weak
-        if weak:
-            payload["verdict"] = "SKIP_6ACC"
-            payload["reason"] = f"single_below_{args.single_floor}"
-            print(
-                f"SKIP_6ACC single_below_{args.single_floor} weak={ {k: round(v,2) for k,v in weak.items()} } r4={r4:.2f}"
-            )
-        elif r4 < args.r4_min:
-            payload["verdict"] = "SKIP_6ACC"
-            payload["reason"] = f"r4_below_{args.r4_min}"
-            print(f"SKIP_6ACC r4_below_{args.r4_min} r4={r4:.2f} rel={ {k: round(v,2) for k,v in rel_s.items()} }")
-        else:
-            payload["verdict"] = "GO"
-            payload["reason"] = "pass"
-            print(f"GO r4={r4:.2f} rel={ {k: round(v,2) for k,v in rel_s.items()} }")
+    if len(rel_s) == 4:
+        payload["r4_mean_rel"] = sum(rel_s[t] for t in R4) / 4.0
 
     gate_path = root / args.arm / "R4_GATE.json"
     gate_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Early abort: any finished task below floor → SKIP (no need to finish R4).
+    if weak:
+        r4 = payload.get("r4_mean_rel")
+        payload["verdict"] = "SKIP_6ACC"
+        payload["reason"] = f"single_below_{args.single_floor}"
+        gate_path.write_text(json.dumps(payload, indent=2))
+        r4_s = f" r4={r4:.2f}" if r4 is not None else ""
+        print(
+            f"SKIP_6ACC single_below_{args.single_floor} "
+            f"weak={ {k: round(v, 2) for k, v in weak.items()} }{r4_s}"
+        )
+        return 0
+
+    if missing:
+        payload["verdict"] = "PENDING"
+        payload["reason"] = f"incomplete_r4:{missing}"
+        gate_path.write_text(json.dumps(payload, indent=2))
+        print(f"PENDING incomplete_r4 missing={missing}")
+        return 0
+
+    r4 = float(payload["r4_mean_rel"])
+    if r4 < args.r4_min:
+        payload["verdict"] = "SKIP_6ACC"
+        payload["reason"] = f"r4_below_{args.r4_min}"
+        gate_path.write_text(json.dumps(payload, indent=2))
+        print(
+            f"SKIP_6ACC r4_below_{args.r4_min} r4={r4:.2f} "
+            f"rel={ {k: round(v, 2) for k, v in rel_s.items()} }"
+        )
+        return 0
+
+    payload["verdict"] = "GO"
+    payload["reason"] = "pass"
     gate_path.write_text(json.dumps(payload, indent=2))
+    print(f"GO r4={r4:.2f} rel={ {k: round(v, 2) for k, v in rel_s.items()} }")
     return 0
 
 

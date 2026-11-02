@@ -114,10 +114,27 @@ while read -r line; do
   echo "ADOPT_HOLD gpu=$cv pid=$pid $(date -Is)" | tee -a "$LOG/queue.log"
 done < <(pgrep -af 'gpu_hold.py' || true)
 
+kill_arm_running() {
+  local arm=$1 tag
+  for tag in "${!PID[@]}"; do
+    if [[ "${tag%__*}" == "$arm" ]]; then
+      echo "KILL_ARM_JOB $tag pid=${PID[$tag]} $(date -Is)" | tee -a "$LOG/queue.log"
+      kill "${PID[$tag]}" 2>/dev/null || true
+      wait "${PID[$tag]}" 2>/dev/null || true
+      unset "PID[$tag]"
+      unset "GPU_OF[$tag]"
+    fi
+  done
+}
+
 launch() {
   local gpu=$1 arm=$2 task=$3
   local dest=$OUT_ROOT/$arm/$task
   local tag="${arm}__${task}"
+  if [[ -n ${ARM_GATED[$arm]+x} && ${ARM_GATED[$arm]} != GO ]]; then
+    echo "SKIP_LAUNCH $tag arm_already_skipped $(date -Is)" | tee -a "$LOG/queue.log"
+    return 1
+  fi
   if [[ -n ${PID[$tag]+x} ]]; then
     echo "RUNNING $tag" | tee -a "$LOG/queue.log"
     return 1
@@ -145,26 +162,36 @@ launch() {
 }
 
 maybe_gate_arm() {
+  # Call after every finished R4 task. Early SKIP if any task rel < 88%.
   local arm=$1
   [[ -n ${ARM_GATED[$arm]+x} ]] && return
-  for t in "${R4_TASKS[@]}"; do
-    if ! find "$OUT_ROOT/$arm/$t" -name '*_results.json' 2>/dev/null | grep -q .; then
-      return
-    fi
-  done
   local verdict
-  verdict=$("$PY" -u "$GATE_PY" --arm "$arm" --out-root "$OUT_ROOT" 2>>"$LOG/gate.log") || true
-  ARM_GATED[$arm]=1
+  verdict=$("$PY" -u "$GATE_PY" --arm "$arm" --out-root "$OUT_ROOT" --single-floor 88 2>>"$LOG/gate.log") || true
   echo "GATE $arm $verdict $(date -Is)" | tee -a "$LOG/queue.log"
+  if [[ "$verdict" == PENDING* ]]; then
+    return
+  fi
   if [[ "$verdict" == GO* ]]; then
+    ARM_GATED[$arm]=GO
     for t in "${EXTRA_TASKS[@]}"; do
       JOBS+=("${arm}|${t}")
     done
     n=${#JOBS[@]}
     echo "ENQUEUE_6ACC $arm $(date -Is)" | tee -a "$LOG/queue.log"
-  else
-    echo "SKIP_6ACC $arm $verdict $(date -Is)" | tee -a "$LOG/queue.log"
+    return
   fi
+  # SKIP_6ACC (single_below_88 or r4_below_92): kill leftover arm jobs, drop pending.
+  ARM_GATED[$arm]=SKIP
+  kill_arm_running "$arm"
+  local new_jobs=() j a t
+  for j in "${JOBS[@]:$idx}"; do
+    IFS='|' read -r a t <<< "$j"
+    [[ "$a" == "$arm" ]] && continue
+    new_jobs+=("$j")
+  done
+  JOBS=("${JOBS[@]:0:$idx}" "${new_jobs[@]}")
+  n=${#JOBS[@]}
+  echo "SKIP_6ACC $arm $verdict $(date -Is)" | tee -a "$LOG/queue.log"
 }
 
 pick_free_foreign() {

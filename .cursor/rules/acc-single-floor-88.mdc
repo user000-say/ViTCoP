@@ -1,0 +1,8 @@
+---
+description: Skip further ACC if any single task relative ACC < 88%
+alwaysApply: true
+---
+
+# ACC single-task floor
+
+For NeXT (and other) gated ACC queues: if **any** finished task’s relative ACC vs Dense is **&lt; 88%**, immediately `SKIP_6ACC` that arm — do not finish remaining R4 tasks or extras. Default gate: `--single-floor 88` (was 85). R4 mean gate stays 92.
