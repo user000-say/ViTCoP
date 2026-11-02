@@ -146,8 +146,12 @@ def bela_qwen2_forward(
         k = k.view(bsz, q_len, num_kv, head_dim).transpose(1, 2)
         if num_kv != num_heads:
             k = k.repeat_interleave(num_heads // num_kv, dim=1)
+        # Dense-absolute: cos/sin must cover max(position_ids), not just q_len.
+        rope_len = q_len
+        if pos_ids is not None:
+            rope_len = max(rope_len, int(pos_ids.max().item()) + 1)
         try:
-            cos, sin = attn.rotary_emb(k, seq_len=q_len)
+            cos, sin = attn.rotary_emb(k, seq_len=rope_len)
         except TypeError:
             cos, sin = attn.rotary_emb(k, position_ids=pos_ids)
         from transformers.models.qwen2.modeling_qwen2 import apply_rotary_pos_emb
@@ -251,15 +255,25 @@ def bela_qwen2_forward(
         parent._bela_last_stage2 = self._bela_last_stage2
 
     # Prefill pruning is one-shot. Clear ctx so decode steps use the stock
-    # Qwen2 forward. Stash pruned length so generate()'s stale attention_mask
-    # (still full pre-prune length) can be rewritten in prepare_inputs_for_generation.
+    # Qwen2 forward. Stash physical pruned length (mask) AND dense-absolute
+    # rope_next (position clock) separately — same contract as NeXT image fix.
     prefill_len = int(hidden_states.shape[1])
+    if position_ids is not None:
+        rope_next = int(position_ids.max().item()) + 1
+    else:
+        rope_next = prefill_len
     self._bela_stage2_ctx = None
     self._bela_prefill_seq_len = prefill_len
+    self._bela_rope_next_pos = rope_next
+    self._bela_last_stage2["rope_mode"] = "dense_absolute"
+    self._bela_last_stage2["rope_next_pos"] = rope_next
+    self._bela_last_stage2["prefill_seq_len"] = prefill_len
     if parent is not None:
         parent._bela_stage2_ctx = None
         parent._bela_pending_visual_start = None
         parent._bela_prefill_seq_len = prefill_len
+        parent._bela_rope_next_pos = rope_next
+        parent._bela_last_stage2 = self._bela_last_stage2
 
     next_cache = None
     if use_cache:
@@ -275,9 +289,39 @@ def bela_qwen2_forward(
     )
 
 
+def _patch_qwen2_rotary_dense_absolute():
+    """TF 4.3x Qwen2RotaryEmbedding returns cos[:kv_seq_len]; absolute position_ids
+    after Stage2 gather can exceed that and OOB in apply_rotary_pos_emb.
+    Return the full cached table (extend if needed) so absolute ids index safely.
+    """
+    from transformers.models.qwen2.modeling_qwen2 import Qwen2RotaryEmbedding
+
+    if getattr(Qwen2RotaryEmbedding, "_bela_dense_absolute", False):
+        return False
+
+    _orig = Qwen2RotaryEmbedding.forward
+
+    def forward_full(self, x, seq_len=None):
+        need = int(seq_len) if seq_len is not None else int(x.shape[-2])
+        # Keep at least the pretrained max table; grow if caller asks for more.
+        need = max(need, int(getattr(self, "max_position_embeddings", need) or need))
+        if need > getattr(self, "max_seq_len_cached", 0):
+            self._set_cos_sin_cache(seq_len=need, device=x.device, dtype=x.dtype)
+        return (
+            self.cos_cached.to(dtype=x.dtype),
+            self.sin_cached.to(dtype=x.dtype),
+        )
+
+    Qwen2RotaryEmbedding.forward = forward_full
+    Qwen2RotaryEmbedding._bela_dense_absolute = True
+    _ORIG["rotary_forward"] = _orig
+    return True
+
+
 def apply_patch():
     from transformers.models.qwen2.modeling_qwen2 import Qwen2Model
 
+    _patch_qwen2_rotary_dense_absolute()
     if getattr(Qwen2Model, "_bela_stage2_patched", False):
         return False
     _ORIG["forward"] = Qwen2Model.forward

@@ -60,23 +60,37 @@ def cover_replace_169(
     scores = scores.float().to(device)
     if slots == 0:
         return scores.topk(k, largest=True, sorted=False).indices.sort().values
-    anchors_k = k - slots
+    # When k≈N, residual can be empty / smaller than slots — clamp like image Dual COVER.
+    k_eff = min(int(k), N_PATCH)
+    slots_eff = min(int(slots), k_eff)
+    anchors_k = k_eff - slots_eff
     anchors = (
         scores.topk(anchors_k, largest=True, sorted=False).indices
         if anchors_k > 0
         else scores.new_empty(0, dtype=torch.long)
     )
-    # Residual excludes CLS-top-K (same spirit as E013 excluding Top core_k).
+    # Residual excludes score-top-K (same spirit as E013 excluding Top core_k).
     topk_mask = torch.zeros(N_PATCH, dtype=torch.bool, device=device)
-    topk_mask[scores.topk(k, largest=True, sorted=False).indices] = True
+    topk_mask[scores.topk(k_eff, largest=True, sorted=False).indices] = True
     residual = torch.where(~topk_mask)[0]
+    if residual.numel() == 0 or slots_eff == 0:
+        # Fall back to pure top-k when COVER residual is empty.
+        return scores.topk(k_eff, largest=True, sorted=False).indices.sort().values
     util = _relative_coverage_169(metric_features, scores, anchors, residual)
-    n_pick = min(slots, int(residual.numel()))
+    n_pick = min(slots_eff, int(residual.numel()))
     pick = residual[util.topk(n_pick, largest=True, sorted=False).indices]
     keep = torch.cat([anchors, pick], dim=0)
-    if keep.unique().numel() != k:
-        raise RuntimeError(f"COVER keep unique={keep.unique().numel()} != K={k}")
-    return keep.sort().values
+    # Top-up from remaining score order if unique count short (k≈N edge).
+    if keep.unique().numel() < k_eff:
+        have = torch.zeros(N_PATCH, dtype=torch.bool, device=device)
+        have[keep] = True
+        need = k_eff - int(have.sum().item())
+        fill = torch.where(~have)[0]
+        fill = fill[scores.index_select(0, fill).topk(need, largest=True, sorted=False).indices]
+        keep = torch.cat([keep, fill], dim=0)
+    if keep.unique().numel() != k_eff:
+        raise RuntimeError(f"COVER keep unique={keep.unique().numel()} != K={k_eff}")
+    return keep.unique().sort().values
 
 
 def dual_cover_framewise(

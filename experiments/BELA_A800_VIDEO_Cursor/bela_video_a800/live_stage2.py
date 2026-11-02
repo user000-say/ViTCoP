@@ -284,11 +284,15 @@ def select_and_prune(
     state.ranks_history = now_ranks.gather(1, idx).detach()
 
     hs = gather_seq(hidden_states, keep_rel_dev, visual_start, visual_end, dim=1)
-    # Re-index positions 0..L-1 after physical prune. Keeping sparse original
-    # position ids OOBs Qwen2 RoPE cos/sin tables sized by current kv_seq_len.
+    # Dense-absolute RoPE: gather original position_ids with the same keep set.
+    # Do NOT recompact to 0..L-1 — that collapses relative distances (same bug
+    # fixed on NeXT image Stage2). Caller must build cos/sin for max(pos)+1.
     if position_ids is not None:
-        new_len = hs.shape[1]
-        position_ids = torch.arange(new_len, device=hs.device, dtype=position_ids.dtype).unsqueeze(0)
+        # Build full absolute keep indices for the whole sequence (pre+visual+post).
+        pre = torch.arange(visual_start, device=hs.device)
+        post = torch.arange(visual_end, position_ids.shape[-1], device=hs.device)
+        keep_abs = torch.cat([pre, visual_start + keep_rel_dev, post], dim=0)
+        position_ids = position_ids.index_select(-1, keep_abs.to(device=position_ids.device))
     if attention_mask is not None and attention_mask.dim() == 4:
         am = attention_mask
         am = gather_seq(am, keep_rel_dev, visual_start, visual_end, dim=3)
