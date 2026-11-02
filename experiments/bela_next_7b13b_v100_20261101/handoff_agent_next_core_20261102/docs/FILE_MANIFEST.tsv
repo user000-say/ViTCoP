@@ -1,0 +1,16 @@
+relpath	role
+next_forward/apply_llava_next.py	patch entry + Stage2 loop
+next_forward/native_stage1.py	Stage1 pack Dual QA
+next_forward/dual_cover.py	crop COVER
+next_forward/stage2.py	Q_ATTN prune
+next_forward/bela_next_compat.py	original_dual/original_qa wrappers
+next_forward/next_pack.py	pack helpers
+next_fix/native_layout.py	spatial_unpad provenance
+next_fix/legacy_bridge.py	BelaConfig + run_original_bela
+qa_cover/query_anchor.py	QA B8 core
+qa_cover/llava_adapter.py	projector+embed QA glue
+legacy_cover/e013_stage1_support.py	historical COVER
+runtime_hf_tf520/modeling_llava_next.py	stock pack_image_features host
+next_configs/arms.json	A0-A4 schedules
+next_scripts/lmms_bela_next_entry.py	eval entry
+next_scripts/gate_next7_arm_r4.py	R4 gate floor 88
