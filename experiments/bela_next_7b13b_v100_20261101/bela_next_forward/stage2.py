@@ -129,14 +129,14 @@ def select_and_prune(
     keep_abs = torch.cat([non_patch, keep_patch], dim=0).sort().values
 
     hs = gather_seq(hidden_states, keep_abs, dim=1)
-    # Preserve original absolute RoPE positions (BELA/vitcop production pattern:
-    # position_ids = all_keep). Never remap to arange — that desyncs cached K/V RoPE.
+    # Always index_select current position_ids by keep_abs.
+    # Cut1: position_ids are 0..S-1 so this equals keep_abs (absolute).
+    # Cut2+: position_ids already hold absolute RoPE ids; must NOT replace with
+    # local keep_abs (that desyncs RoPE vs cached K/V).
     if position_ids is not None:
-        if position_ids.ndim == 2 and position_ids.shape[0] == 1:
-            # If positions were 0..S-1, keep_abs *is* the surviving absolute ids.
-            position_ids = keep_abs.to(device=position_ids.device, dtype=position_ids.dtype).unsqueeze(0)
-        else:
-            position_ids = position_ids.index_select(-1, keep_abs.to(device=position_ids.device))
+        position_ids = position_ids.index_select(
+            -1, keep_abs.to(device=position_ids.device)
+        )
     past_key_values = prune_cache(past_key_values, keep_abs, layers_filled)
 
     old_to_new = torch.full((seq,), -1, dtype=torch.long, device=device)

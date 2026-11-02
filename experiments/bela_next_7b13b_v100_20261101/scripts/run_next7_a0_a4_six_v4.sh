@@ -87,14 +87,35 @@ launch() {
 
 echo "QUEUE5x6_BEGIN n=$n gpus=${GPUS[*]} $(date -Is)" | tee -a "$LOG/queue.log"
 
+declare -A RETRIES
 while [[ $idx -lt $n || ${#PID[@]} -gt 0 ]]; do
   for tag in "${!PID[@]}"; do
     if ! kill -0 "${PID[$tag]}" 2>/dev/null; then
-      wait "${PID[$tag]}" 2>/dev/null || true
+      set +e
+      wait "${PID[$tag]}" 2>/dev/null
       rc=$?
-      echo "DONE $tag rc=$rc gpu=${GPU_OF[$tag]} $(date -Is)" | tee -a "$LOG/queue.log"
+      set -u
+      gpu_done=${GPU_OF[$tag]}
+      arm=${tag%__*}
+      task=${tag#*__}
+      dest=$OUT_ROOT/$arm/$task
+      has_res=0
+      if find "$dest" -name '*_results.json' 2>/dev/null | grep -q .; then has_res=1; fi
+      echo "DONE $tag rc=$rc has_results=$has_res gpu=$gpu_done $(date -Is)" | tee -a "$LOG/queue.log"
       unset "PID[$tag]"
       unset "GPU_OF[$tag]"
+      # Requeue crashed/empty evals (e.g. Dual COVER topk on tiny unpad pools).
+      if [[ $has_res -eq 0 ]]; then
+        r=${RETRIES[$tag]:-0}
+        if [[ $r -lt 2 ]]; then
+          RETRIES[$tag]=$((r + 1))
+          JOBS+=("${arm}|${task}")
+          n=${#JOBS[@]}
+          echo "REQUEUE $tag try=${RETRIES[$tag]} $(date -Is)" | tee -a "$LOG/queue.log"
+        else
+          echo "GIVEUP $tag after ${RETRIES[$tag]} retries $(date -Is)" | tee -a "$LOG/queue.log"
+        fi
+      fi
     fi
   done
   while [[ $idx -lt $n ]]; do

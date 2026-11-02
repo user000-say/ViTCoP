@@ -57,20 +57,29 @@ def dual_cover_one_crop(
         else:
             raise ValueError("non-576 uses lifted path")
     except ValueError:
+        # Lifted COVER for unpad pools != 576. When k≈n (small crop / full-pool
+        # quota), residual is empty — clamp slots so topk never asks for >|residual|.
         total_k = int(k)
-        base = scores.topk(total_k, largest=True, sorted=False).indices.sort().values
-        if b == 0:
-            ids = base
+        if total_k >= n:
+            ids = torch.arange(n, device=scores.device, dtype=torch.long)
         else:
-            base_mask = torch.ones(n, dtype=torch.bool, device=metric.device)
-            base_mask[base] = False
-            residual = torch.where(base_mask)[0]
-            anchors_k = total_k - b
-            anchors = scores.topk(anchors_k, largest=True, sorted=False).indices.sort().values
-            utility = e._core_relative_coverage(metric, scores, anchors, residual)
-            local = utility.topk(b, largest=True, sorted=False).indices
-            chosen = residual.index_select(0, local)
-            ids = torch.cat((anchors, chosen), dim=0).sort().values
+            b_eff = min(int(b), n - total_k)
+            if b_eff <= 0:
+                ids = scores.topk(total_k, largest=True, sorted=False).indices.sort().values
+            else:
+                anchors_k = total_k - b_eff
+                anchors = scores.topk(anchors_k, largest=True, sorted=False).indices.sort().values
+                base_mask = torch.ones(n, dtype=torch.bool, device=metric.device)
+                base_mask[anchors] = False
+                residual = torch.where(base_mask)[0]
+                utility = e._core_relative_coverage(metric, scores, anchors, residual)
+                if int(utility.numel()) < b_eff:
+                    raise RuntimeError(
+                        f"COVER utility size {utility.numel()} < slots {b_eff}"
+                    )
+                local = utility.topk(b_eff, largest=True, sorted=False).indices
+                chosen = residual.index_select(0, local)
+                ids = torch.cat((anchors, chosen), dim=0).sort().values
     if int(ids.unique().numel()) != k:
         raise RuntimeError(f"COVER unique={ids.unique().numel()} != k={k}")
     if int(ids.min()) < 0 or int(ids.max()) >= n:
