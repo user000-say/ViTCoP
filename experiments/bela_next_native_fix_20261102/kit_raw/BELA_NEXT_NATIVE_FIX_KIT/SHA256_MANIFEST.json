@@ -1,0 +1,14 @@
+{
+  "README.md": "936089f8dc6d7dfadad769ff9ed9f69fe3cb4ab6f9b031c66b032694d90ca713",
+  "bela_next_fix/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "bela_next_fix/legacy_bridge.py": "4645c0a5a2f2844a9564e3b49e81d110270a070419f0331b1dfcc4b1ca4e79a3",
+  "bela_next_fix/native_layout.py": "5481a6302bb8b36ab207b70b1e36c65f7a4c13dff0592b33980a3e0527be8d8f",
+  "bela_next_fix/progressive_hooks.py": "4f4d8bb29cbca7c19220644e1e9047b04cb5360978d33f9cc59e83b83e83e0ca",
+  "bela_next_fix/runner.py": "4a6177ad0a41649a99c3585b8cb519678835e56713e91dccccc4f6be9dbc57ae",
+  "bela_next_fix/scoring.py": "56cfe62a36599eddfd5265acb01c6a716fe5b41e7dbdeb06f7dac493a7f37fbc",
+  "configs/arms.json": "10579ddb1f7b5ed0b56c2edfaa5fd3dda8961754c15c0637353f486e9fcbfae9",
+  "docs/CURSOR_EXECUTE_FIRST.md": "965cbae87d03351b8e6a62638dee16d470762450f7254123097c9baae56b0c1c",
+  "smoke_real_next.py": "557d5378f884e538ba90f3488e0a807d7b38674d5e01e6472b3b2c53d1cce92c",
+  "tests/test_contracts.py": "5f5eec711aa30238a8df66a5b580c7f0768e0b3e3ec3a385b8be6b1e41e31c85",
+  "tests/test_scoring.py": "31def863d666e6a02fd7228a9450b6972962a869a46e0c9bde722a89b50a3903"
+}

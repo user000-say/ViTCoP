@@ -31,19 +31,17 @@ _orig_init = LlavaHf.__init__
 def _patched_init(self, *args, **kwargs):
     _orig_init(self, *args, **kwargs)
     apply_patch(self._model)
-    # Paper five-crop lock: force [[672,672]] pinpoints on processor + config
-    proc = self._image_processor
-    ip = getattr(proc, "image_processor", proc)
-    if hasattr(ip, "image_grid_pinpoints"):
-        ip.image_grid_pinpoints = [[672, 672]]
-    if hasattr(self._model, "config") and hasattr(self._model.config, "image_grid_pinpoints"):
-        self._model.config.image_grid_pinpoints = [[672, 672]]
-    if hasattr(self._model, "model") and hasattr(self._model.model, "config"):
-        self._model.model.config.image_grid_pinpoints = [[672, 672]]
+    # NATIVE FIX KIT: do NOT force [[672,672]] — match 2026-10-28 Dense processor.
+    pin = None
+    try:
+        pin = getattr(getattr(self._image_processor, "image_processor", self._image_processor), "image_grid_pinpoints", None)
+    except Exception:
+        pass
     print(
         f"[BELA_NEXT] patched arm={os.environ['BELA_NEXT_ARM']} "
         f"enable={os.environ.get('BELA_NEXT_V2_ENABLE')} "
-        f"model_patched={getattr(self._model, '_bela_next_v2_patched', False)}",
+        f"model_patched={getattr(self._model, '_bela_next_v2_patched', False)} "
+        f"pinpoints={pin} (native, not forced)",
         flush=True,
     )
 

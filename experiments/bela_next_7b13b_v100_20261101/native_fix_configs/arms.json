@@ -1,0 +1,19 @@
+{
+  "checkpoint": "llava-hf/llava-v1.6-vicuna-7b-hf",
+  "objective": "LLaVA-NeXT-7B native AnyRes; patch token-layer W=5120 (not all-KV FLOPs)",
+  "decoder_layers": 32,
+  "cuts_after_layers": [12,20],
+  "stage1": {"selection": "ORIGINAL_DUAL_COVER_PLUS_REAL_QA", "slots": 32,
+    "qa_swaps": 8, "donor": 16, "drop": 12, "seed": 17,
+    "middle_vit_layer": 9, "penultimate_vit_layer": -2},
+  "stage2": "Q_ATTN_ALL", "legacy_method": "BELA-1.5-7B W4096 BEST",
+  "arms": {
+    "A0": [320,91,46], "A1": [320,100,40], "A2": [320,82,52],
+    "A3": [288,136,48], "A4": [256,160,64]
+  },
+  "dense_reference_date": "2026-10-28",
+  "dense_reference": {"GQA": 64.29,"POPE_F1":86.53,"MME":1826.57,"MMBench_EN":67.01,
+                      "ScienceQA_IMG":70.10,"TextVQA_OCR":61.45},
+  "hardware": "GPU 4,5,6,7 ONLY; leave GPUs 0-3 untouched",
+  "important": "W=5120 counts patch tokens only. Native newline and question/text tokens MUST be separately logged."
+}

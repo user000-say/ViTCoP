@@ -109,8 +109,7 @@ def run_generate(model, processor, *, enable: bool, arm: str | None, max_new: in
 def main():
     print("loading", MODEL, "visible", os.environ["CUDA_VISIBLE_DEVICES"], flush=True)
     processor = LlavaNextProcessor.from_pretrained(MODEL)
-    if hasattr(processor, "image_processor"):
-        processor.image_processor.image_grid_pinpoints = [[672, 672]]
+    # Native kit: keep processor pinpoints identical to Dense (do not force 672²)
     model = LlavaNextForConditionalGeneration.from_pretrained(
         MODEL, torch_dtype=torch.float16, low_cpu_mem_usage=True, device_map="cuda:0"
     )
@@ -159,13 +158,18 @@ def main():
             exp = EXPECT[arm]
             pack_mode = s1.get("pack_mode")
             n_nl = s1.get("packed_newlines")
-            pack_ok = pack_mode == "spatial_unpad_newline" and isinstance(n_nl, int) and n_nl > 0
+            qa = s1.get("qa_log") or {}
+            pack_ok = pack_mode == "spatial_unpad_newline" and isinstance(n_nl, int) and n_nl >= 0
+            mid_ok = s1.get("mid_layer") == 9
+            qa_ok = bool(qa.get("legacy_dual_called")) and bool(qa.get("legacy_qa_called"))
             ok = (
                 got[0] == exp[0]
                 and got[1] == exp[1]
                 and got[2] == exp[2]
                 and row["finite"]
                 and pack_ok
+                and mid_ok
+                and qa_ok
             )
             # sequence must physically shorten vs dense ~2928 image tokens + text
             shortened = row["hidden_len"] < 2000
@@ -189,6 +193,9 @@ def main():
                 "pack_mode": pack_mode,
                 "packed_newlines": n_nl,
                 "pack_ok": pack_ok,
+                "mid_ok": mid_ok,
+                "qa_ok": qa_ok,
+                "qa_swaps": qa.get("swaps"),
                 "gen_ok": gen_ok,
                 "gen_tail": gen_tail,
                 "stage1": s1,

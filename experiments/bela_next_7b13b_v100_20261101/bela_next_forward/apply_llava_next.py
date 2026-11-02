@@ -1,42 +1,39 @@
-"""Wire BELA Dual COVER + Stage2 into HF LlavaNext (Transformers 5.20).
+"""Wire native NeXT BELA (FIX KIT 20261102) into HF LlavaNext TF5.20.
 
-BELA_NEXT_V2_ENABLE=0 → completely untouched stock forward (Dense parity).
-ENABLE=1 → Stage1 Dual COVER on crop grids, pack via stock NeXT
-spatial_unpad + image_newline (newlines always kept), then Stage2 Q_ATTN
-physical cuts on *patch* tokens only.
+BELA_NEXT_V2_ENABLE=0 → stock Dense forward/generate untouched.
+ENABLE=1 → Stage1: stock spatial_unpad+newline + Dual COVER (ViT L9+pen) +
+global QA B8 + structural newline keep; Stage2 Q_ATTN physical cuts;
+RoPE keeps original absolute positions.
 
-CRITICAL engineering fidelity (vs earlier simple_crop_concat distortion):
-  - Vision features go through the same AnyRes unpad + image_newline layout
-    as stock `LlavaNextModel.pack_image_features`.
-  - Stage1 only drops patch tokens; every newline stock NeXT emits is kept.
-  - Stage2 never drops newlines/text; RoPE position_ids stay original abs ids.
-  - Prefill/decode continue RoPE from max kept position (not compressed length).
-
-CRITICAL (TF 5.20 generate path):
-  GenerationMixin pre-encodes via get_image_features then pops pixel_values.
-  We patch get_image_features and run a faithful greedy generate that passes
-  explicit position_ids after Stage2 physical prune.
+Do NOT force image_grid_pinpoints=[[672,672]] here — match Dense processor.
+Do NOT prune inside get_image_features (no question there); Stage1 runs in
+prefill forward with input_ids so QA sees the real question.
 """
 from __future__ import annotations
 
 import json
 import os
+import sys
 import types
 from pathlib import Path
 
 import torch
 
-from .dual_cover import dual_cover_five_crops
-from .next_pack import pack_spatial_unpad_selected, valid_tile_local_ids
+from .native_stage1 import run_native_stage1
 from .stage2 import Stage2State, select_and_prune
 
 _ARMS = None
+_PKG = Path(__file__).resolve().parents[1]
+if str(_PKG) not in sys.path:
+    sys.path.insert(0, str(_PKG))
+if str(_PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/src") not in sys.path:
+    sys.path.insert(0, str(_PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/src"))
 
 
 def _arms():
     global _ARMS
     if _ARMS is None:
-        p = Path(__file__).resolve().parents[1] / "BELA_NEXT_7B13B_V100_CURSOR_20261101/configs/arms.json"
+        p = _PKG / "BELA_NEXT_7B13B_V100_CURSOR_20261101/configs/arms.json"
         _ARMS = {a["arm_id"]: a for a in json.loads(p.read_text())["arm_matrix"]}
     return _ARMS
 
@@ -55,14 +52,7 @@ def current_arm():
     return arms[aid]
 
 
-def crop_quotas(k0: int, n_crops: int) -> list:
-    from bela_next_budget.crops import crop_quota_from_ids
-
-    return crop_quota_from_ids([576] * int(n_crops), total=int(k0), policy="uniform")
-
-
 def _rewrite_image_placeholders(input_ids, attention_mask, image_token_id: int, n_keep: int):
-    """Collapse contiguous image-token block to exactly n_keep placeholders."""
     assert input_ids.shape[0] == 1
     ids = input_ids[0]
     pos = (ids == image_token_id).nonzero(as_tuple=True)[0]
@@ -94,200 +84,22 @@ def _past_len(past_key_values) -> int:
     return 0
 
 
-def _image_size_row(image_sizes, batch_idx: int = 0):
-    if image_sizes is None:
-        raise RuntimeError("PRUNING_NOT_ACTIVE: image_sizes required for NeXT unpad pack")
-    if isinstance(image_sizes, torch.Tensor):
-        if image_sizes.ndim == 1:
-            return image_sizes.tolist()
-        return image_sizes[batch_idx].tolist()
-    row = image_sizes[batch_idx]
-    if isinstance(row, torch.Tensor):
-        return row.tolist()
-    return list(row)
-
-
 def apply_patch(model) -> bool:
     if getattr(model, "_bela_next_v2_patched", False):
         return False
 
-    llava = model.model  # LlavaNextModel
+    from bela_next_compat import original_dual, original_qa
+
+    llava = model.model
     lm = llava.language_model
     llama_model = lm.model if hasattr(lm, "model") else lm
 
     orig_llava_fwd = llava.forward
     orig_get_feats = llava.get_image_features
 
-    def stage1_features(
-        self_m,
-        pixel_values,
-        image_sizes,
-        vision_feature_layer=None,
-        vision_feature_select_strategy=None,
-        **kwargs,
-    ):
-        """Vision → Dual COVER per crop → stock spatial_unpad+newline pack."""
-        arm = current_arm()
-        k0, k1, k2 = [int(x) for x in arm["stage_k"]]
-        if pixel_values.dim() == 5:
-            assert pixel_values.shape[0] == 1, "BELA NeXT Stage1 batch=1 only"
-            crops = pixel_values[0]
-        else:
-            crops = pixel_values
-        n_crops = int(crops.shape[0])
-        if n_crops < 1:
-            raise RuntimeError("PRUNING_NOT_ACTIVE_LAYOUT: empty crops")
-
-        kwargs = dict(kwargs)
-        kwargs.pop("return_dict", None)
-        kwargs["output_hidden_states"] = True
-        image_outputs = self_m.vision_tower(crops, return_dict=True, **kwargs)
-        hs = image_outputs.hidden_states
-        mid = hs[12][:, 1:, :]
-        pen = hs[-2][:, 1:, :]
-
-        vfl = vision_feature_layer if vision_feature_layer is not None else self_m.config.vision_feature_layer
-        vfs = vision_feature_select_strategy or self_m.config.vision_feature_select_strategy
-        if isinstance(vfl, int):
-            selected = hs[vfl]
-        else:
-            selected = torch.cat([hs[i] for i in vfl], dim=-1)
-        if vfs == "default":
-            selected = selected[:, 1:]
-        projected = self_m.multi_modal_projector(selected)  # [C,576,D]
-        if projected.shape[1] != 576:
-            raise RuntimeError(f"PRUNING_NOT_ACTIVE_LAYOUT: projected {tuple(projected.shape)}")
-
-        vis_size = int(self_m.config.vision_config.image_size)
-        patch = int(self_m.config.vision_config.patch_size)
-        pinpoints = self_m.config.image_grid_pinpoints
-        img_hw = _image_size_row(image_sizes, 0)
-
-        # Valid post-unpad pools (base = all 576; tiles = unpad survivors)
-        valid_pools = [None] * n_crops
-        if n_crops > 1:
-            tile_pools = valid_tile_local_ids(
-                img_hw,
-                image_grid_pinpoints=pinpoints,
-                vision_image_size=vis_size,
-                patch_size=patch,
-                device=projected.device,
-            )
-            if len(tile_pools) != n_crops - 1:
-                raise RuntimeError(
-                    f"tile pool count {len(tile_pools)} != n_crops-1={n_crops - 1}"
-                )
-            valid_pools = [None] + list(tile_pools)
-
-        quotas = crop_quotas(k0, n_crops)
-        # Clamp quotas to valid pool sizes so emitted patch count can hit K0 on square paper mode
-        clamped = []
-        for ci, q in enumerate(quotas):
-            pool = valid_pools[ci]
-            if pool is None:
-                clamped.append(int(q))
-            else:
-                clamped.append(min(int(q), int(pool.numel())))
-        # Redistribute shortfall to crops that still have room (stable crop order)
-        short = int(k0) - int(sum(clamped))
-        if short > 0:
-            for ci in range(n_crops):
-                if short <= 0:
-                    break
-                pool = valid_pools[ci]
-                cap = 576 if pool is None else int(pool.numel())
-                room = cap - clamped[ci]
-                take = min(room, short)
-                clamped[ci] += take
-                short -= take
-        if int(sum(clamped)) != int(k0) and all(
-            (valid_pools[i] is None) or (valid_pools[i].numel() == 576) for i in range(n_crops)
-        ):
-            raise RuntimeError(f"quota sum {sum(clamped)} != K0 {k0} on full-valid crops")
-
-        keep_flat, per = dual_cover_five_crops(
-            mid, pen, clamped, slots=32, valid_pools=valid_pools
-        )
-
-        packed = pack_spatial_unpad_selected(
-            projected,
-            img_hw,
-            per,
-            self_m.image_newline,
-            image_grid_pinpoints=pinpoints,
-            vision_image_size=vis_size,
-            patch_size=patch,
-        )
-        if packed.n_patches <= 0:
-            raise RuntimeError("PRUNING_NOT_ACTIVE: zero patches after NeXT pack")
-        # Paper-mode square: expect exact K0. Non-square unpad may emit fewer if
-        # Dual COVER selected pad-only ids — we selected inside valid pools so
-        # n_patches should equal sum(clamped).
-        if packed.n_patches != int(sum(clamped)):
-            raise RuntimeError(
-                f"PRUNING_NOT_ACTIVE: packed patches {packed.n_patches} != selected {sum(clamped)}"
-            )
-
-        patch_local = torch.where(packed.is_patch)[0].to(dtype=torch.long)
-        model._bela_stage1 = {
-            "arm": arm["arm_id"],
-            "k0": k0,
-            "k1": k1,
-            "k2": k2,
-            "quotas": clamped,
-            "quotas_requested": quotas,
-            "keep_flat": keep_flat.detach().cpu().tolist(),
-            "per_crop": [x.detach().cpu().tolist() for x in per],
-            "selector": "E013_DUAL_COVER_CROPWISE",
-            "packed_len": int(packed.features.shape[0]),
-            "packed_patches": int(packed.n_patches),
-            "packed_newlines": int(packed.n_newlines),
-            "pack_mode": "spatial_unpad_newline",
-            "unpad_hw": list(packed.unpad_hw),
-            "grid": [packed.grid_nh, packed.grid_nw],
-            "image_size_hw": list(img_hw),
-            "n_crops": n_crops,
-            "base_patches": int(packed.base_patches),
-            "tile_patches": int(packed.tile_patches),
-        }
-        model._bela_keep_flat = keep_flat.detach().cpu()
-        model._bela_visual_is_patch = packed.is_patch.detach().cpu()
-        model._bela_visual_patch_local = patch_local.detach().cpu()
-        model._bela_prefill_hits = int(getattr(model, "_bela_prefill_hits", 0)) + 1
-        # Drop vision tower hidden_states — otherwise all CLIP layers stay alive
-        # through LLM prefill and V100 OOMs on long prompts (mmbench).
-        try:
-            image_outputs.hidden_states = None
-        except Exception:
-            pass
-        del mid, pen, selected, projected, hs
-        image_outputs.pooler_output = [packed.features]
-        return image_outputs
-
-    def hooked_get_image_features(
-        self_m,
-        pixel_values,
-        image_sizes,
-        vision_feature_layer=None,
-        vision_feature_select_strategy=None,
-        **kwargs,
-    ):
-        if not enabled():
-            return orig_get_feats(
-                pixel_values,
-                image_sizes,
-                vision_feature_layer=vision_feature_layer,
-                vision_feature_select_strategy=vision_feature_select_strategy,
-                **kwargs,
-            )
-        return stage1_features(
-            self_m,
-            pixel_values,
-            image_sizes,
-            vision_feature_layer=vision_feature_layer,
-            vision_feature_select_strategy=vision_feature_select_strategy,
-            **kwargs,
-        )
+    def hooked_get_image_features(self_m, *args, **kwargs):
+        # Never prune here — no question available. Stock Dense pack only.
+        return orig_get_feats(*args, **kwargs)
 
     def _llama_forward_with_cuts(
         self_lm,
@@ -325,7 +137,6 @@ def apply_patch(model) -> bool:
                 position_ids=position_ids,
             )
             position_embeddings = self_lm.rotary_emb(hidden_states, position_ids=position_ids)
-
             hidden_states = decoder_layer(
                 hidden_states,
                 attention_mask=causal_mask,
@@ -334,7 +145,6 @@ def apply_patch(model) -> bool:
                 past_key_values=past_key_values,
                 use_cache=use_cache,
             )
-
             layer_1based = layer_idx + 1
             if layer_1based in cut_map:
                 k_tgt = cut_map[layer_1based]
@@ -385,6 +195,20 @@ def apply_patch(model) -> bool:
         **kwargs,
     ):
         if not enabled():
+            # TF generate may leave both pixels and mm_encoder_outputs; stock forbids both.
+            kw = dict(kwargs)
+            mm = mm_encoder_outputs if mm_encoder_outputs is not None else kw.get("mm_encoder_outputs")
+            has_mm = False
+            if isinstance(mm, dict):
+                has_mm = mm.get("image") is not None
+            elif mm is not None:
+                has_mm = True
+            pv = pixel_values if pixel_values is not None else kw.get("pixel_values")
+            if pv is not None and has_mm:
+                pixel_values = None
+                image_sizes = None
+                kw.pop("pixel_values", None)
+                kw.pop("image_sizes", None)
             return orig_llava_fwd(
                 input_ids=input_ids,
                 pixel_values=pixel_values,
@@ -397,11 +221,10 @@ def apply_patch(model) -> bool:
                 vision_feature_select_strategy=vision_feature_select_strategy,
                 use_cache=use_cache,
                 mm_encoder_outputs=mm_encoder_outputs,
-                **kwargs,
+                **kw,
             )
 
         past_len = _past_len(past_key_values)
-        # Decode steps: cache already Stage2-pruned; honor explicit position_ids
         if past_len > 0:
             return orig_llava_fwd(
                 input_ids=input_ids,
@@ -411,68 +234,53 @@ def apply_patch(model) -> bool:
                 position_ids=position_ids,
                 past_key_values=past_key_values,
                 inputs_embeds=inputs_embeds,
-                vision_feature_layer=vision_feature_layer,
-                vision_feature_select_strategy=vision_feature_select_strategy,
                 use_cache=use_cache,
                 mm_encoder_outputs=None,
                 **kwargs,
             )
 
         arm = current_arm()
-        k0, k1, k2 = [int(x) for x in arm["stage_k"]]
-        c1, c2 = [int(x) for x in arm["cuts_after_layers"]]
-
-        mm = mm_encoder_outputs if mm_encoder_outputs is not None else {}
-        image_features = None
-        if mm.get("image") is not None:
-            pooled = mm["image"].pooler_output
-            if isinstance(pooled, (list, tuple)):
-                image_features = torch.cat(pooled, dim=0)
-            else:
-                image_features = pooled
-            if getattr(model, "_bela_stage1", None) is None:
-                raise RuntimeError(
-                    "PRUNING_NOT_ACTIVE: mm_encoder_outputs present but Stage1 metadata missing "
-                    "(get_image_features was not BELA-patched)"
-                )
-            if int(image_features.shape[0]) != int(model._bela_stage1["packed_len"]):
-                raise RuntimeError(
-                    f"PRUNING_NOT_ACTIVE: feature len {image_features.shape[0]} != "
-                    f"Stage1 packed_len {model._bela_stage1['packed_len']}"
-                )
-        elif pixel_values is not None and pixel_values.numel() > 0:
-            img_out = stage1_features(
-                self_m,
-                pixel_values,
-                image_sizes,
-                vision_feature_layer=vision_feature_layer,
-                vision_feature_select_strategy=vision_feature_select_strategy,
+        if pixel_values is None or pixel_values.numel() == 0:
+            raise RuntimeError(
+                "PRUNING_NOT_ACTIVE: ENABLE=1 prefill requires pixel_values "
+                "(QA needs joint vision+question; refuse mm_encoder-only pruned path)"
             )
-            image_features = img_out.pooler_output[0]
-        else:
-            return orig_llava_fwd(
-                input_ids=input_ids,
-                pixel_values=pixel_values,
-                image_sizes=image_sizes,
-                attention_mask=attention_mask,
-                position_ids=position_ids,
-                past_key_values=past_key_values,
-                inputs_embeds=inputs_embeds,
-                vision_feature_layer=vision_feature_layer,
-                vision_feature_select_strategy=vision_feature_select_strategy,
-                use_cache=use_cache,
-                mm_encoder_outputs=mm_encoder_outputs,
-                **kwargs,
-            )
+        if input_ids is None:
+            raise RuntimeError("BELA NeXT Stage1 requires input_ids for QA question span")
 
+        s1 = run_native_stage1(
+            self_m,
+            pixel_values,
+            image_sizes,
+            input_ids,
+            arm,
+            dual_fn=original_dual,
+            qa_fn=original_qa,
+            vision_feature_layer=vision_feature_layer,
+            vision_feature_select_strategy=vision_feature_select_strategy,
+        )
+        image_features = s1.packed_features
         n_img = int(image_features.shape[0])
-        n_patches = int(model._bela_stage1["packed_patches"])
-        if n_patches > k0:
-            raise RuntimeError(f"PRUNING_NOT_ACTIVE: patches {n_patches} > arm K0={k0}")
+        model._bela_stage1 = {
+            "arm": s1.arm_id,
+            "k0": s1.k0,
+            "k1": s1.k1,
+            "k2": s1.k2,
+            "packed_len": n_img,
+            "packed_patches": s1.n_patches,
+            "packed_newlines": s1.n_newlines,
+            "native_patches": s1.native_patch_count,
+            "native_newlines": s1.native_newlines,
+            "pack_mode": s1.pack_mode,
+            "mid_layer": s1.mid_layer,
+            "qa_log": s1.qa_log,
+            "selector": "NATIVE_DUAL_COVER_L9_PLUS_QA_B8",
+        }
+        model._bela_visual_is_patch = s1.is_patch
+        model._bela_visual_patch_local = torch.where(s1.is_patch)[0].to(dtype=torch.long)
+        model._bela_prefill_hits = int(getattr(model, "_bela_prefill_hits", 0)) + 1
 
         image_token_id = self_m.config.image_token_id
-        if input_ids is None:
-            raise RuntimeError("BELA NeXT requires input_ids for placeholder rewrite")
         new_ids, new_mask, img_start = _rewrite_image_placeholders(
             input_ids, attention_mask, image_token_id, n_img
         )
@@ -488,12 +296,11 @@ def apply_patch(model) -> bool:
         model._bela_text_start = int(img_start + n_img)
         model._bela_stage1["img_start"] = int(img_start)
         model._bela_stage1["seq_after_stage1"] = int(new_ids.shape[1])
-        model._bela_stage1["prefill_via"] = "mm_encoder" if mm.get("image") is not None else "pixel_values"
 
         state = Stage2State(
             patch_pos=patch_pos.clone(),
-            k_targets=(k1, k2),
-            cut_layers=(c1, c2),
+            k_targets=(s1.k1, s1.k2),
+            cut_layers=s1.cut_layers,
         )
         outputs = _llama_forward_with_cuts(
             llama_model,
@@ -544,13 +351,14 @@ def apply_patch(model) -> bool:
         pixel_values = kwargs.get("pixel_values", None)
         attention_mask = kwargs.get("attention_mask", None)
         image_sizes = kwargs.get("image_sizes", None)
-        # lmms defaults max_new_tokens=1024 when task yaml omits it — hard-cap for V100.
+        # Match Dense protocol: do not silently shrink vs task yaml unless OOM env set.
+        # Default cap 256 — enough for VQA; override with BELA_NEXT_MAX_NEW.
         max_new_tokens = kwargs.get("max_new_tokens", None)
         if max_new_tokens is None:
             gen_cfg = kwargs.get("generation_config", None) or getattr(self, "generation_config", None)
             max_new_tokens = getattr(gen_cfg, "max_new_tokens", None) if gen_cfg is not None else None
         max_new_tokens = int(max_new_tokens or 32)
-        max_new_tokens = max(1, min(max_new_tokens, int(os.environ.get("BELA_NEXT_MAX_NEW", "64"))))
+        max_new_tokens = max(1, min(max_new_tokens, int(os.environ.get("BELA_NEXT_MAX_NEW", "256"))))
         eos_id = kwargs.get("eos_token_id", None)
         if eos_id is None:
             eos_id = getattr(self.config, "eos_token_id", None)
@@ -560,7 +368,6 @@ def apply_patch(model) -> bool:
             eos_ids = set()
         else:
             eos_ids = {int(eos_id)}
-        # Do NOT force-stop on newline — that distorted SciQA ("B." vs "B") vs Dense.
 
         past = None
         if torch.cuda.is_available():
@@ -575,17 +382,22 @@ def apply_patch(model) -> bool:
                 return_dict=True,
             )
             if getattr(self, "_bela_stage2", None) is None:
-                raise RuntimeError("PRUNING_NOT_ACTIVE: generate prefill missing Stage2 trace")
+                raise RuntimeError("PRUNING_NOT_ACTIVE: generate prefill missing Stage2")
+            s1 = getattr(self, "_bela_stage1", {}) or {}
+            if not s1.get("qa_log", {}).get("legacy_dual_called"):
+                raise RuntimeError("PRUNING_NOT_ACTIVE: Dual COVER not called")
+            if int(s1.get("qa_log", {}).get("qa_swaps_cfg", 0)) > 0 and not s1.get("qa_log", {}).get(
+                "legacy_qa_called"
+            ):
+                raise RuntimeError("PRUNING_NOT_ACTIVE: QA B8 not called")
             past = pre.past_key_values
             short_len = int(pre.logits.shape[1])
             next_token = pre.logits[:, -1, :].argmax(dim=-1, keepdim=True)
-            # Free prefill logits/hidden ASAP (only need last token + cache)
             del pre
             new_list = [next_token]
             device = input_ids.device
             dtype = attention_mask.dtype if attention_mask is not None else input_ids.dtype
             attn = torch.ones(input_ids.shape[0], short_len, device=device, dtype=dtype)
-            # Continue RoPE from preserved absolute positions, not compressed cache length
             next_pos = int(getattr(self, "_bela_rope_next_pos", short_len))
 
             for _ in range(max(0, max_new_tokens - 1)):
@@ -613,7 +425,6 @@ def apply_patch(model) -> bool:
 
             return torch.cat([input_ids] + new_list, dim=1)
         except torch.cuda.OutOfMemoryError:
-            # Let lmms continue: return prompt-only so batch_decode gets a tensor
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             return input_ids
@@ -625,6 +436,24 @@ def apply_patch(model) -> bool:
                 torch.cuda.empty_cache()
 
     model.generate = types.MethodType(hooked_generate, model)
+
+    # ForConditionalGeneration.forward also receives both; strip before model.model
+    if hasattr(model, "forward"):
+        orig_cg_fwd = model.forward
+
+        def hooked_cg_forward(self, *args, **kwargs):
+            if not enabled():
+                pv = kwargs.get("pixel_values", None)
+                mm = kwargs.get("mm_encoder_outputs", None)
+                has_mm = isinstance(mm, dict) and mm.get("image") is not None
+                if pv is not None and has_mm:
+                    kwargs = dict(kwargs)
+                    kwargs["pixel_values"] = None
+                    kwargs["image_sizes"] = None
+            return orig_cg_fwd(*args, **kwargs)
+
+        model.forward = types.MethodType(hooked_cg_forward, model)
+        model._bela_orig_cg_fwd = orig_cg_fwd
 
     model._bela_next_v2_patched = True
     model._bela_llama = llama_model
