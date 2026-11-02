@@ -250,10 +250,17 @@ def apply_patch(model) -> bool:
             "base_patches": int(packed.base_patches),
             "tile_patches": int(packed.tile_patches),
         }
-        model._bela_keep_flat = keep_flat
+        model._bela_keep_flat = keep_flat.detach().cpu()
         model._bela_visual_is_patch = packed.is_patch.detach().cpu()
         model._bela_visual_patch_local = patch_local.detach().cpu()
         model._bela_prefill_hits = int(getattr(model, "_bela_prefill_hits", 0)) + 1
+        # Drop vision tower hidden_states — otherwise all CLIP layers stay alive
+        # through LLM prefill and V100 OOMs on long prompts (mmbench).
+        try:
+            image_outputs.hidden_states = None
+        except Exception:
+            pass
+        del mid, pen, selected, projected, hs
         image_outputs.pooler_output = [packed.features]
         return image_outputs
 
@@ -511,9 +518,9 @@ def apply_patch(model) -> bool:
         return LlavaNextModelOutputWithPast(
             last_hidden_state=outputs.last_hidden_state,
             past_key_values=outputs.past_key_values,
-            hidden_states=getattr(outputs, "hidden_states", None),
-            attentions=getattr(outputs, "attentions", None),
-            image_hidden_states=image_features,
+            hidden_states=None,
+            attentions=None,
+            image_hidden_states=None,
         )
 
     llava.get_image_features = types.MethodType(hooked_get_image_features, llava)
@@ -537,8 +544,13 @@ def apply_patch(model) -> bool:
         pixel_values = kwargs.get("pixel_values", None)
         attention_mask = kwargs.get("attention_mask", None)
         image_sizes = kwargs.get("image_sizes", None)
-        max_new_tokens = int(kwargs.get("max_new_tokens", 32) or 32)
-        max_new_tokens = max(1, min(max_new_tokens, int(os.environ.get("BELA_NEXT_MAX_NEW", "128"))))
+        # lmms defaults max_new_tokens=1024 when task yaml omits it — hard-cap for V100.
+        max_new_tokens = kwargs.get("max_new_tokens", None)
+        if max_new_tokens is None:
+            gen_cfg = kwargs.get("generation_config", None) or getattr(self, "generation_config", None)
+            max_new_tokens = getattr(gen_cfg, "max_new_tokens", None) if gen_cfg is not None else None
+        max_new_tokens = int(max_new_tokens or 32)
+        max_new_tokens = max(1, min(max_new_tokens, int(os.environ.get("BELA_NEXT_MAX_NEW", "64"))))
         eos_id = kwargs.get("eos_token_id", None)
         if eos_id is None:
             eos_id = getattr(self.config, "eos_token_id", None)
@@ -551,6 +563,8 @@ def apply_patch(model) -> bool:
         # Do NOT force-stop on newline — that distorted SciQA ("B." vs "B") vs Dense.
 
         past = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         try:
             pre = self(
                 input_ids=input_ids,
@@ -565,6 +579,8 @@ def apply_patch(model) -> bool:
             past = pre.past_key_values
             short_len = int(pre.logits.shape[1])
             next_token = pre.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+            # Free prefill logits/hidden ASAP (only need last token + cache)
+            del pre
             new_list = [next_token]
             device = input_ids.device
             dtype = attention_mask.dtype if attention_mask is not None else input_ids.dtype
@@ -592,11 +608,19 @@ def apply_patch(model) -> bool:
                 next_pos += 1
                 self._bela_rope_next_pos = next_pos
                 next_token = step.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+                del step
                 new_list.append(next_token)
 
             return torch.cat([input_ids] + new_list, dim=1)
+        except torch.cuda.OutOfMemoryError:
+            # Let lmms continue: return prompt-only so batch_decode gets a tensor
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            return input_ids
         finally:
-            del past
+            past = None
+            if hasattr(self, "_bela_position_ids"):
+                self._bela_position_ids = None
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
