@@ -1,2 +1,12 @@
-% Intentionally excluded from this revision, as requested by the authors.
-% Populate and enable the input in main.tex after the experimental section is ready.
+\section{实验}
+\label{sec:experiments}
+
+本节只报告已经跑完的同日程对照，用来检查模板里第二步——问题条件交换——在固定基底和固定后层规则下改变了什么。模型是 LLaVA-1.5-7B，CLIP-ViT-L/14-336，$N{=}576$，$L{=}32$。两列共享双深度初始化、入口容量 64、事件 $11{:}17,19{:}10$ 和后层规则。视觉 token-layer 预算为
+\[
+W=64\times 12+17\times 8+10\times 12=1024,
+\]
+相对完整视觉序列 $576\times 32$ 保留 $1/18$。完整模型参考为 GQA 61.9、POPE F1 85.8、MME 1852、MMBench 64.1、ScienceQA-IMG 69.51、TextVQA-OCR 58.20。六任务归一化平均是这六项“成绩除以对应参考”的算术平均。样本数为 GQA 12578、POPE 9000、MME 2374、MMBench 4329、ScienceQA-IMG 2017、TextVQA-OCR 5000。
+
+表~\ref{tab:main} 与图~\ref{fig:bars} 中，问题条件更新的六任务归一化平均为 95.34\%，原生基底为 93.56\%。GQA 由 55.57 到 56.52，POPE F1 由 82.21 到 86.16，MME 由 1651.78 到 1715.68，MMBench-EN 由 61.34 到 61.77，ScienceQA-IMG 由 68.91 到 69.61。TextVQA-OCR 由 53.41 降到 53.06。POPE 的精度由 93.11\% 降到 91.30\%，召回由 73.60\% 升到 81.58\%。F1 的上升来自这一精度--召回取舍，不能写成所有幻觉类型都减少。
+
+同一日程下，匹配实际换入数量的随机替换得到 GQA 55.96 和 POPE F1 83.34，已经高于原生基底，真实问题的更新再高于这一随机对照。固定错配问题的 GQA 为 55.68；该对照的 POPE 没有跑完，所以问题身份目前只在 GQA 上有成对结果。跨模型、视频迁移、四部分各自替换的同预算消融、选择器耗时、显存，以及与 SCoRe 的同协议比较，都还没有进入本节。$W$ 仍是 token-layer 计数，不是 FLOPs 或延迟。
