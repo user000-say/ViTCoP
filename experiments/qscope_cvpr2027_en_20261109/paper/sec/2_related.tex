@@ -1,0 +1,12 @@
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Large vision-language models}
+LLaVA and BLIP-2 connect a visual encoder to a language model through a projection or a query interface~\cite{llava15,blip2}. Higher-resolution and video models, including LLaVA-NeXT, LLaVA-OneVision, and Qwen2.5-VL, lengthen the visual sequence with multi-scale crops, dynamic resolution, or multiple frames~\cite{llavanext,onevision,qwen25vl}. The longer prefix increases prefill cost and the key-value cache. This paper studies training-free pruning that chooses the entry set and then contracts it inside the decoder.
+
+\subsection{Visual token pruning}
+Salience methods show that an internal importance signal can drop many visual tokens. They do not, by themselves, describe duplication inside the kept set, and a single visual depth does not carry the ranking of another depth. We estimate both salience and the representative relation from position-aligned middle and deep features.
+
+Coverage and diversity methods make the set-level decision explicit. A purely visual representative relation is not fully consistent with the question: a weakly related region still takes a slot when it is locally distinctive. Q-SCOPE starts from that visual basis and then edits it under a coverage floor.
+
+Pre-decoder compression improves the entry, then holds its length fixed. A small entry removes evidence before interaction. A large entry spends the same capacity in deep layers. Layered schedules separate those two choices, but a delete-only schedule cannot recover a token that missed the entry. Q-SCOPE therefore builds the basis, adapts it with QGE, and refines the survivors with Q-Attn.
