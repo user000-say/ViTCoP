@@ -4,51 +4,18 @@
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/radar_rel6.pdf}
-\caption{同一日程下，原生基底与有界更新相对完整模型的六项比值。径向轴是“成绩 / 固定参考”，从 80 起绘，100 表示与完整模型持平。TextVQA 上更新后的比值低于基底。}
+\caption{已完成配置的六项相对分数。径向轴是成绩除以固定参考，从 85 起绘，100 表示与完整模型持平。MME 使用感知分。TextVQA 低于其余五项。}
 \label{fig:radar}
 \end{figure}
 
-视觉语言模型把视觉编码器和语言模型接到同一条生成过程里。Flamingo、BLIP-2 以及随后的 LLaVA、MiniGPT-4、InstructBLIP 说明，冻结或轻量对齐的视觉前端已经足以支持开放式图文交互~\cite{flamingo,blip2,llava,minigpt4,instructblip}。InternVL、Qwen2-VL、Qwen2.5-VL 和 LLaVA-OneVision 继续提高分辨率、增加视觉输入形式~\cite{internvl,qwen2vl,qwen25vl,onevision}。分辨率和视觉细节增加时，送入语言模型的 patch 序列通常一起变长。
+Flamingo、BLIP-2 和 LLaVA 把视觉编码器接到语言模型上，随后的高分辨率与视频模型继续增加视觉位置~\cite{flamingo,blip2,llava,llava15,llavanext,qwen25vl,onevision}。LLaVA-1.5 的常用网格有 576 个视觉 token，往往长于问题本身。长度为 $n$、宽度为 $d$ 的自注意力含有随 $n^2d$ 增长的配对项，前馈层和 KV cache 也随前缀变长~\cite{attention,pagedattention}。压缩冗余视觉位置，是算子优化之外的一条途径~\cite{fastv,visionzip,sparsevlm}。
 
-主流模型用 ViT 或 CLIP 把图像切成 patch，再经投影进入 Decoder~\cite{vit,clip,llava15}。LLaVA-1.5 的常用网格是 576 个视觉 token，往往长于问题本身。对长度为 $n$、宽度为 $d$ 的序列，自注意力中的查询--键与注意力--值乘积带有 $O(n^2d)$ 项~\cite{attention}。视觉前缀因此提高预填充成本，并增加解码时要读取的 KV cache~\cite{pagedattention}。FlashAttention 降低了注意力的访存开销~\cite{flashattention,flashattention2}，前馈层、投影和缓存实现仍随序列长度变化。减少实际进入各层的视觉 token，是另一条与算子优化互补的途径。
+已有方法按三条线选择保留谁，每条线都留下一个原理缺口。第一，显著性排序通常只读一个深度。中层和深层的高分位置并不重合：1,024 张图上，两套前排的 Jaccard 均值是 0.331。只用其中一层，入口会丢掉另一层才排到前面的位置。第二，多样性或覆盖回答的是图像内部谁能代表其余位置。DivPrune、DART 和 SCoRe 的代表关系不读取当前问题，同一幅图因此得到同一个入口~\cite{divprune,dart,score}。第三，VisionZip、CoIn 和 PruneSID 主要在语言模型之前做成一条紧凑序列，后层容量被入口长度固定~\cite{visionzip,coin,prunesid}。入口过少时，浅层还没有足够的交互计算；走到深层以后，多留的视觉位置对平均分数的推动变小。PyramidDrop、SparseVLM 和 ViTCoP 已经按层缩短序列~\cite{pyramiddrop,sparsevlm,vitcop}。在相同的层均预算下，保留数怎样沿深度分配，仍然决定实际能到达的性能。
 
-已有工作表明，视觉序列里有大量可压缩冗余~\cite{fastv,visionzip,sparsevlm,vitcop}。VisionZip、VisPruner 和 LLaVA-PruMerge 在视觉侧挑选或合并紧凑表示，DivPrune 与 DART 分别从集合多样性和重复关系决定保留谁~\cite{visionzip,vispruner,prumerge,divprune,dart}。SparseVLM 与 PyramidDrop 则在语言模型内部按层缩减视觉序列~\cite{sparsevlm,pyramiddrop}。这些方法已经覆盖了“看视觉特征选 token”“看集合内部是否重复”和“在深层继续删”三类决策。
+这三件事不能收成一次无约束排序。SCoRe 把显著性与覆盖写成加权 $k$-center，CoIn 在信息性和覆盖的共同引导下一次选出子集~\cite{score,coin}。二者都一次决定最终集合。本文要分开的是：基底先固定，问题只能在多大范围内改它，后层又按什么容量执行。
 
-问题条件并没有留在这一步之外。CDPruner 用指令相关性调制 DPP 核，MMTok 用统一覆盖同时代表文本和视觉，MoB 把提示对齐与视觉保留写成带预算分配的双目标覆盖~\cite{cdpruner,mmtok,mob}。SCoRe、CoIn 和 QCPruner 进一步把显著性、信息性或问题效用放进覆盖或设施选址目标~\cite{score,coin,qcpruner}。STAR-Pro 则把入口覆盖池和后续嵌套精炼连在同一个层平均预算下~\cite{starpro}。因此，不能把“同时使用问题、覆盖和渐进剪枝”本身当作剩余问题。
+给定非增的层容量和与问题无关的基底 $S_0$，入口适配在容量不变、相对 $S_0$ 的覆盖失真增量不超过 $\delta$、交换距离不超过 $B$ 的集合里，提高问题效用。这个可行域记为 $\mathcal{F}(S_0)$。BELA 不求解该域上的全局最优。它用双深度描述和格子配额生成 $S_0$，再从 $S_0$ 做有限次一进一出的交换；接受的交换留在覆盖包络内。同一组原始索引随后按层日程嵌套收缩。选择描述只决定索引，送入语言模型的仍是原模型深层行，参数也不更新。
 
-SCoRe 把显著性与覆盖收成一次加权 $k$-center，从而给剪枝一个可以单独检查的代表性目标~\cite{score}。沿着同一条路，还可以再问：这个目标是不是必须一次建成。单层特征只给出一种替代关系；按点排序或只看集合内部差异，也回答不了没被选中的位置现在由谁代表；把问题效用写进同一次联合目标，则让“新位置值得加入”和“旧代表可以删掉”变成同一个分数的两侧。入口集合同时还被用来决定后层谁继续存活，于是“先进入计算”和“占用最后若干层”也被绑在一起。
+在 LLaVA-1.5-7B 的已完成极限预算上，六项相对平均为 95.66\%，见图~\ref{fig:radar}。格子配额基底是 93.89\%，最小一档问题交换把它提高到 95.66\%，GQA 净增 145 题，TextVQA-OCR 同时下降。表~\ref{tab:main} 为 77.8\%、88.9\% 和 94.4\% 三档预留了同协议对照；目前只有 94.4\% 的 BELA 一行有记录。
 
-BELA 把这四件事拆开，并把其中的入口修改写成一个可单独检查的优化问题。给定与问题无关的基底 $S_0$，在集合大小不变、至多更换 $B$ 个身份、全体位置覆盖不低于地板的约束下，最大化集合内问题分数之和。这和 SCoRe 的一次加权 $k$-center、CoIn 的一次信息性--覆盖选择不是同一个问题：那里一次选出最终集合，这里基底先固定，问题只能在编辑半径内修改它。求解过程不求这个全局最优，只从 $S_0$ 做有限次一进一出的交换。第三步再把得到的索引按预定层数逐段减少。选择描述只决定索引，送入投影器的仍是原模型特征，也不更新参数。
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.92\textwidth]{figures/bars_rel6.pdf}
-\caption{同一协议下的基线对照。纵轴是成绩除以固定完整模型参考，100 表示与完整模型持平，纵轴从 85 起绘。两列只差入口身份。TextVQA 上有界更新低于原生基底。图中没有列入其他论文的数字，因为那些数字不是这条日程、这套评分下测得的。}
-\label{fig:bars}
-\end{figure*}
-
-我们在 LLaVA-1.5-7B 上固定 $64\!\rightarrow\!17\!\rightarrow\!10$ 的日程，层平均视觉 token 数为 32，视觉 token-layer 预算 $W{=}1024$。表~\ref{tab:main} 只改变入口身份。六项成绩除以固定完整模型参考后的平均值由 93.56\% 变为 95.34\%；参考值为 GQA 61.9、POPE F1 85.8、MME 1852、MMBench 64.1、ScienceQA-IMG 69.51、TextVQA-OCR 58.20。五项上升，TextVQA-OCR 由 53.41 降到 53.06。同一日程下，匹配换入数量的随机替换得到 GQA 55.96 和 POPE F1 83.34，已经高于原生集合，真实问题的更新再高于这一随机对照。把问题换成固定错配排列时 GQA 为 55.68，该对照的 POPE 没有跑完，所以问题身份目前只在 GQA 上有成对结果。POPE F1 的上升伴随召回由 73.60\% 增至 81.58\%、精度由 93.11\% 降至 91.30\%，不能写成所有幻觉类型都减少。
-
-\begin{table}[t]
-\centering
-\caption{LLaVA-1.5-7B 上只改变入口身份的对照。两列共享双深度初始化、入口容量 64、事件 $11{:}17,19{:}10$ 和后层规则。GQA、ScienceQA-IMG 与 TextVQA-OCR 为准确率，POPE 为 F1，MME 为感知加认知，MMBench 为英文开发集分数。末行是六项相对固定完整模型参考的算术平均。}
-\label{tab:main}
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcc}
-\hline
-任务 & 原生集合 & 问题条件更新 \\
-\hline
-GQA & 55.57 & 56.52 \\
-POPE F1 & 82.21 & 86.16 \\
-MME & 1651.78 & 1715.68 \\
-MMBench-EN & 61.34 & 61.77 \\
-ScienceQA-IMG & 68.91 & 69.61 \\
-TextVQA-OCR & 53.41 & 53.06 \\
-\hline
-六任务归一化平均 & 93.56\% & 95.34\% \\
-\hline
-\end{tabular}
-\end{table}
-
-本文的贡献有三点。第一，把固定基底上的入口修改写成带容量、编辑半径和覆盖地板的子集问题，并给出一个不求解全局最优的有界交换过程。第二，给出这个模板的一个训练无关实例：双深度描述补上单层替代关系的不足，空间原型初始化补上“未选位置由谁代表”，覆盖门控交换补上“加入收益不能自动批准移除”，两段后层规则把入口参与和末层保留分开。第三，在 $W{=}1024$ 的固定日程上只改变入口身份，报告六任务归一化平均的变化、随机与错配对照，以及 TextVQA-OCR 上的下降。图~\ref{fig:radar} 用同一相对刻度画出六项比值。
+本文的贡献有三点。第一，把入口修改写成分层预算下、带覆盖失真和修改范围约束的查询自适应子集选择。第二，给出一个免训练实例：双深度描述补上单层排序，格子配额补上补选集中，有界交换补上“加入收益不能自动批准移除”，分层日程把浅层参与和深层保留分开。第三，报告这一实例在六项任务上的取舍、交换范围和层预算分配，并把尚未测量的格子留空。
